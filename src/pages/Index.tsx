@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import heroImage from "@/assets/hero-dog.jpg";
+import heroImage from "@/assets/hero-section.png";
 import galleryCat from "@/assets/gallery-cat.jpg";
 import galleryBeagle from "@/assets/gallery-beagle.jpg";
 import galleryRabbit from "@/assets/gallery-rabbit.jpg";

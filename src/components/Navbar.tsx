@@ -3,7 +3,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import logoIcon from "@/assets/logo-icon.png";
-
+import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
@@ -20,32 +20,29 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+    <nav className="bg-[#001D4D] text-primary-foreground sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-center h-16 gap-10">
           <Link to="/" className="flex items-center space-x-2">
-            <img src={logoIcon} alt="SnapPup" className="h-10 w-10" />
-            <span className="text-2xl font-display font-bold text-primary">SnapPup</span>
+            <img src={logoIcon} alt="SnapPup" className="h-10 w-15" />
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-16 ">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`text-sm font-medium transition-colors ${
+                className={`text-base font-medium transition-colors ${
                   isActive(item.path)
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "text-orange-500 text-decoration-2 decoration-orange-500 underline underline-offset-8"
+                    : "text-rose-50 hover:text-orange-500"
                 }`}
               >
                 {item.name}
               </Link>
             ))}
-            <Button asChild size="sm">
-              <Link to="/booking">Đặt lịch ngay</Link>
-            </Button>
+           
           </div>
 
           {/* Mobile Menu Button */}
@@ -56,6 +53,22 @@ const Navbar = () => {
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
+
+          {/* Social Icons */}
+          <div className="hidden md:flex items-center gap-4">
+            <a href="#" className="text-accent hover:text-accent/80 transition-colors">
+              <Facebook className="w-5 h-5" />
+            </a>
+            <a href="#" className="text-accent hover:text-accent/80 transition-colors">
+              <Twitter className="w-5 h-5" />
+            </a>
+            <a href="#" className="text-accent hover:text-accent/80 transition-colors">
+              <Instagram className="w-5 h-5" />
+            </a>
+            <a href="#" className="text-accent hover:text-accent/80 transition-colors">
+              <Linkedin className="w-5 h-5" />
+            </a>
+          </div>
         </div>
 
         {/* Mobile Navigation */}

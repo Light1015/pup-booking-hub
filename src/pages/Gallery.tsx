@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import galleryCat from "@/assets/gallery-cat.jpg";
 import galleryBeagle from "@/assets/gallery-beagle.jpg";
 import galleryRabbit from "@/assets/gallery-rabbit.jpg";
-import heroImage from "@/assets/hero-dog.jpg";
+import heroImage from "@/assets/hero-section.png";
 
 const Gallery = () => {
   const [activeFilter, setActiveFilter] = useState("all");
