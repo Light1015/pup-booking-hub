@@ -56,7 +56,7 @@ const Navbar = () => {
 
           {/* Social Icons */}
           <div className="hidden md:flex items-center gap-4">
-            <a href="#" className="text-accent hover:text-accent/80 transition-colors">
+            <a href="https://www.facebook.com/profile.php?id=61581392236844" className="text-accent hover:text-accent/80 transition-colors">
               <Facebook className="w-5 h-5" />
             </a>
             <a href="#" className="text-accent hover:text-accent/80 transition-colors">

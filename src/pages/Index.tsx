@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import heroImage from "@/assets/hero-section.png";
-import galleryCat from "@/assets/gallery-cat.jpg";
+import galleryCVProfile from "@/assets/gallery-cv-profile.png";
 import galleryBeagle from "@/assets/gallery-beagle.jpg";
 import galleryRabbit from "@/assets/gallery-rabbit.jpg";
 
@@ -34,9 +34,12 @@ const Index = () => {
   ];
 
   const galleryPreviews = [
-    { image: galleryCat, title: "Mèo" },
-    { image: galleryBeagle, title: "Chó" },
-    { image: galleryRabbit, title: "Thú cưng khác" },
+    { image: galleryCVProfile, title: "CHUP ANH CV, PROFILE" },
+    { image: galleryBeagle, title: "CHUP ANH COUPLE" },
+    { image: galleryRabbit, title: "CHUP ANH TOT NGHIEP" },
+    { image: galleryRabbit, title: "CHUP ANH GIA DINH" },
+    { image: galleryRabbit, title: "CHUP ANH LE" },
+    { image: galleryRabbit, title: "CHUP ANH SAN PHAM" },
   ];
 
   return (
@@ -58,10 +61,10 @@ const Index = () => {
           <div className="max-w-2xl space-y-6">
             <h1 className="text-5xl md:text-6xl font-display font-bold leading-tight">
               Lưu giữ khoảnh khắc <br />
-              <span className="text-primary">đáng yêu nhất</span>
+              <span className="text-primary">đáng nhớ nhất</span>
             </h1>
             <p className="text-xl text-muted-foreground">
-              Studio chụp ảnh thú cưng chuyên nghiệp, nơi những khoảnh khắc của bé cưng được tôn vinh
+              Lorem ipsum dolor sit amet consectetur. Ac hac sociis arcu aenean mi. Et habitant ullamcorper amet
             </p>
             <div className="flex flex-wrap gap-4">
               <Button size="lg" asChild>
@@ -78,9 +81,9 @@ const Index = () => {
       {/* Services Section */}
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-display font-bold mb-4">Dịch vụ của chúng tôi</h2>
+          <h2 className="text-4xl font-display font-bold mb-4">Các dịch vụ chụp ảnh tại SnapPup</h2>
           <p className="text-muted-foreground text-lg">
-            Chúng tôi mang đến trải nghiệm chụp ảnh tuyệt vời cho bé cưng
+            Chúng tôi mang đến trải nghiệm chụp ảnh tuyệt vời
           </p>
         </div>
 
@@ -140,7 +143,7 @@ const Index = () => {
         <Card className="bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-primary/20">
           <CardContent className="p-12 text-center space-y-6">
             <h2 className="text-4xl font-display font-bold">
-              Sẵn sàng chụp ảnh cho bé cưng?
+              Sẵn sàng chụp ảnh?
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Đặt lịch ngay hôm nay để nhận ưu đãi đặc biệt cho khách hàng mới
