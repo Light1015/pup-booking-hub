@@ -1,7 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { Camera, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
+import logoIcon from "@/assets/logo-icon.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,8 +10,9 @@ const Navbar = () => {
 
   const navItems = [
     { name: "Trang chủ", path: "/" },
-    { name: "Thư viện", path: "/gallery" },
-    { name: "Về chúng tôi", path: "/about" },
+    { name: "Giới thiệu", path: "/about" },
+    { name: "Dịch vụ", path: "/services" },
+    { name: "Kho ảnh đẹp", path: "/gallery" },
     { name: "Đặt lịch", path: "/booking" },
     { name: "Liên hệ", path: "/contact" },
   ];
@@ -22,8 +24,8 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <Camera className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-display font-bold text-foreground">SnapPup</span>
+            <img src={logoIcon} alt="SnapPup" className="h-10 w-10" />
+            <span className="text-2xl font-display font-bold text-primary">SnapPup</span>
           </Link>
 
           {/* Desktop Navigation */}

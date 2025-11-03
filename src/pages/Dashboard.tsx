@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Calendar, Mail, Image, Trash2, Home } from "lucide-react";
+import { Calendar, Mail, Image, Trash2, Home, Briefcase } from "lucide-react";
+import { Service } from "./Services";
 
 interface Booking {
   name: string;
@@ -39,11 +40,13 @@ const Dashboard = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [newImage, setNewImage] = useState({
     url: "",
     title: "",
     category: "dog",
   });
+  const [editingService, setEditingService] = useState<Service | null>(null);
 
   useEffect(() => {
     loadData();
@@ -53,10 +56,12 @@ const Dashboard = () => {
     const savedBookings = JSON.parse(localStorage.getItem("bookings") || "[]");
     const savedContacts = JSON.parse(localStorage.getItem("contacts") || "[]");
     const savedGallery = JSON.parse(localStorage.getItem("gallery") || "[]");
+    const savedServices = JSON.parse(localStorage.getItem("services") || "[]");
     
     setBookings(savedBookings);
     setContacts(savedContacts);
     setGalleryImages(savedGallery);
+    setServices(savedServices);
   };
 
   const handleAddImage = (e: React.FormEvent) => {
@@ -94,6 +99,19 @@ const Dashboard = () => {
     setContacts(updatedContacts);
     localStorage.setItem("contacts", JSON.stringify(updatedContacts));
     toast.success("Đã xóa tin nhắn");
+  };
+
+  const handleUpdateService = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingService) return;
+
+    const updatedServices = services.map(s => 
+      s.id === editingService.id ? editingService : s
+    );
+    setServices(updatedServices);
+    localStorage.setItem("services", JSON.stringify(updatedServices));
+    toast.success("Đã cập nhật dịch vụ");
+    setEditingService(null);
   };
 
   return (
@@ -144,14 +162,25 @@ const Dashboard = () => {
               <div className="text-2xl font-bold">{galleryImages.length}</div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Dịch vụ</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{services.length}</div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="bookings" className="space-y-6">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
             <TabsTrigger value="bookings">Lịch đặt</TabsTrigger>
             <TabsTrigger value="contacts">Tin nhắn</TabsTrigger>
             <TabsTrigger value="gallery">Thư viện ảnh</TabsTrigger>
+            <TabsTrigger value="services">Dịch vụ</TabsTrigger>
           </TabsList>
 
           {/* Bookings Tab */}
@@ -350,6 +379,123 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Services Tab */}
+          <TabsContent value="services">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quản lý dịch vụ</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {services.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    Chưa có dịch vụ nào
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {services.map((service) => (
+                      <div
+                        key={service.id}
+                        className="border rounded-lg p-6 space-y-4"
+                      >
+                        {editingService?.id === service.id ? (
+                          <form onSubmit={handleUpdateService} className="space-y-4">
+                            <div className="space-y-2">
+                              <Label>Tiêu đề</Label>
+                              <Input
+                                value={editingService.title}
+                                onChange={(e) =>
+                                  setEditingService({
+                                    ...editingService,
+                                    title: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Giá</Label>
+                              <Input
+                                value={editingService.price}
+                                onChange={(e) =>
+                                  setEditingService({
+                                    ...editingService,
+                                    price: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Mô tả</Label>
+                              <textarea
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 min-h-[100px]"
+                                value={editingService.description}
+                                onChange={(e) =>
+                                  setEditingService({
+                                    ...editingService,
+                                    description: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>URL ảnh</Label>
+                              <Input
+                                value={editingService.image}
+                                onChange={(e) =>
+                                  setEditingService({
+                                    ...editingService,
+                                    image: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button type="submit">Lưu</Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setEditingService(null)}
+                              >
+                                Hủy
+                              </Button>
+                            </div>
+                          </form>
+                        ) : (
+                          <>
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2 flex-1">
+                                <h3 className="text-xl font-bold">{service.title}</h3>
+                                <p className="text-2xl font-bold text-primary">
+                                  {service.price}
+                                </p>
+                                <p className="text-muted-foreground">
+                                  {service.description}
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditingService(service)}
+                              >
+                                Chỉnh sửa
+                              </Button>
+                            </div>
+                            {service.image && (
+                              <img
+                                src={service.image}
+                                alt={service.title}
+                                className="w-full h-48 object-cover rounded-lg"
+                              />
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
