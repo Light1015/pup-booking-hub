@@ -41,7 +41,9 @@ const Dashboard = () => {
     package_2_features: "Áp dụng từ 5 người trở lên, Tư vấn trang phục chung cho cả nhóm, Đồng giá chỉ 100k/người, Chụp riêng từng người theo style nhất quán, Tặng ảnh chung cho cả nhóm"
   });
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
-  const [newCategory, setNewCategory] = useState({ name: "", label: "", image_url: "" });
+  const [replyDialogOpen, setReplyDialogOpen] = useState(false);
+  const [replyData, setReplyData] = useState<{ type: 'booking' | 'contact'; data: any; message: string }>({ type: 'booking', data: null, message: '' });
+  const [newCategory, setNewCategory] = useState({ name: "", label: "", image_urls: [] as string[] });
   const [adminEmail, setAdminEmail] = useState("");
 
   // Fetch admin email
@@ -298,6 +300,48 @@ const Dashboard = () => {
     },
   });
 
+  // Send email to customer from booking
+  const sendBookingEmail = useMutation({
+    mutationFn: async ({ booking, replyMessage }: { booking: any; replyMessage: string }) => {
+      const { error } = await supabase.functions.invoke("send-customer-reply", {
+        body: {
+          customerEmail: booking.email,
+          customerName: booking.name,
+          subject: "Phản hồi về lịch đặt chụp ảnh",
+          message: replyMessage,
+        },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Đã gửi email!");
+    },
+    onError: (error: any) => {
+      toast.error("Gửi email thất bại: " + error.message);
+    },
+  });
+
+  // Send email to customer from contact
+  const sendContactReply = useMutation({
+    mutationFn: async ({ contact, replyMessage }: { contact: any; replyMessage: string }) => {
+      const { error } = await supabase.functions.invoke("send-customer-reply", {
+        body: {
+          customerEmail: contact.email,
+          customerName: contact.name,
+          subject: "Phản hồi liên hệ từ SnapPup Studio",
+          message: replyMessage,
+        },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Đã gửi email!");
+    },
+    onError: (error: any) => {
+      toast.error("Gửi email thất bại: " + error.message);
+    },
+  });
+
   // Category mutations
   const addCategory = useMutation({
     mutationFn: async (category: any) => {
@@ -307,7 +351,7 @@ const Dashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Đã thêm danh mục!");
-      setNewCategory({ name: "", label: "", image_url: "" });
+      setNewCategory({ name: "", label: "", image_urls: [] });
     },
   });
 
@@ -427,6 +471,16 @@ const Dashboard = () => {
                           <p className="mt-4"><strong>Ghi chú:</strong> {booking.notes}</p>
                         )}
                         <div className="flex gap-2 mt-4">
+                          <Button 
+                            size="sm" 
+                            onClick={() => {
+                              setReplyData({ type: 'booking', data: booking, message: '' });
+                              setReplyDialogOpen(true);
+                            }}
+                          >
+                            <Mail className="w-4 h-4 mr-2" />
+                            Gửi mail
+                          </Button>
                           <Button size="sm" variant="destructive" onClick={() => deleteBooking.mutate(booking.id)}>
                             <Trash2 className="w-4 h-4 mr-2" />
                             Xóa
@@ -462,10 +516,22 @@ const Dashboard = () => {
                             <p><strong>Ngày:</strong> {new Date(contact.created_at).toLocaleDateString('vi-VN')}</p>
                           </div>
                         </div>
-                        <Button size="sm" variant="destructive" className="mt-4" onClick={() => deleteContact.mutate(contact.id)}>
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Xóa
-                        </Button>
+                        <div className="flex gap-2 mt-4">
+                          <Button 
+                            size="sm" 
+                            onClick={() => {
+                              setReplyData({ type: 'contact', data: contact, message: '' });
+                              setReplyDialogOpen(true);
+                            }}
+                          >
+                            <Mail className="w-4 h-4 mr-2" />
+                            Gửi mail
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => deleteContact.mutate(contact.id)}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Xóa
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -696,19 +762,27 @@ const Dashboard = () => {
                       <Input placeholder="Chó, Mèo..." value={newCategory.label} onChange={(e) => setNewCategory({ ...newCategory, label: e.target.value })} />
                     </div>
                     <div>
-                      <Label>Chọn ảnh từ thư viện</Label>
-                      <Select value={newCategory.image_url} onValueChange={(value) => setNewCategory({ ...newCategory, image_url: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn ảnh" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {gallery.map((img: any) => (
-                            <SelectItem key={img.id} value={img.image_url}>
-                              {img.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label>Chọn ảnh từ thư viện (có thể chọn nhiều)</Label>
+                      <div className="grid grid-cols-3 gap-2 mt-2 max-h-60 overflow-y-auto border rounded-lg p-2">
+                        {gallery.map((img: any) => (
+                          <div 
+                            key={img.id} 
+                            className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${
+                              newCategory.image_urls.includes(img.image_url) ? 'border-primary' : 'border-transparent'
+                            }`}
+                            onClick={() => {
+                              const urls = newCategory.image_urls.includes(img.image_url)
+                                ? newCategory.image_urls.filter(url => url !== img.image_url)
+                                : [...newCategory.image_urls, img.image_url];
+                              setNewCategory({ ...newCategory, image_urls: urls });
+                            }}
+                          >
+                            <img src={img.image_url} alt={img.title} className="w-full h-20 object-cover" />
+                            <p className="text-xs p-1 bg-background/80 absolute bottom-0 left-0 right-0">{img.title}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">Đã chọn: {newCategory.image_urls.length} ảnh</p>
                     </div>
                     <Button onClick={() => addCategory.mutate(newCategory)}>
                       <Plus className="w-4 h-4 mr-2" />
@@ -725,18 +799,32 @@ const Dashboard = () => {
                           <div className="grid gap-4">
                             <Input value={editingCategory.name} onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })} />
                             <Input value={editingCategory.label} onChange={(e) => setEditingCategory({ ...editingCategory, label: e.target.value })} />
-                            <Select value={editingCategory.image_url || ""} onValueChange={(value) => setEditingCategory({ ...editingCategory, image_url: value })}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Chọn ảnh" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {gallery.map((img: any) => (
-                                  <SelectItem key={img.id} value={img.image_url}>
-                                    {img.title}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div>
+                              <Label>Chọn ảnh từ thư viện (có thể chọn nhiều)</Label>
+                              <div className="grid grid-cols-3 gap-2 mt-2 max-h-60 overflow-y-auto border rounded-lg p-2">
+                                {gallery.map((img: any) => {
+                                  const imageUrls = editingCategory.image_urls || (editingCategory.image_url ? [editingCategory.image_url] : []);
+                                  return (
+                                    <div 
+                                      key={img.id} 
+                                      className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${
+                                        imageUrls.includes(img.image_url) ? 'border-primary' : 'border-transparent'
+                                      }`}
+                                      onClick={() => {
+                                        const urls = imageUrls.includes(img.image_url)
+                                          ? imageUrls.filter((url: string) => url !== img.image_url)
+                                          : [...imageUrls, img.image_url];
+                                        setEditingCategory({ ...editingCategory, image_urls: urls, image_url: null });
+                                      }}
+                                    >
+                                      <img src={img.image_url} alt={img.title} className="w-full h-20 object-cover" />
+                                      <p className="text-xs p-1 bg-background/80 absolute bottom-0 left-0 right-0">{img.title}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-2">Đã chọn: {(editingCategory.image_urls || []).length} ảnh</p>
+                            </div>
                             <div className="flex gap-2">
                               <Button onClick={() => updateCategory.mutate(editingCategory)}>Lưu</Button>
                               <Button variant="outline" onClick={() => setEditingCategory(null)}>Hủy</Button>
@@ -744,11 +832,18 @@ const Dashboard = () => {
                           </div>
                         ) : (
                           <>
-                            {category.image_url && (
-                              <img src={category.image_url} alt={category.label} className="w-full h-40 object-cover rounded-lg mb-4" />
+                            {(category.image_urls || (category.image_url ? [category.image_url] : [])).length > 0 && (
+                              <div className="grid grid-cols-2 gap-2 mb-4">
+                                {(category.image_urls || [category.image_url]).slice(0, 4).map((url: string, idx: number) => (
+                                  <img key={idx} src={url} alt={`${category.label} ${idx + 1}`} className="w-full h-20 object-cover rounded-lg" />
+                                ))}
+                              </div>
                             )}
                             <h3 className="font-semibold">{category.label}</h3>
                             <p className="text-sm text-muted-foreground">{category.name}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {(category.image_urls || (category.image_url ? [category.image_url] : [])).length} ảnh
+                            </p>
                             <div className="flex gap-2 mt-4">
                               <Button size="sm" onClick={() => setEditingCategory(category)}>
                                 <Edit className="w-4 h-4 mr-2" />
@@ -769,6 +864,48 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Reply Dialog */}
+        <Dialog open={replyDialogOpen} onOpenChange={setReplyDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Gửi email phản hồi</DialogTitle>
+              <DialogDescription>
+                Gửi đến: {replyData.data?.email} ({replyData.data?.name})
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Tin nhắn</Label>
+                <Textarea
+                  rows={8}
+                  placeholder="Nhập nội dung email..."
+                  value={replyData.message}
+                  onChange={(e) => setReplyData({ ...replyData, message: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setReplyDialogOpen(false)}>
+                  Hủy
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (replyData.type === 'booking') {
+                      sendBookingEmail.mutate({ booking: replyData.data, replyMessage: replyData.message });
+                    } else {
+                      sendContactReply.mutate({ contact: replyData.data, replyMessage: replyData.message });
+                    }
+                    setReplyDialogOpen(false);
+                    setReplyData({ type: 'booking', data: null, message: '' });
+                  }}
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Gửi email
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
