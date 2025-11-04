@@ -21,18 +21,48 @@ const Contact = () => {
 
   const createContactMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase
+      // Insert contact first
+      const { error: contactError } = await supabase
         .from("contacts")
         .insert([data]);
       
-      if (error) throw error;
+      if (contactError) throw contactError;
+
+      // Get admin email
+      const { data: config } = await supabase
+        .from("site_config")
+        .select("value")
+        .eq("key", "admin_email")
+        .single();
+
+      const adminEmail = config?.value || "admin@snappup.studio";
+
+      // Send email notification
+      const { error: emailError } = await supabase.functions.invoke("send-contact-email", {
+        body: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          message: data.message,
+          adminEmail: adminEmail,
+        },
+      });
+
+      if (emailError) {
+        console.error("Email error:", emailError);
+        throw new Error("Không gửi được email thông báo");
+      }
     },
     onSuccess: () => {
-      toast.success("Cảm ơn bạn! Chúng tôi sẽ liên hệ lại sớm.");
+      toast.success("Cảm ơn bạn! Chúng tôi đã nhận được tin nhắn và sẽ liên hệ lại sớm.");
       setFormData({ name: "", email: "", phone: "", message: "" });
     },
-    onError: () => {
-      toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
+    onError: (error: any) => {
+      if (error.message.includes("email")) {
+        toast.warning("Tin nhắn đã được lưu nhưng không gửi được email thông báo");
+      } else {
+        toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
+      }
     },
   });
 

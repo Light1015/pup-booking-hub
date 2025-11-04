@@ -47,7 +47,8 @@ const Booking = () => {
     }
 
     try {
-      const { error } = await supabase.from("bookings").insert([{
+      // Insert booking first
+      const { error: bookingError } = await supabase.from("bookings").insert([{
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
@@ -58,9 +59,36 @@ const Booking = () => {
         notes: formData.notes,
       }]);
 
-      if (error) throw error;
+      if (bookingError) throw bookingError;
 
-      toast.success("Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
+      // Get admin email
+      const { data: config } = await supabase
+        .from("site_config")
+        .select("value")
+        .eq("key", "admin_email")
+        .single();
+
+      const adminEmail = config?.value || "admin@snappup.studio";
+
+      // Send email notification
+      const { error: emailError } = await supabase.functions.invoke("send-booking-email", {
+        body: {
+          customerName: formData.name,
+          customerEmail: formData.email,
+          petName: formData.petName,
+          date: format(selectedDate, "yyyy-MM-dd"),
+          time: selectedTime,
+          message: formData.notes,
+          adminEmail: adminEmail,
+        },
+      });
+
+      if (emailError) {
+        console.error("Email error:", emailError);
+        toast.warning("Đặt lịch thành công nhưng không gửi được email thông báo");
+      } else {
+        toast.success("Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận.");
+      }
     
       setFormData({
         name: "",
