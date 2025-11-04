@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,20 +6,38 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Check } from "lucide-react";
 import { Service } from "./Services";
 import { Helmet } from "react-helmet";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const ServiceDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [service, setService] = useState<Service | null>(null);
 
-  useEffect(() => {
-    const savedServices = localStorage.getItem("services");
-    if (savedServices) {
-      const services: Service[] = JSON.parse(savedServices);
-      const foundService = services.find(s => s.id === id);
-      setService(foundService || null);
-    }
-  }, [id]);
+  const { data: service, isLoading } = useQuery({
+    queryKey: ["service", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as Service | null;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   if (!service) {
     return (
@@ -72,7 +89,7 @@ const ServiceDetail = () => {
                 <div className="space-y-6">
                   <Card className="overflow-hidden">
                     <img
-                      src={service.image}
+                      src={service.image_url}
                       alt={service.title}
                       className="w-full aspect-[4/3] object-cover"
                     />

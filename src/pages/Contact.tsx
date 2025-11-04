@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Phone, Mail, MapPin, Clock, Facebook, Instagram } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation } from "@tanstack/react-query";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -17,22 +19,26 @@ const Contact = () => {
     message: "",
   });
 
+  const createContactMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const { error } = await supabase
+        .from("contacts")
+        .insert([data]);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cảm ơn bạn! Chúng tôi sẽ liên hệ lại sớm.");
+      setFormData({ name: "", email: "", phone: "", message: "" });
+    },
+    onError: () => {
+      toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Store contact message in localStorage
-    const contact = {
-      ...formData,
-      createdAt: new Date().toISOString(),
-    };
-    
-    const existingContacts = JSON.parse(localStorage.getItem("contacts") || "[]");
-    existingContacts.push(contact);
-    localStorage.setItem("contacts", JSON.stringify(existingContacts));
-
-    toast.success("Cảm ơn bạn! Chúng tôi sẽ liên hệ lại sớm.");
-    
-    setFormData({ name: "", email: "", phone: "", message: "" });
+    createContactMutation.mutate(formData);
   };
 
   const contactInfo = [
@@ -134,8 +140,13 @@ const Contact = () => {
                       />
                     </div>
 
-                    <Button type="submit" className="w-full" size="lg">
-                      Gửi tin nhắn
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      size="lg"
+                      disabled={createContactMutation.isPending}
+                    >
+                      {createContactMutation.isPending ? "Đang gửi..." : "Gửi tin nhắn"}
                     </Button>
                   </form>
                 </CardContent>

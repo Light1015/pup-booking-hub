@@ -1,114 +1,36 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 export interface Service {
   id: string;
   title: string;
   price: string;
   description: string;
-  image: string;
+  image_url: string;
   features: string[];
 }
 
-const defaultServices: Service[] = [
-  {
-    id: "cv-profile",
-    title: "CV - PROFILE",
-    price: "300K",
-    description: "Chụp ảnh CV chuyên nghiệp cho hồ sơ xin việc, tạo ấn tượng tốt với nhà tuyển dụng.",
-    image: "/placeholder.svg",
-    features: [
-      "Chụp ảnh CV chuyên nghiệp",
-      "Tư vấn trang phục phù hợp",
-      "Chỉnh sửa ảnh cơ bản",
-      "Giao ảnh trong 3 ngày làm việc"
-    ]
-  },
-  {
-    id: "couple",
-    title: "COUPLE",
-    price: "300K",
-    description: "Lưu giữ những khoảnh khắc ngọt ngào của hai bạn với gói chụp ảnh cặp đôi.",
-    image: "/placeholder.svg",
-    features: [
-      "Chụp ảnh cặp đôi tự nhiên",
-      "Nhiều concept theo yêu cầu",
-      "Chỉnh màu chuyên nghiệp",
-      "Giao file trong 5 ngày"
-    ]
-  },
-  {
-    id: "family",
-    title: "GIA ĐÌNH",
-    price: "300K",
-    description: "Gói chụp gia đình ấm áp, ghi lại những khoảnh khắc hạnh phúc bên người thân.",
-    image: "/placeholder.svg",
-    features: [
-      "Chụp ảnh gia đình nhiều thế hệ",
-      "Địa điểm linh hoạt",
-      "Chỉnh sửa ảnh đẹp tự nhiên",
-      "Album ảnh đẹp mắt"
-    ]
-  },
-  {
-    id: "graduation",
-    title: "TỐT NGHIỆP",
-    price: "300K",
-    description: "Lưu giữ kỷ niệm ngày tốt nghiệp đáng nhớ với bộ ảnh chuyên nghiệp.",
-    image: "/placeholder.svg",
-    features: [
-      "Chụp ảnh tốt nghiệp trong trường",
-      "Gồm ảnh cá nhân và nhóm",
-      "Chỉnh sửa ảnh sắc nét",
-      "Giao ảnh nhanh trong 2 ngày"
-    ]
-  },
-  {
-    id: "holiday",
-    title: "LỄ",
-    price: "300K",
-    description: "Gói chụp ảnh theo chủ đề lễ hội, Giáng sinh, Tết, Halloween...",
-    image: "/placeholder.svg",
-    features: [
-      "Concept theo chủ đề lễ",
-      "Trang trí phù hợp theo mùa",
-      "Màu sắc tươi sáng",
-      "Nhiều góc chụp sáng tạo"
-    ]
-  },
-  {
-    id: "product",
-    title: "SẢN PHẨM",
-    price: "300K",
-    description: "Chụp ảnh sản phẩm chuyên nghiệp cho kinh doanh, bán hàng online.",
-    image: "/placeholder.svg",
-    features: [
-      "Chụp sản phẩm góc 360",
-      "Background chuyên nghiệp",
-      "Ánh sáng studio chuẩn",
-      "Chỉnh ảnh sắc nét, rõ chi tiết"
-    ]
-  }
-];
-
 const Services = () => {
   const navigate = useNavigate();
-  const [services, setServices] = useState<Service[]>([]);
 
-  useEffect(() => {
-    const savedServices = localStorage.getItem("services");
-    if (savedServices) {
-      setServices(JSON.parse(savedServices));
-    } else {
-      setServices(defaultServices);
-      localStorage.setItem("services", JSON.stringify(defaultServices));
-    }
-  }, []);
+  const { data: services = [], isLoading } = useQuery({
+    queryKey: ["services"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .order("created_at", { ascending: true });
+      
+      if (error) throw error;
+      return data as Service[];
+    },
+  });
 
   const handleServiceClick = (serviceId: string) => {
     navigate(`/services/${serviceId}`);
@@ -142,8 +64,13 @@ const Services = () => {
           {/* Services Grid */}
           <section className="py-16">
             <div className="container mx-auto px-4">
-              <div className="space-y-8">
-                {services.map((service, index) => (
+              {isLoading ? (
+                <div className="flex justify-center items-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {services.map((service, index) => (
                   <Card 
                     key={service.id}
                     className="overflow-hidden hover:shadow-lg transition-shadow"
@@ -153,7 +80,7 @@ const Services = () => {
                         {/* Image */}
                         <div className={`relative h-64 md:h-auto ${index % 2 === 1 ? 'md:col-start-2' : ''}`}>
                           <img
-                            src={service.image}
+                            src={service.image_url}
                             alt={service.title}
                             className="w-full h-full object-cover"
                           />
@@ -180,8 +107,9 @@ const Services = () => {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
 
