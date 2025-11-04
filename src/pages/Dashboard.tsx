@@ -1,504 +1,602 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Calendar, Mail, Image, Trash2, Home, Briefcase } from "lucide-react";
-import { Service } from "./Services";
-
-interface Booking {
-  name: string;
-  phone: string;
-  email: string;
-  petName: string;
-  petType: string;
-  date: string;
-  time: string;
-  notes: string;
-  createdAt: string;
-}
-
-interface Contact {
-  name: string;
-  email: string;
-  phone: string;
-  message: string;
-  createdAt: string;
-}
-
-interface GalleryImage {
-  id: string;
-  url: string;
-  title: string;
-  category: string;
-}
+import { Trash2, Mail, Upload, Plus, Edit, LogOut } from "lucide-react";
 
 const Dashboard = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [newImage, setNewImage] = useState({
-    url: "",
-    title: "",
-    category: "dog",
+  const { signOut } = useAuth();
+  const queryClient = useQueryClient();
+  const [emailDialog, setEmailDialog] = useState<{ open: boolean; booking: any | null }>({ open: false, booking: null });
+  const [emailMessage, setEmailMessage] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [editingService, setEditingService] = useState<any | null>(null);
+  const [newService, setNewService] = useState({ title: "", price: "", description: "", image_url: "", features: "" });
+  const [editingCategory, setEditingCategory] = useState<any | null>(null);
+  const [newCategory, setNewCategory] = useState({ name: "", label: "" });
+
+  // Fetch data
+  const { data: bookings = [] } = useQuery({
+    queryKey: ["bookings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
   });
-  const [editingService, setEditingService] = useState<Service | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const loadData = () => {
-    const savedBookings = JSON.parse(localStorage.getItem("bookings") || "[]");
-    const savedContacts = JSON.parse(localStorage.getItem("contacts") || "[]");
-    const savedGallery = JSON.parse(localStorage.getItem("gallery") || "[]");
-    const savedServices = JSON.parse(localStorage.getItem("services") || "[]");
-    
-    setBookings(savedBookings);
-    setContacts(savedContacts);
-    setGalleryImages(savedGallery);
-    setServices(savedServices);
-  };
+  const { data: gallery = [] } = useQuery({
+    queryKey: ["gallery"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gallery_images")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const handleAddImage = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const image: GalleryImage = {
-      id: Date.now().toString(),
-      ...newImage,
-    };
-    
-    const updatedGallery = [...galleryImages, image];
-    setGalleryImages(updatedGallery);
-    localStorage.setItem("gallery", JSON.stringify(updatedGallery));
-    
-    toast.success("Đã thêm ảnh vào thư viện");
-    setNewImage({ url: "", title: "", category: "dog" });
-  };
+  const { data: services = [] } = useQuery({
+    queryKey: ["services"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const handleDeleteImage = (id: string) => {
-    const updatedGallery = galleryImages.filter((img) => img.id !== id);
-    setGalleryImages(updatedGallery);
-    localStorage.setItem("gallery", JSON.stringify(updatedGallery));
-    toast.success("Đã xóa ảnh");
-  };
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gallery_categories")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const handleDeleteBooking = (index: number) => {
-    const updatedBookings = bookings.filter((_, i) => i !== index);
-    setBookings(updatedBookings);
-    localStorage.setItem("bookings", JSON.stringify(updatedBookings));
-    toast.success("Đã xóa lịch đặt");
-  };
+  // Delete mutations
+  const deleteBooking = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("bookings").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      toast.success("Đã xóa lịch đặt");
+    },
+  });
 
-  const handleDeleteContact = (index: number) => {
-    const updatedContacts = contacts.filter((_, i) => i !== index);
-    setContacts(updatedContacts);
-    localStorage.setItem("contacts", JSON.stringify(updatedContacts));
-    toast.success("Đã xóa tin nhắn");
-  };
+  const deleteContact = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("contacts").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success("Đã xóa liên hệ");
+    },
+  });
 
-  const handleUpdateService = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editingService) return;
+  const deleteImage = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("gallery_images").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery"] });
+      toast.success("Đã xóa ảnh");
+    },
+  });
 
-    const updatedServices = services.map(s => 
-      s.id === editingService.id ? editingService : s
-    );
-    setServices(updatedServices);
-    localStorage.setItem("services", JSON.stringify(updatedServices));
-    toast.success("Đã cập nhật dịch vụ");
-    setEditingService(null);
+  const deleteService = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("services").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      toast.success("Đã xóa dịch vụ");
+    },
+  });
+
+  // Send email mutation
+  const sendEmail = useMutation({
+    mutationFn: async ({ email, customerName, petName, bookingDate, bookingTime, message }: any) => {
+      const { error } = await supabase.functions.invoke("send-booking-email", {
+        body: { to: email, customerName, petName, bookingDate, bookingTime, message },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Email đã được gửi!");
+      setEmailDialog({ open: false, booking: null });
+      setEmailMessage("");
+    },
+  });
+
+  // Upload image mutation
+  const uploadImage = useMutation({
+    mutationFn: async ({ file, title, category }: { file: File; title: string; category: string }) => {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("gallery")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("gallery")
+        .getPublicUrl(fileName);
+
+      const { error: dbError } = await supabase
+        .from("gallery_images")
+        .insert([{ image_url: publicUrl, title, category }]);
+
+      if (dbError) throw dbError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery"] });
+      toast.success("Đã tải ảnh lên!");
+    },
+  });
+
+  // Service mutations
+  const addService = useMutation({
+    mutationFn: async (service: any) => {
+      const { error } = await supabase.from("services").insert([{
+        ...service,
+        features: service.features.split(",").map((f: string) => f.trim()),
+      }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      toast.success("Đã thêm dịch vụ!");
+      setNewService({ title: "", price: "", description: "", image_url: "", features: "" });
+    },
+  });
+
+  const updateService = useMutation({
+    mutationFn: async ({ id, ...service }: any) => {
+      const { error } = await supabase.from("services").update({
+        ...service,
+        features: typeof service.features === "string" 
+          ? service.features.split(",").map((f: string) => f.trim())
+          : service.features,
+      }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      toast.success("Đã cập nhật dịch vụ!");
+      setEditingService(null);
+    },
+  });
+
+  // Category mutations
+  const addCategory = useMutation({
+    mutationFn: async (category: any) => {
+      const { error } = await supabase.from("gallery_categories").insert([category]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Đã thêm danh mục!");
+      setNewCategory({ name: "", label: "" });
+    },
+  });
+
+  const updateCategory = useMutation({
+    mutationFn: async ({ id, ...category }: any) => {
+      const { error } = await supabase.from("gallery_categories").update(category).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Đã cập nhật danh mục!");
+      setEditingCategory(null);
+    },
+  });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const title = prompt("Nhập tiêu đề ảnh:");
+    const category = prompt("Nhập danh mục (dog/cat/other):");
+
+    if (!title || !category) {
+      toast.error("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      await uploadImage.mutateAsync({ file, title, category });
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-display font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">Quản lý website SnapPup</p>
-          </div>
-          <Button asChild variant="outline">
-            <Link to="/">
-              <Home className="h-4 w-4 mr-2" />
-              Về trang chủ
-            </Link>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+          <Button onClick={signOut} variant="outline">
+            <LogOut className="w-4 h-4 mr-2" />
+            Đăng xuất
           </Button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Lịch đặt</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Lịch đặt</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{bookings.length}</div>
+              <p className="text-3xl font-bold">{bookings.length}</p>
             </CardContent>
           </Card>
-          
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Tin nhắn</CardTitle>
-              <Mail className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Liên hệ</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{contacts.length}</div>
+              <p className="text-3xl font-bold">{contacts.length}</p>
             </CardContent>
           </Card>
-          
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Ảnh trong thư viện</CardTitle>
-              <Image className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Thư viện</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{galleryImages.length}</div>
+              <p className="text-3xl font-bold">{gallery.length}</p>
             </CardContent>
           </Card>
-
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Dịch vụ</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Dịch vụ</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{services.length}</div>
+              <p className="text-3xl font-bold">{services.length}</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="bookings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="bookings">Lịch đặt</TabsTrigger>
-            <TabsTrigger value="contacts">Tin nhắn</TabsTrigger>
-            <TabsTrigger value="gallery">Thư viện ảnh</TabsTrigger>
+            <TabsTrigger value="contacts">Liên hệ</TabsTrigger>
+            <TabsTrigger value="gallery">Thư viện</TabsTrigger>
             <TabsTrigger value="services">Dịch vụ</TabsTrigger>
+            <TabsTrigger value="categories">Danh mục</TabsTrigger>
           </TabsList>
 
-          {/* Bookings Tab */}
           <TabsContent value="bookings">
             <Card>
               <CardHeader>
-                <CardTitle>Danh sách lịch đặt</CardTitle>
+                <CardTitle>Quản lý lịch đặt</CardTitle>
+                <CardDescription>Danh sách các lịch đặt chụp ảnh</CardDescription>
               </CardHeader>
               <CardContent>
-                {bookings.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Chưa có lịch đặt nào
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {bookings.map((booking, index) => (
-                      <div
-                        key={index}
-                        className="border rounded-lg p-4 space-y-2"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <p className="font-semibold">{booking.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {booking.phone} • {booking.email}
-                            </p>
-                            <p className="text-sm">
-                              <span className="font-medium">Bé cưng:</span>{" "}
-                              {booking.petName} ({booking.petType})
-                            </p>
-                            <p className="text-sm">
-                              <span className="font-medium">Thời gian:</span>{" "}
-                              {new Date(booking.date).toLocaleDateString("vi-VN")}{" "}
-                              - {booking.time}
-                            </p>
-                            {booking.notes && (
-                              <p className="text-sm">
-                                <span className="font-medium">Ghi chú:</span>{" "}
-                                {booking.notes}
-                              </p>
-                            )}
+                <div className="space-y-4">
+                  {bookings.map((booking: any) => (
+                    <Card key={booking.id}>
+                      <CardContent className="pt-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p><strong>Tên:</strong> {booking.name}</p>
+                            <p><strong>Email:</strong> {booking.email}</p>
+                            <p><strong>SĐT:</strong> {booking.phone}</p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteBooking(index)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                          <div>
+                            <p><strong>Tên pet:</strong> {booking.pet_name}</p>
+                            <p><strong>Loại pet:</strong> {booking.pet_type}</p>
+                            <p><strong>Ngày:</strong> {new Date(booking.booking_date).toLocaleDateString('vi-VN')}</p>
+                            <p><strong>Giờ:</strong> {booking.booking_time}</p>
+                          </div>
+                        </div>
+                        {booking.notes && (
+                          <p className="mt-4"><strong>Ghi chú:</strong> {booking.notes}</p>
+                        )}
+                        <div className="flex gap-2 mt-4">
+                          <Button size="sm" onClick={() => setEmailDialog({ open: true, booking })}>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Gửi email
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => deleteBooking.mutate(booking.id)}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Xóa
                           </Button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Contacts Tab */}
           <TabsContent value="contacts">
             <Card>
               <CardHeader>
-                <CardTitle>Tin nhắn liên hệ</CardTitle>
+                <CardTitle>Quản lý liên hệ</CardTitle>
+                <CardDescription>Danh sách tin nhắn liên hệ</CardDescription>
               </CardHeader>
               <CardContent>
-                {contacts.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Chưa có tin nhắn nào
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {contacts.map((contact, index) => (
-                      <div
-                        key={index}
-                        className="border rounded-lg p-4 space-y-2"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1 flex-1">
-                            <p className="font-semibold">{contact.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {contact.email} • {contact.phone}
-                            </p>
-                            <p className="text-sm mt-2">{contact.message}</p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {new Date(contact.createdAt).toLocaleString("vi-VN")}
-                            </p>
+                <div className="space-y-4">
+                  {contacts.map((contact: any) => (
+                    <Card key={contact.id}>
+                      <CardContent className="pt-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p><strong>Tên:</strong> {contact.name}</p>
+                            <p><strong>Email:</strong> {contact.email}</p>
+                            <p><strong>SĐT:</strong> {contact.phone}</p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteContact(index)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div>
+                            <p><strong>Tin nhắn:</strong> {contact.message}</p>
+                            <p><strong>Ngày:</strong> {new Date(contact.created_at).toLocaleDateString('vi-VN')}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        <Button size="sm" variant="destructive" className="mt-4" onClick={() => deleteContact.mutate(contact.id)}>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Xóa
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Gallery Tab */}
           <TabsContent value="gallery">
-            <div className="space-y-6">
-              {/* Add Image Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Thêm ảnh mới</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleAddImage} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="imageUrl">URL ảnh *</Label>
+            <Card>
+              <CardHeader>
+                <CardTitle>Quản lý thư viện ảnh</CardTitle>
+                <CardDescription>Upload và quản lý ảnh</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <Label htmlFor="image-upload" className="cursor-pointer">
+                    <div className="border-2 border-dashed border-primary/50 rounded-lg p-8 text-center hover:border-primary transition-colors">
+                      <Upload className="w-12 h-12 mx-auto mb-4 text-primary" />
+                      <p className="text-lg font-semibold mb-2">Tải ảnh lên</p>
+                      <p className="text-sm text-muted-foreground">Click để chọn ảnh</p>
                       <Input
-                        id="imageUrl"
-                        required
-                        placeholder="https://..."
-                        value={newImage.url}
-                        onChange={(e) =>
-                          setNewImage({ ...newImage, url: e.target.value })
-                        }
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                        className="hidden"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="imageTitle">Tiêu đề *</Label>
-                      <Input
-                        id="imageTitle"
-                        required
-                        value={newImage.title}
-                        onChange={(e) =>
-                          setNewImage({ ...newImage, title: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="imageCategory">Danh mục *</Label>
-                      <select
-                        id="imageCategory"
-                        className="w-full rounded-md border border-input bg-background px-3 py-2"
-                        value={newImage.category}
-                        onChange={(e) =>
-                          setNewImage({ ...newImage, category: e.target.value })
-                        }
-                      >
-                        <option value="dog">Chó</option>
-                        <option value="cat">Mèo</option>
-                        <option value="other">Khác</option>
-                      </select>
-                    </div>
-                    <Button type="submit">Thêm ảnh</Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              {/* Gallery Grid */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Thư viện ảnh</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {galleryImages.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      Chưa có ảnh nào trong thư viện
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {galleryImages.map((image) => (
-                        <div
-                          key={image.id}
-                          className="relative group rounded-lg overflow-hidden"
-                        >
-                          <img
-                            src={image.url}
-                            alt={image.title}
-                            className="w-full h-48 object-cover"
-                          />
-                          <div className="absolute inset-0 bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center">
-                            <p className="font-semibold mb-2">{image.title}</p>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              {image.category}
-                            </p>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteImage(image.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                  </Label>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  {gallery.map((image: any) => (
+                    <Card key={image.id}>
+                      <CardContent className="p-4">
+                        <img src={image.image_url} alt={image.title} className="w-full h-40 object-cover rounded-lg mb-2" />
+                        <p className="font-semibold">{image.title}</p>
+                        <p className="text-sm text-muted-foreground">{image.category}</p>
+                        <Button size="sm" variant="destructive" className="w-full mt-2" onClick={() => deleteImage.mutate(image.id)}>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Xóa
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          {/* Services Tab */}
           <TabsContent value="services">
             <Card>
               <CardHeader>
                 <CardTitle>Quản lý dịch vụ</CardTitle>
+                <CardDescription>Thêm và chỉnh sửa dịch vụ</CardDescription>
               </CardHeader>
               <CardContent>
-                {services.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Chưa có dịch vụ nào
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {services.map((service) => (
-                      <div
-                        key={service.id}
-                        className="border rounded-lg p-6 space-y-4"
-                      >
+                <div className="mb-6 p-4 border rounded-lg">
+                  <h3 className="font-semibold mb-4">Thêm dịch vụ mới</h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <Label>Tiêu đề</Label>
+                      <Input value={newService.title} onChange={(e) => setNewService({ ...newService, title: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Giá</Label>
+                      <Input value={newService.price} onChange={(e) => setNewService({ ...newService, price: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Mô tả</Label>
+                      <Textarea value={newService.description} onChange={(e) => setNewService({ ...newService, description: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>URL ảnh</Label>
+                      <Input value={newService.image_url} onChange={(e) => setNewService({ ...newService, image_url: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Tính năng (cách nhau bởi dấu phẩy)</Label>
+                      <Textarea value={newService.features} onChange={(e) => setNewService({ ...newService, features: e.target.value })} />
+                    </div>
+                    <Button onClick={() => addService.mutate(newService)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Thêm dịch vụ
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {services.map((service: any) => (
+                    <Card key={service.id}>
+                      <CardContent className="pt-6">
                         {editingService?.id === service.id ? (
-                          <form onSubmit={handleUpdateService} className="space-y-4">
-                            <div className="space-y-2">
-                              <Label>Tiêu đề</Label>
-                              <Input
-                                value={editingService.title}
-                                onChange={(e) =>
-                                  setEditingService({
-                                    ...editingService,
-                                    title: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Giá</Label>
-                              <Input
-                                value={editingService.price}
-                                onChange={(e) =>
-                                  setEditingService({
-                                    ...editingService,
-                                    price: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Mô tả</Label>
-                              <textarea
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 min-h-[100px]"
-                                value={editingService.description}
-                                onChange={(e) =>
-                                  setEditingService({
-                                    ...editingService,
-                                    description: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>URL ảnh</Label>
-                              <Input
-                                value={editingService.image}
-                                onChange={(e) =>
-                                  setEditingService({
-                                    ...editingService,
-                                    image: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
+                          <div className="grid gap-4">
+                            <Input value={editingService.title} onChange={(e) => setEditingService({ ...editingService, title: e.target.value })} />
+                            <Input value={editingService.price} onChange={(e) => setEditingService({ ...editingService, price: e.target.value })} />
+                            <Textarea value={editingService.description} onChange={(e) => setEditingService({ ...editingService, description: e.target.value })} />
+                            <Textarea value={Array.isArray(editingService.features) ? editingService.features.join(", ") : editingService.features} onChange={(e) => setEditingService({ ...editingService, features: e.target.value })} />
                             <div className="flex gap-2">
-                              <Button type="submit">Lưu</Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setEditingService(null)}
-                              >
-                                Hủy
-                              </Button>
+                              <Button onClick={() => updateService.mutate(editingService)}>Lưu</Button>
+                              <Button variant="outline" onClick={() => setEditingService(null)}>Hủy</Button>
                             </div>
-                          </form>
+                          </div>
                         ) : (
                           <>
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-2 flex-1">
-                                <h3 className="text-xl font-bold">{service.title}</h3>
-                                <p className="text-2xl font-bold text-primary">
-                                  {service.price}
-                                </p>
-                                <p className="text-muted-foreground">
-                                  {service.description}
-                                </p>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setEditingService(service)}
-                              >
-                                Chỉnh sửa
+                            <h3 className="font-semibold text-lg">{service.title}</h3>
+                            <p className="text-primary font-bold">{service.price}</p>
+                            <p className="text-muted-foreground mt-2">{service.description}</p>
+                            <div className="flex gap-2 mt-4">
+                              <Button size="sm" onClick={() => setEditingService(service)}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Sửa
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => deleteService.mutate(service.id)}>
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Xóa
                               </Button>
                             </div>
-                            {service.image && (
-                              <img
-                                src={service.image}
-                                alt={service.title}
-                                className="w-full h-48 object-cover rounded-lg"
-                              />
-                            )}
                           </>
                         )}
-                      </div>
-                    ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="categories">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quản lý danh mục</CardTitle>
+                <CardDescription>Thêm và chỉnh sửa danh mục ảnh</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6 p-4 border rounded-lg">
+                  <h3 className="font-semibold mb-4">Thêm danh mục mới</h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <Label>Mã danh mục (VD: dog, cat)</Label>
+                      <Input value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Tên hiển thị</Label>
+                      <Input value={newCategory.label} onChange={(e) => setNewCategory({ ...newCategory, label: e.target.value })} />
+                    </div>
+                    <Button onClick={() => addCategory.mutate(newCategory)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Thêm danh mục
+                    </Button>
                   </div>
-                )}
+                </div>
+
+                <div className="space-y-4">
+                  {categories.map((category: any) => (
+                    <Card key={category.id}>
+                      <CardContent className="pt-6">
+                        {editingCategory?.id === category.id ? (
+                          <div className="grid gap-4">
+                            <Input value={editingCategory.name} onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })} />
+                            <Input value={editingCategory.label} onChange={(e) => setEditingCategory({ ...editingCategory, label: e.target.value })} />
+                            <div className="flex gap-2">
+                              <Button onClick={() => updateCategory.mutate(editingCategory)}>Lưu</Button>
+                              <Button variant="outline" onClick={() => setEditingCategory(null)}>Hủy</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-semibold">{category.label}</p>
+                              <p className="text-sm text-muted-foreground">Mã: {category.name}</p>
+                            </div>
+                            <Button size="sm" onClick={() => setEditingCategory(category)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Sửa
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={emailDialog.open} onOpenChange={(open) => setEmailDialog({ open, booking: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gửi email xác nhận</DialogTitle>
+            <DialogDescription>
+              Gửi email xác nhận lịch đặt đến {emailDialog.booking?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Tin nhắn (tùy chọn)</Label>
+              <Textarea value={emailMessage} onChange={(e) => setEmailMessage(e.target.value)} placeholder="Nhập tin nhắn thêm cho khách hàng..." rows={4} />
+            </div>
+            <Button
+              onClick={() => {
+                if (emailDialog.booking) {
+                  sendEmail.mutate({
+                    email: emailDialog.booking.email,
+                    customerName: emailDialog.booking.name,
+                    petName: emailDialog.booking.pet_name,
+                    bookingDate: emailDialog.booking.booking_date,
+                    bookingTime: emailDialog.booking.booking_time,
+                    message: emailMessage,
+                  });
+                }
+              }}
+              disabled={sendEmail.isPending}
+            >
+              {sendEmail.isPending ? "Đang gửi..." : "Gửi email"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

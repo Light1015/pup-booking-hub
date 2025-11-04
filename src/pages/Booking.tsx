@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { format } from "date-fns";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { Phone, Mail, MapPin, CreditCard } from "lucide-react";
 
 const Booking = () => {
@@ -36,7 +38,7 @@ const Booking = () => {
     "19:00 - 20:00",
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedDate || !selectedTime) {
@@ -44,31 +46,35 @@ const Booking = () => {
       return;
     }
 
-    // Store booking data in localStorage
-    const booking = {
-      ...formData,
-      date: selectedDate.toISOString(),
-      time: selectedTime,
-      createdAt: new Date().toISOString(),
-    };
-    
-    const existingBookings = JSON.parse(localStorage.getItem("bookings") || "[]");
-    existingBookings.push(booking);
-    localStorage.setItem("bookings", JSON.stringify(existingBookings));
+    try {
+      const { error } = await supabase.from("bookings").insert([{
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        pet_name: formData.petName,
+        pet_type: formData.petType,
+        booking_date: format(selectedDate, "yyyy-MM-dd"),
+        booking_time: selectedTime,
+        notes: formData.notes,
+      }]);
 
-    toast.success("Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
+      if (error) throw error;
+
+      toast.success("Đặt lịch thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
     
-    // Reset form
-    setFormData({
-      name: "",
-      phone: "",
-      email: "",
-      petName: "",
-      petType: "",
-      notes: "",
-    });
-    setSelectedDate(undefined);
-    setSelectedTime("");
+      setFormData({
+        name: "",
+        phone: "",
+        email: "",
+        petName: "",
+        petType: "",
+        notes: "",
+      });
+      setSelectedDate(undefined);
+      setSelectedTime("");
+    } catch (error: any) {
+      toast.error("Đặt lịch thất bại: " + error.message);
+    }
   };
 
   return (
