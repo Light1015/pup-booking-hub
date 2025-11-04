@@ -14,6 +14,19 @@ export interface Service {
   description: string;
   image_url: string;
   features: string[];
+  info_title_1?: string;
+  info_content_1?: string;
+  info_title_2?: string;
+  info_content_2?: string;
+  info_title_3?: string;
+  info_content_3?: string;
+  pricing_title?: string;
+  package_1_name?: string;
+  package_1_price?: string;
+  package_1_features?: string[];
+  package_2_name?: string;
+  package_2_price?: string;
+  package_2_features?: string[];
 }
 
 const Services = () => {

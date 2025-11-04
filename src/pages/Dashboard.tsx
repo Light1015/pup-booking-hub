@@ -9,19 +9,70 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Trash2, Mail, Upload, Plus, Edit, LogOut } from "lucide-react";
 
 const Dashboard = () => {
   const { signOut } = useAuth();
   const queryClient = useQueryClient();
-  const [emailDialog, setEmailDialog] = useState<{ open: boolean; booking: any | null }>({ open: false, booking: null });
-  const [emailMessage, setEmailMessage] = useState("");
+  const [uploadType, setUploadType] = useState<"file" | "url">("file");
+  const [uploadData, setUploadData] = useState({ title: "", category: "", url: "" });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [editingService, setEditingService] = useState<any | null>(null);
-  const [newService, setNewService] = useState({ title: "", price: "", description: "", image_url: "", features: "" });
+  const [newService, setNewService] = useState({ 
+    title: "", 
+    price: "", 
+    description: "", 
+    image_url: "", 
+    features: "",
+    info_title_1: "",
+    info_content_1: "",
+    info_title_2: "",
+    info_content_2: "",
+    info_title_3: "",
+    info_content_3: "",
+    package_1_name: "GÓI CÁ NHÂN",
+    package_1_price: "400K",
+    package_1_features: "Chụp trọn gói cho một người, Tư vấn trang phục và makeup, Chọn phông nền theo yêu cầu, Chụp nhiều pose khác nhau, Giao ảnh trong 48h",
+    package_2_name: "GÓI NHÓM",
+    package_2_price: "100K",
+    package_2_features: "Áp dụng từ 5 người trở lên, Tư vấn trang phục chung cho cả nhóm, Đồng giá chỉ 100k/người, Chụp riêng từng người theo style nhất quán, Tặng ảnh chung cho cả nhóm"
+  });
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
-  const [newCategory, setNewCategory] = useState({ name: "", label: "" });
+  const [newCategory, setNewCategory] = useState({ name: "", label: "", image_url: "" });
+  const [adminEmail, setAdminEmail] = useState("");
+
+  // Fetch admin email
+  const { data: siteConfig } = useQuery({
+    queryKey: ["siteConfig"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("site_config")
+        .select("*")
+        .eq("key", "admin_email")
+        .single();
+      if (error) throw error;
+      setAdminEmail(data.value);
+      return data;
+    },
+  });
+
+  // Update admin email
+  const updateAdminEmail = useMutation({
+    mutationFn: async (email: string) => {
+      const { error } = await supabase
+        .from("site_config")
+        .update({ value: email })
+        .eq("key", "admin_email");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["siteConfig"] });
+      toast.success("Đã cập nhật email admin!");
+    },
+  });
 
   // Fetch data
   const { data: bookings = [] } = useQuery({
@@ -129,48 +180,63 @@ const Dashboard = () => {
     },
   });
 
-  // Send email mutation
-  const sendEmail = useMutation({
-    mutationFn: async ({ email, customerName, petName, bookingDate, bookingTime, message }: any) => {
-      const { error } = await supabase.functions.invoke("send-booking-email", {
-        body: { to: email, customerName, petName, bookingDate, bookingTime, message },
-      });
+  const deleteCategory = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("gallery_categories").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Email đã được gửi!");
-      setEmailDialog({ open: false, booking: null });
-      setEmailMessage("");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Đã xóa danh mục");
     },
   });
 
   // Upload image mutation
   const uploadImage = useMutation({
-    mutationFn: async ({ file, title, category }: { file: File; title: string; category: string }) => {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from("gallery")
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("gallery")
-        .getPublicUrl(fileName);
-
-      const { error: dbError } = await supabase
+    mutationFn: async ({ url, title, category }: { url: string; title: string; category: string }) => {
+      const { error } = await supabase
         .from("gallery_images")
-        .insert([{ image_url: publicUrl, title, category }]);
-
-      if (dbError) throw dbError;
+        .insert([{ image_url: url, title, category }]);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gallery"] });
-      toast.success("Đã tải ảnh lên!");
+      toast.success("Đã thêm ảnh!");
+      setUploadData({ title: "", category: "", url: "" });
+      setSelectedFile(null);
     },
   });
+
+  const handleImageUpload = async () => {
+    if (!uploadData.title || !uploadData.category) {
+      toast.error("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      if (uploadType === "file" && selectedFile) {
+        const fileExt = selectedFile.name.split(".").pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("gallery")
+          .upload(fileName, selectedFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("gallery")
+          .getPublicUrl(fileName);
+
+        await uploadImage.mutateAsync({ url: publicUrl, title: uploadData.title, category: uploadData.category });
+      } else if (uploadType === "url" && uploadData.url) {
+        await uploadImage.mutateAsync({ url: uploadData.url, title: uploadData.title, category: uploadData.category });
+      }
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   // Service mutations
   const addService = useMutation({
@@ -178,24 +244,51 @@ const Dashboard = () => {
       const { error } = await supabase.from("services").insert([{
         ...service,
         features: service.features.split(",").map((f: string) => f.trim()),
+        package_1_features: service.package_1_features.split(",").map((f: string) => f.trim()),
+        package_2_features: service.package_2_features.split(",").map((f: string) => f.trim()),
       }]);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
       toast.success("Đã thêm dịch vụ!");
-      setNewService({ title: "", price: "", description: "", image_url: "", features: "" });
+      setNewService({ 
+        title: "", 
+        price: "", 
+        description: "", 
+        image_url: "", 
+        features: "",
+        info_title_1: "",
+        info_content_1: "",
+        info_title_2: "",
+        info_content_2: "",
+        info_title_3: "",
+        info_content_3: "",
+        package_1_name: "GÓI CÁ NHÂN",
+        package_1_price: "400K",
+        package_1_features: "",
+        package_2_name: "GÓI NHÓM",
+        package_2_price: "100K",
+        package_2_features: ""
+      });
     },
   });
 
   const updateService = useMutation({
     mutationFn: async ({ id, ...service }: any) => {
-      const { error } = await supabase.from("services").update({
-        ...service,
-        features: typeof service.features === "string" 
-          ? service.features.split(",").map((f: string) => f.trim())
-          : service.features,
-      }).eq("id", id);
+      const updateData: any = { ...service };
+      
+      if (typeof service.features === "string") {
+        updateData.features = service.features.split(",").map((f: string) => f.trim());
+      }
+      if (typeof service.package_1_features === "string") {
+        updateData.package_1_features = service.package_1_features.split(",").map((f: string) => f.trim());
+      }
+      if (typeof service.package_2_features === "string") {
+        updateData.package_2_features = service.package_2_features.split(",").map((f: string) => f.trim());
+      }
+
+      const { error } = await supabase.from("services").update(updateData).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -214,7 +307,7 @@ const Dashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Đã thêm danh mục!");
-      setNewCategory({ name: "", label: "" });
+      setNewCategory({ name: "", label: "", image_url: "" });
     },
   });
 
@@ -230,26 +323,6 @@ const Dashboard = () => {
     },
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const title = prompt("Nhập tiêu đề ảnh:");
-    const category = prompt("Nhập danh mục (dog/cat/other):");
-
-    if (!title || !category) {
-      toast.error("Vui lòng nhập đầy đủ thông tin");
-      return;
-    }
-
-    setUploadingImage(true);
-    try {
-      await uploadImage.mutateAsync({ file, title, category });
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -260,6 +333,27 @@ const Dashboard = () => {
             Đăng xuất
           </Button>
         </div>
+
+        {/* Admin Email Settings */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Cài đặt Email</CardTitle>
+            <CardDescription>Email admin sẽ nhận thông báo đặt lịch và liên hệ</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <Input 
+                type="email" 
+                placeholder="admin@example.com" 
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+              />
+              <Button onClick={() => updateAdminEmail.mutate(adminEmail)}>
+                Lưu
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -333,10 +427,6 @@ const Dashboard = () => {
                           <p className="mt-4"><strong>Ghi chú:</strong> {booking.notes}</p>
                         )}
                         <div className="flex gap-2 mt-4">
-                          <Button size="sm" onClick={() => setEmailDialog({ open: true, booking })}>
-                            <Mail className="w-4 h-4 mr-2" />
-                            Gửi email
-                          </Button>
                           <Button size="sm" variant="destructive" onClick={() => deleteBooking.mutate(booking.id)}>
                             <Trash2 className="w-4 h-4 mr-2" />
                             Xóa
@@ -391,23 +481,80 @@ const Dashboard = () => {
                 <CardDescription>Upload và quản lý ảnh</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="mb-6">
-                  <Label htmlFor="image-upload" className="cursor-pointer">
-                    <div className="border-2 border-dashed border-primary/50 rounded-lg p-8 text-center hover:border-primary transition-colors">
-                      <Upload className="w-12 h-12 mx-auto mb-4 text-primary" />
-                      <p className="text-lg font-semibold mb-2">Tải ảnh lên</p>
-                      <p className="text-sm text-muted-foreground">Click để chọn ảnh</p>
-                      <Input
-                        id="image-upload"
-                        type="file"
+                <div className="mb-6 p-6 border rounded-lg space-y-4">
+                  <div className="flex gap-4">
+                    <Button 
+                      variant={uploadType === "file" ? "default" : "outline"}
+                      onClick={() => setUploadType("file")}
+                    >
+                      Tải từ máy
+                    </Button>
+                    <Button 
+                      variant={uploadType === "url" ? "default" : "outline"}
+                      onClick={() => setUploadType("url")}
+                    >
+                      Nhập URL
+                    </Button>
+                  </div>
+
+                  <div>
+                    <Label>Tiêu đề</Label>
+                    <Input 
+                      value={uploadData.title} 
+                      onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
+                      placeholder="Nhập tiêu đề ảnh"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Danh mục</Label>
+                    <Select 
+                      value={uploadData.category} 
+                      onValueChange={(value) => setUploadData({ ...uploadData, category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn danh mục" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat: any) => (
+                          <SelectItem key={cat.name} value={cat.name}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {uploadType === "file" ? (
+                    <div>
+                      <Label>Chọn ảnh</Label>
+                      <Input 
+                        type="file" 
                         accept="image/*"
-                        onChange={handleImageUpload}
-                        disabled={uploadingImage}
-                        className="hidden"
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                       />
                     </div>
-                  </Label>
+                  ) : (
+                    <div>
+                      <Label>URL ảnh</Label>
+                      <Input 
+                        value={uploadData.url} 
+                        onChange={(e) => setUploadData({ ...uploadData, url: e.target.value })}
+                        placeholder="https://example.com/image.jpg"
+                      />
+                    </div>
+                  )}
+
+                  <Button 
+                    onClick={handleImageUpload} 
+                    disabled={uploadingImage}
+                    className="w-full"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploadingImage ? "Đang tải..." : "Thêm ảnh"}
+                  </Button>
                 </div>
+
                 <div className="grid grid-cols-3 gap-4">
                   {gallery.map((image: any) => (
                     <Card key={image.id}>
@@ -431,32 +578,40 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Quản lý dịch vụ</CardTitle>
-                <CardDescription>Thêm và chỉnh sửa dịch vụ</CardDescription>
+                <CardDescription>Thêm và chỉnh sửa dịch vụ với thông tin chi tiết</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="mb-6 p-4 border rounded-lg">
                   <h3 className="font-semibold mb-4">Thêm dịch vụ mới</h3>
                   <div className="grid gap-4">
-                    <div>
-                      <Label>Tiêu đề</Label>
-                      <Input value={newService.title} onChange={(e) => setNewService({ ...newService, title: e.target.value })} />
-                    </div>
-                    <div>
-                      <Label>Giá</Label>
-                      <Input value={newService.price} onChange={(e) => setNewService({ ...newService, price: e.target.value })} />
-                    </div>
-                    <div>
-                      <Label>Mô tả</Label>
-                      <Textarea value={newService.description} onChange={(e) => setNewService({ ...newService, description: e.target.value })} />
-                    </div>
-                    <div>
-                      <Label>URL ảnh</Label>
-                      <Input value={newService.image_url} onChange={(e) => setNewService({ ...newService, image_url: e.target.value })} />
-                    </div>
-                    <div>
-                      <Label>Tính năng (cách nhau bởi dấu phẩy)</Label>
-                      <Textarea value={newService.features} onChange={(e) => setNewService({ ...newService, features: e.target.value })} />
-                    </div>
+                    <Input placeholder="Tiêu đề" value={newService.title} onChange={(e) => setNewService({ ...newService, title: e.target.value })} />
+                    <Input placeholder="Giá" value={newService.price} onChange={(e) => setNewService({ ...newService, price: e.target.value })} />
+                    <Textarea placeholder="Mô tả" value={newService.description} onChange={(e) => setNewService({ ...newService, description: e.target.value })} />
+                    <Input placeholder="URL ảnh" value={newService.image_url} onChange={(e) => setNewService({ ...newService, image_url: e.target.value })} />
+                    <Textarea placeholder="Tính năng (cách nhau bởi dấu phẩy)" value={newService.features} onChange={(e) => setNewService({ ...newService, features: e.target.value })} />
+                    
+                    <h4 className="font-semibold mt-4">Thông tin chi tiết 1</h4>
+                    <Input placeholder="Tiêu đề 1" value={newService.info_title_1} onChange={(e) => setNewService({ ...newService, info_title_1: e.target.value })} />
+                    <Textarea placeholder="Nội dung 1" value={newService.info_content_1} onChange={(e) => setNewService({ ...newService, info_content_1: e.target.value })} />
+                    
+                    <h4 className="font-semibold mt-4">Thông tin chi tiết 2</h4>
+                    <Input placeholder="Tiêu đề 2" value={newService.info_title_2} onChange={(e) => setNewService({ ...newService, info_title_2: e.target.value })} />
+                    <Textarea placeholder="Nội dung 2" value={newService.info_content_2} onChange={(e) => setNewService({ ...newService, info_content_2: e.target.value })} />
+                    
+                    <h4 className="font-semibold mt-4">Thông tin chi tiết 3</h4>
+                    <Input placeholder="Tiêu đề 3" value={newService.info_title_3} onChange={(e) => setNewService({ ...newService, info_title_3: e.target.value })} />
+                    <Textarea placeholder="Nội dung 3" value={newService.info_content_3} onChange={(e) => setNewService({ ...newService, info_content_3: e.target.value })} />
+                    
+                    <h4 className="font-semibold mt-4">Gói 1</h4>
+                    <Input placeholder="Tên gói 1" value={newService.package_1_name} onChange={(e) => setNewService({ ...newService, package_1_name: e.target.value })} />
+                    <Input placeholder="Giá gói 1" value={newService.package_1_price} onChange={(e) => setNewService({ ...newService, package_1_price: e.target.value })} />
+                    <Textarea placeholder="Tính năng gói 1 (cách nhau bởi dấu phẩy)" value={newService.package_1_features} onChange={(e) => setNewService({ ...newService, package_1_features: e.target.value })} />
+                    
+                    <h4 className="font-semibold mt-4">Gói 2</h4>
+                    <Input placeholder="Tên gói 2" value={newService.package_2_name} onChange={(e) => setNewService({ ...newService, package_2_name: e.target.value })} />
+                    <Input placeholder="Giá gói 2" value={newService.package_2_price} onChange={(e) => setNewService({ ...newService, package_2_price: e.target.value })} />
+                    <Textarea placeholder="Tính năng gói 2 (cách nhau bởi dấu phẩy)" value={newService.package_2_features} onChange={(e) => setNewService({ ...newService, package_2_features: e.target.value })} />
+                    
                     <Button onClick={() => addService.mutate(newService)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Thêm dịch vụ
@@ -473,7 +628,25 @@ const Dashboard = () => {
                             <Input value={editingService.title} onChange={(e) => setEditingService({ ...editingService, title: e.target.value })} />
                             <Input value={editingService.price} onChange={(e) => setEditingService({ ...editingService, price: e.target.value })} />
                             <Textarea value={editingService.description} onChange={(e) => setEditingService({ ...editingService, description: e.target.value })} />
+                            <Input value={editingService.image_url} onChange={(e) => setEditingService({ ...editingService, image_url: e.target.value })} />
                             <Textarea value={Array.isArray(editingService.features) ? editingService.features.join(", ") : editingService.features} onChange={(e) => setEditingService({ ...editingService, features: e.target.value })} />
+                            
+                            <h4 className="font-semibold mt-4">Thông tin chi tiết</h4>
+                            <Input placeholder="Tiêu đề 1" value={editingService.info_title_1 || ""} onChange={(e) => setEditingService({ ...editingService, info_title_1: e.target.value })} />
+                            <Textarea placeholder="Nội dung 1" value={editingService.info_content_1 || ""} onChange={(e) => setEditingService({ ...editingService, info_content_1: e.target.value })} />
+                            <Input placeholder="Tiêu đề 2" value={editingService.info_title_2 || ""} onChange={(e) => setEditingService({ ...editingService, info_title_2: e.target.value })} />
+                            <Textarea placeholder="Nội dung 2" value={editingService.info_content_2 || ""} onChange={(e) => setEditingService({ ...editingService, info_content_2: e.target.value })} />
+                            <Input placeholder="Tiêu đề 3" value={editingService.info_title_3 || ""} onChange={(e) => setEditingService({ ...editingService, info_title_3: e.target.value })} />
+                            <Textarea placeholder="Nội dung 3" value={editingService.info_content_3 || ""} onChange={(e) => setEditingService({ ...editingService, info_content_3: e.target.value })} />
+                            
+                            <h4 className="font-semibold mt-4">Gói giá</h4>
+                            <Input placeholder="Tên gói 1" value={editingService.package_1_name || ""} onChange={(e) => setEditingService({ ...editingService, package_1_name: e.target.value })} />
+                            <Input placeholder="Giá gói 1" value={editingService.package_1_price || ""} onChange={(e) => setEditingService({ ...editingService, package_1_price: e.target.value })} />
+                            <Textarea placeholder="Tính năng gói 1" value={Array.isArray(editingService.package_1_features) ? editingService.package_1_features.join(", ") : editingService.package_1_features || ""} onChange={(e) => setEditingService({ ...editingService, package_1_features: e.target.value })} />
+                            <Input placeholder="Tên gói 2" value={editingService.package_2_name || ""} onChange={(e) => setEditingService({ ...editingService, package_2_name: e.target.value })} />
+                            <Input placeholder="Giá gói 2" value={editingService.package_2_price || ""} onChange={(e) => setEditingService({ ...editingService, package_2_price: e.target.value })} />
+                            <Textarea placeholder="Tính năng gói 2" value={Array.isArray(editingService.package_2_features) ? editingService.package_2_features.join(", ") : editingService.package_2_features || ""} onChange={(e) => setEditingService({ ...editingService, package_2_features: e.target.value })} />
+                            
                             <div className="flex gap-2">
                               <Button onClick={() => updateService.mutate(editingService)}>Lưu</Button>
                               <Button variant="outline" onClick={() => setEditingService(null)}>Hủy</Button>
@@ -508,19 +681,34 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Quản lý danh mục</CardTitle>
-                <CardDescription>Thêm và chỉnh sửa danh mục ảnh</CardDescription>
+                <CardDescription>Thêm và chỉnh sửa danh mục ảnh với ảnh đại diện</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="mb-6 p-4 border rounded-lg">
                   <h3 className="font-semibold mb-4">Thêm danh mục mới</h3>
                   <div className="grid gap-4">
                     <div>
-                      <Label>Mã danh mục (VD: dog, cat)</Label>
-                      <Input value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} />
+                      <Label>Tên (key)</Label>
+                      <Input placeholder="dog, cat, other..." value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} />
                     </div>
                     <div>
-                      <Label>Tên hiển thị</Label>
-                      <Input value={newCategory.label} onChange={(e) => setNewCategory({ ...newCategory, label: e.target.value })} />
+                      <Label>Nhãn hiển thị</Label>
+                      <Input placeholder="Chó, Mèo..." value={newCategory.label} onChange={(e) => setNewCategory({ ...newCategory, label: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Chọn ảnh từ thư viện</Label>
+                      <Select value={newCategory.image_url} onValueChange={(value) => setNewCategory({ ...newCategory, image_url: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn ảnh" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {gallery.map((img: any) => (
+                            <SelectItem key={img.id} value={img.image_url}>
+                              {img.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <Button onClick={() => addCategory.mutate(newCategory)}>
                       <Plus className="w-4 h-4 mr-2" />
@@ -529,7 +717,7 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   {categories.map((category: any) => (
                     <Card key={category.id}>
                       <CardContent className="pt-6">
@@ -537,22 +725,41 @@ const Dashboard = () => {
                           <div className="grid gap-4">
                             <Input value={editingCategory.name} onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })} />
                             <Input value={editingCategory.label} onChange={(e) => setEditingCategory({ ...editingCategory, label: e.target.value })} />
+                            <Select value={editingCategory.image_url || ""} onValueChange={(value) => setEditingCategory({ ...editingCategory, image_url: value })}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn ảnh" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {gallery.map((img: any) => (
+                                  <SelectItem key={img.id} value={img.image_url}>
+                                    {img.title}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <div className="flex gap-2">
                               <Button onClick={() => updateCategory.mutate(editingCategory)}>Lưu</Button>
                               <Button variant="outline" onClick={() => setEditingCategory(null)}>Hủy</Button>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="font-semibold">{category.label}</p>
-                              <p className="text-sm text-muted-foreground">Mã: {category.name}</p>
+                          <>
+                            {category.image_url && (
+                              <img src={category.image_url} alt={category.label} className="w-full h-40 object-cover rounded-lg mb-4" />
+                            )}
+                            <h3 className="font-semibold">{category.label}</h3>
+                            <p className="text-sm text-muted-foreground">{category.name}</p>
+                            <div className="flex gap-2 mt-4">
+                              <Button size="sm" onClick={() => setEditingCategory(category)}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Sửa
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => deleteCategory.mutate(category.id)}>
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Xóa
+                              </Button>
                             </div>
-                            <Button size="sm" onClick={() => setEditingCategory(category)}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Sửa
-                            </Button>
-                          </div>
+                          </>
                         )}
                       </CardContent>
                     </Card>
@@ -563,40 +770,6 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
-
-      <Dialog open={emailDialog.open} onOpenChange={(open) => setEmailDialog({ open, booking: null })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Gửi email xác nhận</DialogTitle>
-            <DialogDescription>
-              Gửi email xác nhận lịch đặt đến {emailDialog.booking?.email}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Tin nhắn (tùy chọn)</Label>
-              <Textarea value={emailMessage} onChange={(e) => setEmailMessage(e.target.value)} placeholder="Nhập tin nhắn thêm cho khách hàng..." rows={4} />
-            </div>
-            <Button
-              onClick={() => {
-                if (emailDialog.booking) {
-                  sendEmail.mutate({
-                    email: emailDialog.booking.email,
-                    customerName: emailDialog.booking.name,
-                    petName: emailDialog.booking.pet_name,
-                    bookingDate: emailDialog.booking.booking_date,
-                    bookingTime: emailDialog.booking.booking_time,
-                    message: emailMessage,
-                  });
-                }
-              }}
-              disabled={sendEmail.isPending}
-            >
-              {sendEmail.isPending ? "Đang gửi..." : "Gửi email"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

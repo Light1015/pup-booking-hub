@@ -93,18 +93,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
           label: string
           name: string
         }
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
           label: string
           name: string
         }
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
           label?: string
           name?: string
         }
@@ -168,7 +171,20 @@ export type Database = {
           features: string[]
           id: string
           image_url: string
+          info_content_1: string | null
+          info_content_2: string | null
+          info_content_3: string | null
+          info_title_1: string | null
+          info_title_2: string | null
+          info_title_3: string | null
+          package_1_features: string[] | null
+          package_1_name: string | null
+          package_1_price: string | null
+          package_2_features: string[] | null
+          package_2_name: string | null
+          package_2_price: string | null
           price: string
+          pricing_title: string | null
           title: string
           updated_at: string
         }
@@ -178,7 +194,20 @@ export type Database = {
           features?: string[]
           id?: string
           image_url: string
+          info_content_1?: string | null
+          info_content_2?: string | null
+          info_content_3?: string | null
+          info_title_1?: string | null
+          info_title_2?: string | null
+          info_title_3?: string | null
+          package_1_features?: string[] | null
+          package_1_name?: string | null
+          package_1_price?: string | null
+          package_2_features?: string[] | null
+          package_2_name?: string | null
+          package_2_price?: string | null
           price: string
+          pricing_title?: string | null
           title: string
           updated_at?: string
         }
@@ -188,9 +217,46 @@ export type Database = {
           features?: string[]
           id?: string
           image_url?: string
+          info_content_1?: string | null
+          info_content_2?: string | null
+          info_content_3?: string | null
+          info_title_1?: string | null
+          info_title_2?: string | null
+          info_title_3?: string | null
+          package_1_features?: string[] | null
+          package_1_name?: string | null
+          package_1_price?: string | null
+          package_2_features?: string[] | null
+          package_2_name?: string | null
+          package_2_price?: string | null
           price?: string
+          pricing_title?: string | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      site_config: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string
         }
         Relationships: []
       }

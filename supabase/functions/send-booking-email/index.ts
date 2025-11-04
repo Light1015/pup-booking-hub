@@ -10,12 +10,13 @@ const corsHeaders = {
 };
 
 interface EmailRequest {
-  to: string;
   customerName: string;
+  customerEmail: string;
   petName: string;
-  bookingDate: string;
-  bookingTime: string;
+  date: string;
+  time: string;
   message?: string;
+  adminEmail: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -24,82 +25,65 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, customerName, petName, bookingDate, bookingTime, message }: EmailRequest = await req.json();
+    const { customerName, customerEmail, petName, date, time, message, adminEmail }: EmailRequest = await req.json();
 
-    console.log("Sending email to:", to);
+    console.log("Sending booking confirmation to customer:", customerEmail);
+    console.log("Sending booking notification to admin:", adminEmail);
 
-    const emailResponse = await resend.emails.send({
-      from: "SnapPup Photography <onboarding@resend.dev>",
-      to: [to],
-      subject: "Xác nhận lịch chụp ảnh - SnapPup",
+    // Send confirmation email to customer
+    const customerEmailResponse = await resend.emails.send({
+      from: "SnapPup Studio <onboarding@resend.dev>",
+      to: [customerEmail],
+      subject: "Xác nhận đặt lịch chụp ảnh",
       html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-              .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
-              .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-              h1 { margin: 0; font-size: 28px; }
-              h2 { color: #667eea; font-size: 20px; margin-top: 0; }
-              .detail-row { margin: 10px 0; }
-              .label { font-weight: bold; color: #555; }
-              .message-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>🐾 SnapPup Photography</h1>
-                <p style="margin: 10px 0 0 0; font-size: 16px;">Xác nhận lịch chụp ảnh</p>
-              </div>
-              <div class="content">
-                <p>Xin chào <strong>${customerName}</strong>,</p>
-                <p>Cảm ơn bạn đã đặt lịch chụp ảnh cho <strong>${petName}</strong>! Đây là thông tin chi tiết về lịch hẹn của bạn:</p>
-                
-                <div class="info-box">
-                  <h2>📅 Thông tin lịch hẹn</h2>
-                  <div class="detail-row">
-                    <span class="label">Tên khách hàng:</span> ${customerName}
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Tên thú cưng:</span> ${petName}
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Ngày chụp:</span> ${new Date(bookingDate).toLocaleDateString('vi-VN')}
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Giờ chụp:</span> ${bookingTime}
-                  </div>
-                </div>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Xác nhận đặt lịch chụp ảnh</h2>
+          <p>Xin chào ${customerName},</p>
+          <p>Cảm ơn bạn đã đặt lịch chụp ảnh tại SnapPup Studio. Chúng tôi đã nhận được yêu cầu của bạn với thông tin sau:</p>
+          
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Tên thú cưng:</strong> ${petName}</p>
+            <p><strong>Ngày:</strong> ${date}</p>
+            <p><strong>Giờ:</strong> ${time}</p>
+            ${message ? `<p><strong>Ghi chú:</strong> ${message}</p>` : ''}
+          </div>
 
-                ${message ? `
-                  <div class="message-box">
-                    <strong>💬 Tin nhắn từ SnapPup:</strong>
-                    <p style="margin: 10px 0 0 0;">${message}</p>
-                  </div>
-                ` : ''}
-
-                <p style="margin-top: 30px;">Chúng tôi rất mong được gặp bạn và ${petName}! Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi.</p>
-                
-                <div class="footer">
-                  <p><strong>SnapPup Photography Studio</strong></p>
-                  <p>📧 Email: contact@snappup.com | 📞 Phone: (028) 1234 5678</p>
-                  <p>📍 123 Nguyễn Huệ, Quận 1, TP.HCM</p>
-                </div>
-              </div>
-            </div>
-          </body>
-        </html>
+          <p>Chúng tôi sẽ liên hệ với bạn sớm để xác nhận lịch hẹn.</p>
+          <p>Trân trọng,<br>SnapPup Studio Team</p>
+        </div>
       `,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Customer email sent successfully:", customerEmailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
+    // Send notification email to admin
+    const adminEmailResponse = await resend.emails.send({
+      from: "SnapPup Studio <onboarding@resend.dev>",
+      to: [adminEmail],
+      subject: `Đặt lịch mới từ ${customerName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Đặt lịch mới</h2>
+          <p>Có một đặt lịch mới từ khách hàng:</p>
+          
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Tên khách hàng:</strong> ${customerName}</p>
+            <p><strong>Email:</strong> ${customerEmail}</p>
+            <p><strong>Tên thú cưng:</strong> ${petName}</p>
+            <p><strong>Ngày:</strong> ${date}</p>
+            <p><strong>Giờ:</strong> ${time}</p>
+            ${message ? `<p><strong>Ghi chú:</strong> ${message}</p>` : ''}
+          </div>
+        </div>
+      `,
+    });
+
+    console.log("Admin email sent successfully:", adminEmailResponse);
+
+    return new Response(JSON.stringify({ 
+      customer: customerEmailResponse, 
+      admin: adminEmailResponse 
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
