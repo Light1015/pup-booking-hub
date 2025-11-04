@@ -19,6 +19,27 @@ interface EmailRequest {
   adminEmail: string;
 }
 
+// Validation helper functions
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 255;
+};
+
+const validateString = (str: string, minLen: number, maxLen: number): boolean => {
+  if (!str) return false;
+  const trimmed = str.trim();
+  return trimmed.length >= minLen && trimmed.length <= maxLen;
+};
+
+const validateTime = (time: string): boolean => {
+  return /^\d{2}:\d{2}$/.test(time);
+};
+
+const validateDate = (date: string): boolean => {
+  const d = new Date(date);
+  return d instanceof Date && !isNaN(d.getTime());
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,6 +47,56 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { customerName, customerEmail, petName, date, time, message, adminEmail }: EmailRequest = await req.json();
+
+    // Validate all inputs
+    if (!validateString(customerName, 1, 100)) {
+      return new Response(
+        JSON.stringify({ error: "Tên không hợp lệ (1-100 ký tự)" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validateEmail(customerEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Email không hợp lệ" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validateString(petName, 1, 50)) {
+      return new Response(
+        JSON.stringify({ error: "Tên thú cưng không hợp lệ (1-50 ký tự)" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validateDate(date)) {
+      return new Response(
+        JSON.stringify({ error: "Ngày không hợp lệ" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validateTime(time)) {
+      return new Response(
+        JSON.stringify({ error: "Giờ không hợp lệ" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (message && message.length > 500) {
+      return new Response(
+        JSON.stringify({ error: "Ghi chú quá dài (tối đa 500 ký tự)" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validateEmail(adminEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Email admin không hợp lệ" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     console.log("Sending booking confirmation to customer:", customerEmail);
     console.log("Sending booking notification to admin:", adminEmail);

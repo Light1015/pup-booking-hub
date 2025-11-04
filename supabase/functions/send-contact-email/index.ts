@@ -17,6 +17,22 @@ interface ContactEmailRequest {
   adminEmail: string;
 }
 
+// Validation helper functions
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 255;
+};
+
+const validateString = (str: string, minLen: number, maxLen: number): boolean => {
+  if (!str) return false;
+  const trimmed = str.trim();
+  return trimmed.length >= minLen && trimmed.length <= maxLen;
+};
+
+const validatePhone = (phone: string): boolean => {
+  return /^[0-9+\-\s()]+$/.test(phone) && phone.length >= 8 && phone.length <= 20;
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,6 +40,42 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { name, email, phone, message, adminEmail }: ContactEmailRequest = await req.json();
+
+    // Validate all inputs
+    if (!validateString(name, 1, 100)) {
+      return new Response(
+        JSON.stringify({ error: "Tên không hợp lệ (1-100 ký tự)" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validateEmail(email)) {
+      return new Response(
+        JSON.stringify({ error: "Email không hợp lệ" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validatePhone(phone)) {
+      return new Response(
+        JSON.stringify({ error: "Số điện thoại không hợp lệ" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validateString(message, 1, 1000)) {
+      return new Response(
+        JSON.stringify({ error: "Tin nhắn không hợp lệ (1-1000 ký tự)" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validateEmail(adminEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Email admin không hợp lệ" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     console.log("Sending contact email to:", adminEmail);
 

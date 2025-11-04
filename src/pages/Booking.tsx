@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
+import { z } from "zod";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,17 @@ import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Phone, Mail, MapPin, CreditCard } from "lucide-react";
+
+// Validation schema
+const bookingSchema = z.object({
+  name: z.string().trim().min(1, "Vui lòng nhập tên").max(100, "Tên quá dài (tối đa 100 ký tự)"),
+  email: z.string().email("Email không hợp lệ").max(255, "Email quá dài"),
+  phone: z.string().regex(/^[0-9+\-\s()]+$/, "Số điện thoại không hợp lệ").min(8, "Số điện thoại quá ngắn").max(20, "Số điện thoại quá dài"),
+  petName: z.string().trim().min(1, "Vui lòng nhập tên thú cưng").max(50, "Tên thú cưng quá dài"),
+  petType: z.string().min(1, "Vui lòng chọn loại thú cưng").max(50, "Loại thú cưng không hợp lệ"),
+  petAge: z.string().max(20, "Tuổi thú cưng không hợp lệ").optional(),
+  notes: z.string().max(500, "Ghi chú quá dài (tối đa 500 ký tự)").optional(),
+});
 
 const Booking = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -44,6 +56,16 @@ const Booking = () => {
     if (!selectedDate || !selectedTime) {
       toast.error("Vui lòng chọn ngày và giờ");
       return;
+    }
+
+    // Validate form data
+    try {
+      bookingSchema.parse(formData);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+        return;
+      }
     }
 
     try {

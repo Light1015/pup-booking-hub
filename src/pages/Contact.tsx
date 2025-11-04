@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { z } from "zod";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,14 @@ import { toast } from "sonner";
 import { Phone, Mail, MapPin, Clock, Facebook, Instagram } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation } from "@tanstack/react-query";
+
+// Validation schema
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Vui lòng nhập tên").max(100, "Tên quá dài (tối đa 100 ký tự)"),
+  email: z.string().email("Email không hợp lệ").max(255, "Email quá dài"),
+  phone: z.string().regex(/^[0-9+\-\s()]+$/, "Số điện thoại không hợp lệ").min(8, "Số điện thoại quá ngắn").max(20, "Số điện thoại quá dài"),
+  message: z.string().trim().min(1, "Vui lòng nhập tin nhắn").max(1000, "Tin nhắn quá dài (tối đa 1000 ký tự)"),
+});
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -68,6 +77,17 @@ const Contact = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form data
+    try {
+      contactSchema.parse(formData);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+        return;
+      }
+    }
+    
     createContactMutation.mutate(formData);
   };
 
