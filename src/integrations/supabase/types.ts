@@ -94,6 +94,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          image_urls: string[] | null
           label: string
           name: string
         }
@@ -101,6 +102,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          image_urls?: string[] | null
           label: string
           name: string
         }
@@ -108,6 +110,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          image_urls?: string[] | null
           label?: string
           name?: string
         }
