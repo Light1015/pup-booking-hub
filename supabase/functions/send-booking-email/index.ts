@@ -98,28 +98,20 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // TEST MODE: Domain chưa verify trên Resend
-    const testModeEmail = "trangnpd.work@gmail.com";
-    
-    console.log("TEST MODE: Sending emails to:", testModeEmail);
-    console.log("Original customer email:", customerEmail);
+    console.log("Sending booking confirmation to customer:", customerEmail);
 
-    // Send confirmation email to customer (TEST MODE)
+    // Send confirmation email to customer
     const customerEmailResponse = await resend.emails.send({
-      from: "SnapPup Studio <onboarding@resend.dev>",
-      to: [testModeEmail],
+      from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
+      to: [customerEmail],
       subject: "Xác nhận đặt lịch chụp ảnh",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
-            <strong>⚠️ TEST MODE:</strong> Email gốc của khách: <strong>${customerEmail}</strong>
-          </div>
           <h2 style="color: #333;">Xác nhận đặt lịch chụp ảnh</h2>
           <p>Xin chào ${customerName},</p>
           <p>Cảm ơn bạn đã đặt lịch chụp ảnh tại SnapPup Studio. Chúng tôi đã nhận được yêu cầu của bạn với thông tin sau:</p>
           
           <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Email khách hàng:</strong> ${customerEmail}</p>
             <p><strong>Tên thú cưng:</strong> ${petName}</p>
             <p><strong>Ngày:</strong> ${date}</p>
             <p><strong>Giờ:</strong> ${time}</p>
@@ -134,10 +126,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Customer email sent successfully:", customerEmailResponse);
 
-    // Send notification email to admin (TEST MODE)
+    // Send notification email to admin
     const adminEmailResponse = await resend.emails.send({
-      from: "SnapPup Studio <onboarding@resend.dev>",
-      to: [testModeEmail],
+      from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
+      to: [adminEmail],
       subject: `Đặt lịch mới từ ${customerName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
