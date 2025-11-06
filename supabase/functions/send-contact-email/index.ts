@@ -77,22 +77,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // TEST MODE: Resend free tier only allows sending to verified email
-    const testModeEmail = "trangnpd.work@gmail.com";
-    
-    console.log("TEST MODE: Sending contact email to:", testModeEmail);
-    console.log("Original customer email:", email);
+    console.log("Sending contact notification to admin:", adminEmail);
 
     const emailResponse = await resend.emails.send({
-      from: "SnapPup Studio <onboarding@resend.dev>",
-      to: [testModeEmail],
+      from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
+      to: [adminEmail],
       subject: `Liên hệ mới từ ${name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
-            <strong>⚠️ TEST MODE:</strong> Đây là email thông báo cho admin
-          </div>
-          
           <h2 style="color: #333;">Liên hệ mới từ website</h2>
           <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p><strong>Họ tên:</strong> ${name}</p>

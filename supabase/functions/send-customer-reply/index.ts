@@ -65,22 +65,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // TEST MODE: Resend free tier only allows sending to verified email
-    const testModeEmail = "trangnpd.work@gmail.com";
-    
-    console.log("TEST MODE: Reply email will be sent to:", testModeEmail);
-    console.log("Original customer email:", customerEmail);
+    console.log("Sending reply to customer:", customerEmail);
 
     const emailResponse = await resend.emails.send({
-      from: "SnapPup Studio <onboarding@resend.dev>",
-      to: [testModeEmail],
+      from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
+      to: [customerEmail],
       subject: subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
-            <strong>⚠️ TEST MODE:</strong> Email gốc của khách: <strong>${customerEmail}</strong>
-          </div>
-          
           <h2 style="color: #333;">${subject}</h2>
           <p>Xin chào ${customerName},</p>
           <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
