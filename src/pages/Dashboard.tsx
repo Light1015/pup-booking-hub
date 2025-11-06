@@ -10,8 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, Mail, Upload, Plus, Edit, LogOut } from "lucide-react";
+import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar } from "lucide-react";
+import { BookingCalendar } from "@/components/BookingCalendar";
+import { AdminReplies } from "@/components/AdminReplies";
 
 const Dashboard = () => {
   const { signOut } = useAuth();
@@ -45,6 +48,8 @@ const Dashboard = () => {
   const [replyData, setReplyData] = useState<{ type: 'booking' | 'contact'; data: any; message: string }>({ type: 'booking', data: null, message: '' });
   const [newCategory, setNewCategory] = useState({ name: "", label: "", image_urls: [] as string[] });
   const [adminEmail, setAdminEmail] = useState("");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState<string>("all");
+  const [contactStatusFilter, setContactStatusFilter] = useState<string>("all");
 
   // Fetch admin email
   const { data: siteConfig } = useQuery({
@@ -300,9 +305,27 @@ const Dashboard = () => {
     },
   });
 
+  // Mark as read
+  const markAsRead = useMutation({
+    mutationFn: async ({ type, id }: { type: 'booking' | 'contact'; id: string }) => {
+      const table = type === 'booking' ? 'bookings' : 'contacts';
+      const { error } = await supabase
+        .from(table)
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    }
+  });
+
   // Send email to customer from booking
   const sendBookingEmail = useMutation({
     mutationFn: async ({ booking, replyMessage }: { booking: any; replyMessage: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase.functions.invoke("send-customer-reply", {
         body: {
           customerEmail: booking.email,
@@ -312,8 +335,29 @@ const Dashboard = () => {
         },
       });
       if (error) throw error;
+
+      // Save to admin_replies
+      await supabase.from("admin_replies").insert([{
+        reference_type: 'booking',
+        reference_id: booking.id,
+        recipient_email: booking.email,
+        subject: "Phản hồi về lịch đặt chụp ảnh",
+        message: replyMessage,
+        sent_by: user?.id
+      }]);
+
+      // Update booking status
+      await supabase
+        .from("bookings")
+        .update({ 
+          replied_at: new Date().toISOString(),
+          read_at: booking.read_at || new Date().toISOString()
+        })
+        .eq('id', booking.id);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["adminReplies"] });
       toast.success("Đã gửi email!");
     },
     onError: (error: any) => {
@@ -324,6 +368,8 @@ const Dashboard = () => {
   // Send email to customer from contact
   const sendContactReply = useMutation({
     mutationFn: async ({ contact, replyMessage }: { contact: any; replyMessage: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase.functions.invoke("send-customer-reply", {
         body: {
           customerEmail: contact.email,
@@ -333,8 +379,29 @@ const Dashboard = () => {
         },
       });
       if (error) throw error;
+
+      // Save to admin_replies
+      await supabase.from("admin_replies").insert([{
+        reference_type: 'contact',
+        reference_id: contact.id,
+        recipient_email: contact.email,
+        subject: "Phản hồi liên hệ từ SnapPup Studio",
+        message: replyMessage,
+        sent_by: user?.id
+      }]);
+
+      // Update contact status
+      await supabase
+        .from("contacts")
+        .update({ 
+          replied_at: new Date().toISOString(),
+          read_at: contact.read_at || new Date().toISOString()
+        })
+        .eq('id', contact.id);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["adminReplies"] });
       toast.success("Đã gửi email!");
     },
     onError: (error: any) => {
@@ -435,9 +502,11 @@ const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="bookings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="bookings">Lịch đặt</TabsTrigger>
+            <TabsTrigger value="calendar">Lịch</TabsTrigger>
             <TabsTrigger value="contacts">Liên hệ</TabsTrigger>
+            <TabsTrigger value="replies">Phản hồi</TabsTrigger>
             <TabsTrigger value="gallery">Thư viện</TabsTrigger>
             <TabsTrigger value="services">Dịch vụ</TabsTrigger>
             <TabsTrigger value="categories">Danh mục</TabsTrigger>
@@ -446,14 +515,45 @@ const Dashboard = () => {
           <TabsContent value="bookings">
             <Card>
               <CardHeader>
-                <CardTitle>Quản lý lịch đặt</CardTitle>
-                <CardDescription>Danh sách các lịch đặt chụp ảnh</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Quản lý lịch đặt</CardTitle>
+                    <CardDescription>Danh sách các lịch đặt chụp ảnh</CardDescription>
+                  </div>
+                  <Select value={bookingStatusFilter} onValueChange={setBookingStatusFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="unread">Chưa đọc</SelectItem>
+                      <SelectItem value="read">Đã đọc</SelectItem>
+                      <SelectItem value="replied">Đã phản hồi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {bookings.map((booking: any) => (
-                    <Card key={booking.id}>
+                  {bookings
+                    .filter((booking: any) => {
+                      if (bookingStatusFilter === 'unread') return !booking.read_at;
+                      if (bookingStatusFilter === 'read') return booking.read_at && !booking.replied_at;
+                      if (bookingStatusFilter === 'replied') return booking.replied_at;
+                      return true;
+                    })
+                    .map((booking: any) => (
+                    <Card key={booking.id} className={!booking.read_at ? 'border-primary' : ''}>
                       <CardContent className="pt-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex gap-2">
+                            {!booking.read_at && <Badge variant="default">Chưa đọc</Badge>}
+                            {booking.read_at && !booking.replied_at && <Badge variant="secondary">Đã đọc</Badge>}
+                            {booking.replied_at && <Badge variant="outline">Đã phản hồi</Badge>}
+                            {booking.status === 'confirmed' && <Badge className="bg-green-600">Đã xác nhận</Badge>}
+                            {booking.status === 'cancelled' && <Badge variant="destructive">Đã hủy</Badge>}
+                          </div>
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <p><strong>Tên:</strong> {booking.name}</p>
@@ -471,6 +571,16 @@ const Dashboard = () => {
                           <p className="mt-4"><strong>Ghi chú:</strong> {booking.notes}</p>
                         )}
                         <div className="flex gap-2 mt-4">
+                          {!booking.read_at && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => markAsRead.mutate({ type: 'booking', id: booking.id })}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Đánh dấu đã đọc
+                            </Button>
+                          )}
                           <Button 
                             size="sm" 
                             onClick={() => {
@@ -494,17 +604,56 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="calendar">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quản lý lịch</CardTitle>
+                <CardDescription>Xem và tạo lịch đặt mới, ngăn chặn đặt trùng</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BookingCalendar bookings={bookings} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="contacts">
             <Card>
               <CardHeader>
-                <CardTitle>Quản lý liên hệ</CardTitle>
-                <CardDescription>Danh sách tin nhắn liên hệ</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Quản lý liên hệ</CardTitle>
+                    <CardDescription>Danh sách tin nhắn liên hệ</CardDescription>
+                  </div>
+                  <Select value={contactStatusFilter} onValueChange={setContactStatusFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="unread">Chưa đọc</SelectItem>
+                      <SelectItem value="read">Đã đọc</SelectItem>
+                      <SelectItem value="replied">Đã phản hồi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {contacts.map((contact: any) => (
-                    <Card key={contact.id}>
+                  {contacts
+                    .filter((contact: any) => {
+                      if (contactStatusFilter === 'unread') return !contact.read_at;
+                      if (contactStatusFilter === 'read') return contact.read_at && !contact.replied_at;
+                      if (contactStatusFilter === 'replied') return contact.replied_at;
+                      return true;
+                    })
+                    .map((contact: any) => (
+                    <Card key={contact.id} className={!contact.read_at ? 'border-primary' : ''}>
                       <CardContent className="pt-6">
+                        <div className="flex gap-2 mb-4">
+                          {!contact.read_at && <Badge variant="default">Chưa đọc</Badge>}
+                          {contact.read_at && !contact.replied_at && <Badge variant="secondary">Đã đọc</Badge>}
+                          {contact.replied_at && <Badge variant="outline">Đã phản hồi</Badge>}
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <p><strong>Tên:</strong> {contact.name}</p>
@@ -517,6 +666,16 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="flex gap-2 mt-4">
+                          {!contact.read_at && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => markAsRead.mutate({ type: 'contact', id: contact.id })}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Đánh dấu đã đọc
+                            </Button>
+                          )}
                           <Button 
                             size="sm" 
                             onClick={() => {
@@ -536,6 +695,18 @@ const Dashboard = () => {
                     </Card>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="replies">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lịch sử phản hồi</CardTitle>
+                <CardDescription>Tất cả tin nhắn đã gửi cho khách hàng</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminReplies />
               </CardContent>
             </Card>
           </TabsContent>

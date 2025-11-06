@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_replies: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          recipient_email: string
+          reference_id: string
+          reference_type: string
+          sent_at: string
+          sent_by: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          recipient_email: string
+          reference_id: string
+          reference_type: string
+          sent_at?: string
+          sent_by?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          recipient_email?: string
+          reference_id?: string
+          reference_type?: string
+          sent_at?: string
+          sent_by?: string | null
+          subject?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           booking_date: string
@@ -27,6 +63,8 @@ export type Database = {
           pet_name: string
           pet_type: string
           phone: string
+          read_at: string | null
+          replied_at: string | null
           status: string | null
         }
         Insert: {
@@ -41,6 +79,8 @@ export type Database = {
           pet_name: string
           pet_type: string
           phone: string
+          read_at?: string | null
+          replied_at?: string | null
           status?: string | null
         }
         Update: {
@@ -55,6 +95,8 @@ export type Database = {
           pet_name?: string
           pet_type?: string
           phone?: string
+          read_at?: string | null
+          replied_at?: string | null
           status?: string | null
         }
         Relationships: []
@@ -67,6 +109,8 @@ export type Database = {
           message: string
           name: string
           phone: string
+          read_at: string | null
+          replied_at: string | null
           status: string | null
         }
         Insert: {
@@ -76,6 +120,8 @@ export type Database = {
           message: string
           name: string
           phone: string
+          read_at?: string | null
+          replied_at?: string | null
           status?: string | null
         }
         Update: {
@@ -85,6 +131,8 @@ export type Database = {
           message?: string
           name?: string
           phone?: string
+          read_at?: string | null
+          replied_at?: string | null
           status?: string | null
         }
         Relationships: []
