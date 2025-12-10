@@ -32,7 +32,8 @@ const validateString = (str: string, minLen: number, maxLen: number): boolean =>
 };
 
 const validateTime = (time: string): boolean => {
-  return /^\d{2}:\d{2}$/.test(time);
+  // Accept both "HH:MM" and "HH:MM - HH:MM" formats
+  return /^\d{2}:\d{2}(\s*-\s*\d{2}:\d{2})?$/.test(time);
 };
 
 const validateDate = (date: string): boolean => {
