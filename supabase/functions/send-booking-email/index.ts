@@ -41,12 +41,17 @@ const validateDate = (date: string): boolean => {
 };
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("send-booking-email function called");
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { customerName, customerEmail, petName, date, time, message, adminEmail }: EmailRequest = await req.json();
+    const body = await req.text();
+    console.log("Request body:", body);
+    
+    const { customerName, customerEmail, petName, date, time, message, adminEmail }: EmailRequest = JSON.parse(body);
 
     // Validate all inputs
     if (!validateString(customerName, 1, 100)) {
@@ -98,7 +103,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Sending booking confirmation to customer:", customerEmail);
+    console.log("All validations passed. Sending booking confirmation to customer:", customerEmail);
+    console.log("RESEND_API_KEY exists:", !!Deno.env.get("RESEND_API_KEY"));
 
     // Send confirmation email to customer
     const customerEmailResponse = await resend.emails.send({
