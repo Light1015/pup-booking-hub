@@ -65,6 +65,7 @@ export type Database = {
           phone: string
           read_at: string | null
           replied_at: string | null
+          selected_category: string | null
           status: string | null
         }
         Insert: {
@@ -81,6 +82,7 @@ export type Database = {
           phone: string
           read_at?: string | null
           replied_at?: string | null
+          selected_category?: string | null
           status?: string | null
         }
         Update: {
@@ -97,6 +99,7 @@ export type Database = {
           phone?: string
           read_at?: string | null
           replied_at?: string | null
+          selected_category?: string | null
           status?: string | null
         }
         Relationships: []
@@ -190,6 +193,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      photo_albums: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_urls: string[] | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_urls?: string[] | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_urls?: string[] | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_albums_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

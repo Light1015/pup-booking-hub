@@ -13,8 +13,9 @@ const menuItems = [
   { id: "contacts", label: "Quản lý liên hệ", icon: MessageSquare },
   { id: "replies", label: "Lịch sử phản hồi", icon: Mail },
   { id: "gallery", label: "Thư viện ảnh", icon: Image },
-  { id: "services", label: "Dịch vụ", icon: FileText },
+  { id: "albums", label: "Bộ ảnh", icon: FolderOpen },
   { id: "categories", label: "Danh mục", icon: FolderOpen },
+  { id: "services", label: "Dịch vụ", icon: FileText },
   { id: "settings", label: "Cài đặt", icon: Settings },
 ];
 

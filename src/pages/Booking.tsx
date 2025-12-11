@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,31 +10,41 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Phone, Mail, MapPin, CreditCard } from "lucide-react";
+import LoadingDialog from "@/components/LoadingDialog";
 
 // Validation schema
 const bookingSchema = z.object({
   name: z.string().trim().min(1, "Vui lòng nhập tên").max(100, "Tên quá dài (tối đa 100 ký tự)"),
   email: z.string().email("Email không hợp lệ").max(255, "Email quá dài"),
   phone: z.string().regex(/^[0-9+\-\s()]+$/, "Số điện thoại không hợp lệ").min(8, "Số điện thoại quá ngắn").max(20, "Số điện thoại quá dài"),
-  petName: z.string().trim().min(1, "Vui lòng nhập tên thú cưng").max(50, "Tên thú cưng quá dài"),
-  petType: z.string().min(1, "Vui lòng chọn loại thú cưng").max(50, "Loại thú cưng không hợp lệ"),
-  petAge: z.string().max(20, "Tuổi thú cưng không hợp lệ").optional(),
+  selectedCategory: z.string().min(1, "Vui lòng chọn hạng mục chụp ảnh"),
   notes: z.string().max(500, "Ghi chú quá dài (tối đa 500 ký tự)").optional(),
 });
 
 const Booking = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     email: "",
-    petName: "",
-    petType: "",
+    selectedCategory: "",
     notes: "",
+  });
+
+  // Fetch categories for selection
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("gallery_categories").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
   });
 
   const timeSlots = [
@@ -68,14 +79,21 @@ const Booking = () => {
       }
     }
 
+    setIsLoading(true);
+
     try {
+      // Get category label for display
+      const selectedCategoryData = categories.find((c: any) => c.name === formData.selectedCategory);
+      const categoryLabel = selectedCategoryData?.label || formData.selectedCategory;
+
       // Insert booking first
       const { error: bookingError } = await supabase.from("bookings").insert([{
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
-        pet_name: formData.petName,
-        pet_type: formData.petType,
+        pet_name: categoryLabel,
+        pet_type: formData.selectedCategory,
+        selected_category: formData.selectedCategory,
         booking_date: format(selectedDate, "yyyy-MM-dd"),
         booking_time: selectedTime,
         notes: formData.notes,
@@ -88,7 +106,7 @@ const Booking = () => {
         .from("site_config")
         .select("value")
         .eq("key", "admin_email")
-        .single();
+        .maybeSingle();
 
       const adminEmail = config?.value || "admin@snappup.studio";
 
@@ -97,7 +115,7 @@ const Booking = () => {
         body: {
           customerName: formData.name,
           customerEmail: formData.email,
-          petName: formData.petName,
+          petName: categoryLabel,
           date: format(selectedDate, "yyyy-MM-dd"),
           time: selectedTime,
           message: formData.notes,
@@ -116,19 +134,21 @@ const Booking = () => {
         name: "",
         phone: "",
         email: "",
-        petName: "",
-        petType: "",
+        selectedCategory: "",
         notes: "",
       });
       setSelectedDate(undefined);
       setSelectedTime("");
     } catch (error: any) {
       toast.error("Đặt lịch thất bại: " + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen">
+      <LoadingDialog open={isLoading} message="Đang xử lý đặt lịch..." />
       <Navbar />
 
       <div className="container mx-auto px-4 py-12">
@@ -226,28 +246,24 @@ const Booking = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="petName">Tên bé cưng *</Label>
-                      <Input
-                        id="petName"
-                        required
-                        value={formData.petName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, petName: e.target.value })
+                      <Label>Hạng mục chụp ảnh *</Label>
+                      <Select
+                        value={formData.selectedCategory}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, selectedCategory: value })
                         }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="petType">Loại thú cưng *</Label>
-                      <Input
-                        id="petType"
-                        required
-                        placeholder="Ví dụ: Chó Golden, Mèo Ba Tư..."
-                        value={formData.petType}
-                        onChange={(e) =>
-                          setFormData({ ...formData, petType: e.target.value })
-                        }
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn hạng mục chụp ảnh" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category: any) => (
+                            <SelectItem key={category.id} value={category.name}>
+                              {category.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
@@ -291,8 +307,8 @@ const Booking = () => {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full" size="lg">
-                      Đặt lịch
+                    <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                      {isLoading ? "Đang xử lý..." : "Đặt lịch"}
                     </Button>
                   </form>
                 </CardContent>
