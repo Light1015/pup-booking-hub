@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Phone, Mail, MapPin, Clock, Facebook, Instagram } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation } from "@tanstack/react-query";
+import LoadingDialog from "@/components/LoadingDialog";
 
 // Validation schema
 const contactSchema = z.object({
@@ -118,6 +119,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen">
+      <LoadingDialog open={createContactMutation.isPending} message="Đang gửi tin nhắn..." />
       <Navbar />
 
       <div className="container mx-auto px-4 py-12">

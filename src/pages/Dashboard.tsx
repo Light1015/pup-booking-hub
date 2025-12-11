@@ -53,6 +53,10 @@ const Dashboard = () => {
   const [bookingStatusFilter, setBookingStatusFilter] = useState<string>("all");
   const [contactStatusFilter, setContactStatusFilter] = useState<string>("all");
   
+  // Album states
+  const [newAlbum, setNewAlbum] = useState({ name: "", description: "", category_id: "", image_urls: [] as string[] });
+  const [editingAlbum, setEditingAlbum] = useState<any | null>(null);
+  
   // Confirm dialog states
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -163,6 +167,15 @@ const Dashboard = () => {
     },
   });
 
+  // Fetch albums
+  const { data: albums = [] } = useQuery({
+    queryKey: ["albums"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("photo_albums").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
   // Delete mutations
   const deleteBooking = useMutation({
     mutationFn: async (id: string) => {
@@ -236,6 +249,53 @@ const Dashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Đã xóa danh mục");
+      setConfirmDialog(prev => ({ ...prev, open: false, isLoading: false }));
+    },
+    onError: (error: any) => {
+      toast.error("Lỗi: " + error.message);
+      setConfirmDialog(prev => ({ ...prev, isLoading: false }));
+    },
+  });
+
+  // Album mutations
+  const addAlbum = useMutation({
+    mutationFn: async (album: any) => {
+      const { error } = await supabase.from("photo_albums").insert([album]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["albums"] });
+      toast.success("Đã thêm bộ ảnh!");
+      setNewAlbum({ name: "", description: "", category_id: "", image_urls: [] });
+    },
+    onError: (error: any) => {
+      toast.error("Lỗi: " + error.message);
+    },
+  });
+
+  const updateAlbum = useMutation({
+    mutationFn: async ({ id, ...album }: any) => {
+      const { error } = await supabase.from("photo_albums").update(album).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["albums"] });
+      toast.success("Đã cập nhật bộ ảnh!");
+      setEditingAlbum(null);
+    },
+    onError: (error: any) => {
+      toast.error("Lỗi: " + error.message);
+    },
+  });
+
+  const deleteAlbum = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("photo_albums").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["albums"] });
+      toast.success("Đã xóa bộ ảnh");
       setConfirmDialog(prev => ({ ...prev, open: false, isLoading: false }));
     },
     onError: (error: any) => {
@@ -587,8 +647,7 @@ const Dashboard = () => {
                           <p><strong>SĐT:</strong> {booking.phone}</p>
                         </div>
                         <div>
-                          <p><strong>Tên pet:</strong> {booking.pet_name}</p>
-                          <p><strong>Loại pet:</strong> {booking.pet_type}</p>
+                          <p><strong>Hạng mục:</strong> {booking.pet_name}</p>
                           <p><strong>Ngày:</strong> {new Date(booking.booking_date).toLocaleDateString('vi-VN')}</p>
                           <p><strong>Giờ:</strong> {booking.booking_time}</p>
                         </div>
@@ -903,6 +962,120 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case "albums":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Quản lý bộ ảnh</CardTitle>
+              <CardDescription>Thêm và chỉnh sửa bộ ảnh trong từng danh mục</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6 p-4 border rounded-lg">
+                <h3 className="font-semibold mb-4">Thêm bộ ảnh mới</h3>
+                <div className="grid gap-4">
+                  <div><Label>Tên bộ ảnh</Label><Input placeholder="VD: Bộ ảnh gia đình..." value={newAlbum.name} onChange={(e) => setNewAlbum({ ...newAlbum, name: e.target.value })} /></div>
+                  <div><Label>Mô tả</Label><Textarea placeholder="Mô tả bộ ảnh..." value={newAlbum.description} onChange={(e) => setNewAlbum({ ...newAlbum, description: e.target.value })} /></div>
+                  <div>
+                    <Label>Danh mục</Label>
+                    <Select value={newAlbum.category_id} onValueChange={(value) => setNewAlbum({ ...newAlbum, category_id: value })}>
+                      <SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat: any) => <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Chọn ảnh từ thư viện</Label>
+                    <div className="grid grid-cols-4 gap-2 mt-2 max-h-60 overflow-y-auto border rounded-lg p-2">
+                      {gallery.map((img: any) => (
+                        <div key={img.id} className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${newAlbum.image_urls.includes(img.image_url) ? 'border-primary' : 'border-transparent'}`}
+                          onClick={() => {
+                            const urls = newAlbum.image_urls.includes(img.image_url) ? newAlbum.image_urls.filter(url => url !== img.image_url) : [...newAlbum.image_urls, img.image_url];
+                            setNewAlbum({ ...newAlbum, image_urls: urls });
+                          }}>
+                          <img src={img.image_url} alt={img.title} className="w-full h-16 object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">Đã chọn: {newAlbum.image_urls.length} ảnh</p>
+                  </div>
+                  <Button onClick={() => addAlbum.mutate(newAlbum)}><Plus className="w-4 h-4 mr-2" />Thêm bộ ảnh</Button>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {albums.map((album: any) => {
+                  const category = categories.find((c: any) => c.id === album.category_id);
+                  return (
+                    <Card key={album.id}>
+                      <CardContent className="pt-6">
+                        {editingAlbum?.id === album.id ? (
+                          <div className="grid gap-4">
+                            <Input value={editingAlbum.name} onChange={(e) => setEditingAlbum({ ...editingAlbum, name: e.target.value })} placeholder="Tên bộ ảnh" />
+                            <Textarea value={editingAlbum.description || ""} onChange={(e) => setEditingAlbum({ ...editingAlbum, description: e.target.value })} placeholder="Mô tả" />
+                            <Select value={editingAlbum.category_id || ""} onValueChange={(value) => setEditingAlbum({ ...editingAlbum, category_id: value })}>
+                              <SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
+                              <SelectContent>
+                                {categories.map((cat: any) => <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <div>
+                              <Label>Chọn ảnh</Label>
+                              <div className="grid grid-cols-4 gap-2 mt-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                                {gallery.map((img: any) => (
+                                  <div key={img.id} className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${(editingAlbum.image_urls || []).includes(img.image_url) ? 'border-primary' : 'border-transparent'}`}
+                                    onClick={() => {
+                                      const urls = (editingAlbum.image_urls || []).includes(img.image_url) 
+                                        ? (editingAlbum.image_urls || []).filter((url: string) => url !== img.image_url) 
+                                        : [...(editingAlbum.image_urls || []), img.image_url];
+                                      setEditingAlbum({ ...editingAlbum, image_urls: urls });
+                                    }}>
+                                    <img src={img.image_url} alt={img.title} className="w-full h-12 object-cover" />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button onClick={() => updateAlbum.mutate(editingAlbum)}>Lưu</Button>
+                              <Button variant="outline" onClick={() => setEditingAlbum(null)}>Hủy</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex justify-between items-start mb-4">
+                              <div>
+                                <h3 className="font-semibold text-lg">{album.name}</h3>
+                                <p className="text-sm text-muted-foreground">Danh mục: {category?.label || "Không xác định"}</p>
+                                {album.description && <p className="text-sm mt-2">{album.description}</p>}
+                              </div>
+                              <Badge>{(album.image_urls || []).length} ảnh</Badge>
+                            </div>
+                            {(album.image_urls || []).length > 0 && (
+                              <div className="grid grid-cols-4 gap-2 mb-4">
+                                {(album.image_urls || []).slice(0, 8).map((url: string, idx: number) => (
+                                  <img key={idx} src={url} alt={`${album.name} ${idx + 1}`} className="w-full h-16 object-cover rounded-lg" />
+                                ))}
+                                {(album.image_urls || []).length > 8 && (
+                                  <div className="w-full h-16 bg-muted rounded-lg flex items-center justify-center text-sm">+{(album.image_urls || []).length - 8} ảnh</div>
+                                )}
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => setEditingAlbum(album)}><Edit className="w-4 h-4 mr-2" />Sửa</Button>
+                              <Button size="sm" variant="destructive" onClick={() => showConfirmDialog("Xóa bộ ảnh", `Bạn có chắc muốn xóa bộ ảnh "${album.name}"?`, () => deleteAlbum.mutate(album.id), "destructive")}>
+                                <Trash2 className="w-4 h-4 mr-2" />Xóa
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
