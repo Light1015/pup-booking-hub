@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar, MessageSquare, Image, FolderOpen, Bell } from "lucide-react";
+import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar, MessageSquare, Image, FolderOpen, Bell, Search, Download, FileText } from "lucide-react";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { AdminReplies } from "@/components/AdminReplies";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -53,6 +53,11 @@ const Dashboard = () => {
   const [adminEmail, setAdminEmail] = useState("");
   const [bookingStatusFilter, setBookingStatusFilter] = useState<string>("all");
   const [contactStatusFilter, setContactStatusFilter] = useState<string>("all");
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [contactSearch, setContactSearch] = useState("");
+  const [bookingDateFilter, setBookingDateFilter] = useState<string>("all");
+  const [contactDateFilter, setContactDateFilter] = useState<string>("all");
+  const [reportPeriod, setReportPeriod] = useState<string>("month");
   
   // Album states
   const [newAlbum, setNewAlbum] = useState({ name: "", description: "", category_id: "", price: "", image_urls: [] as string[] });
@@ -748,37 +753,120 @@ const Dashboard = () => {
         );
 
       case "bookings":
+        // Filter bookings
+        const filteredBookings = bookings.filter((booking: any) => {
+          // Status filter
+          if (bookingStatusFilter === 'unread' && booking.read_at) return false;
+          if (bookingStatusFilter === 'read' && (!booking.read_at || booking.replied_at)) return false;
+          if (bookingStatusFilter === 'replied' && !booking.replied_at) return false;
+          
+          // Date filter
+          if (bookingDateFilter !== 'all') {
+            const bookingDate = new Date(booking.created_at);
+            const now = new Date();
+            if (bookingDateFilter === 'today') {
+              if (bookingDate.toDateString() !== now.toDateString()) return false;
+            } else if (bookingDateFilter === 'week') {
+              const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+              if (bookingDate < weekAgo) return false;
+            } else if (bookingDateFilter === 'month') {
+              const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+              if (bookingDate < monthAgo) return false;
+            }
+          }
+          
+          // Search filter
+          if (bookingSearch) {
+            const search = bookingSearch.toLowerCase();
+            return booking.name?.toLowerCase().includes(search) ||
+                   booking.email?.toLowerCase().includes(search) ||
+                   booking.phone?.includes(search) ||
+                   booking.pet_name?.toLowerCase().includes(search);
+          }
+          return true;
+        });
+
+        // Export function
+        const exportBookings = () => {
+          const headers = ['Tên', 'Email', 'SĐT', 'Hạng mục', 'Ngày chụp', 'Giờ', 'Ghi chú', 'Trạng thái', 'Ngày tạo'];
+          const data = filteredBookings.map((b: any) => [
+            b.name,
+            b.email,
+            b.phone,
+            b.pet_name,
+            new Date(b.booking_date).toLocaleDateString('vi-VN'),
+            b.booking_time,
+            b.notes || '',
+            b.replied_at ? 'Đã phản hồi' : b.read_at ? 'Đã đọc' : 'Chưa đọc',
+            new Date(b.created_at).toLocaleDateString('vi-VN')
+          ]);
+          
+          const csvContent = [headers.join(','), ...data.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+          const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `lich-dat_${new Date().toISOString().split('T')[0]}.csv`;
+          link.click();
+          toast.success('Đã xuất báo cáo lịch đặt!');
+        };
+
         return (
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Quản lý lịch đặt</CardTitle>
-                  <CardDescription>Danh sách các lịch đặt chụp ảnh</CardDescription>
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Quản lý lịch đặt</CardTitle>
+                    <CardDescription>Danh sách các lịch đặt chụp ảnh ({filteredBookings.length} kết quả)</CardDescription>
+                  </div>
+                  <Button onClick={exportBookings} variant="outline">
+                    <Download className="w-4 h-4 mr-2" />Xuất CSV
+                  </Button>
                 </div>
-                <Select value={bookingStatusFilter} onValueChange={setBookingStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="unread">Chưa đọc</SelectItem>
-                    <SelectItem value="read">Đã đọc</SelectItem>
-                    <SelectItem value="replied">Đã phản hồi</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-3">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Tìm theo tên, email, SĐT, hạng mục..." 
+                      value={bookingSearch} 
+                      onChange={(e) => setBookingSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={bookingStatusFilter} onValueChange={setBookingStatusFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="unread">Chưa đọc</SelectItem>
+                      <SelectItem value="read">Đã đọc</SelectItem>
+                      <SelectItem value="replied">Đã phản hồi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={bookingDateFilter} onValueChange={setBookingDateFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Thời gian" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="today">Hôm nay</SelectItem>
+                      <SelectItem value="week">7 ngày qua</SelectItem>
+                      <SelectItem value="month">30 ngày qua</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {bookings
-                  .filter((booking: any) => {
-                    if (bookingStatusFilter === 'unread') return !booking.read_at;
-                    if (bookingStatusFilter === 'read') return booking.read_at && !booking.replied_at;
-                    if (bookingStatusFilter === 'replied') return booking.replied_at;
-                    return true;
-                  })
-                  .map((booking: any) => (
+                {filteredBookings.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Không tìm thấy lịch đặt nào</p>
+                  </div>
+                ) : filteredBookings.map((booking: any) => (
                   <Card key={booking.id} className={!booking.read_at ? 'border-primary' : ''}>
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-start mb-4">
@@ -838,37 +926,117 @@ const Dashboard = () => {
         );
 
       case "contacts":
+        // Filter contacts
+        const filteredContacts = contacts.filter((contact: any) => {
+          // Status filter
+          if (contactStatusFilter === 'unread' && contact.read_at) return false;
+          if (contactStatusFilter === 'read' && (!contact.read_at || contact.replied_at)) return false;
+          if (contactStatusFilter === 'replied' && !contact.replied_at) return false;
+          
+          // Date filter
+          if (contactDateFilter !== 'all') {
+            const contactDate = new Date(contact.created_at);
+            const now = new Date();
+            if (contactDateFilter === 'today') {
+              if (contactDate.toDateString() !== now.toDateString()) return false;
+            } else if (contactDateFilter === 'week') {
+              const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+              if (contactDate < weekAgo) return false;
+            } else if (contactDateFilter === 'month') {
+              const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+              if (contactDate < monthAgo) return false;
+            }
+          }
+          
+          // Search filter
+          if (contactSearch) {
+            const search = contactSearch.toLowerCase();
+            return contact.name?.toLowerCase().includes(search) ||
+                   contact.email?.toLowerCase().includes(search) ||
+                   contact.phone?.includes(search) ||
+                   contact.message?.toLowerCase().includes(search);
+          }
+          return true;
+        });
+
+        // Export contacts function
+        const exportContacts = () => {
+          const headers = ['Tên', 'Email', 'SĐT', 'Tin nhắn', 'Trạng thái', 'Ngày gửi'];
+          const data = filteredContacts.map((c: any) => [
+            c.name,
+            c.email,
+            c.phone,
+            c.message,
+            c.replied_at ? 'Đã phản hồi' : c.read_at ? 'Đã đọc' : 'Chưa đọc',
+            new Date(c.created_at).toLocaleDateString('vi-VN')
+          ]);
+          
+          const csvContent = [headers.join(','), ...data.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+          const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `lien-he_${new Date().toISOString().split('T')[0]}.csv`;
+          link.click();
+          toast.success('Đã xuất báo cáo liên hệ!');
+        };
+
         return (
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Quản lý liên hệ</CardTitle>
-                  <CardDescription>Danh sách tin nhắn liên hệ</CardDescription>
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Quản lý liên hệ</CardTitle>
+                    <CardDescription>Danh sách tin nhắn liên hệ ({filteredContacts.length} kết quả)</CardDescription>
+                  </div>
+                  <Button onClick={exportContacts} variant="outline">
+                    <Download className="w-4 h-4 mr-2" />Xuất CSV
+                  </Button>
                 </div>
-                <Select value={contactStatusFilter} onValueChange={setContactStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="unread">Chưa đọc</SelectItem>
-                    <SelectItem value="read">Đã đọc</SelectItem>
-                    <SelectItem value="replied">Đã phản hồi</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-3">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Tìm theo tên, email, SĐT, tin nhắn..." 
+                      value={contactSearch} 
+                      onChange={(e) => setContactSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={contactStatusFilter} onValueChange={setContactStatusFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="unread">Chưa đọc</SelectItem>
+                      <SelectItem value="read">Đã đọc</SelectItem>
+                      <SelectItem value="replied">Đã phản hồi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={contactDateFilter} onValueChange={setContactDateFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Thời gian" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="today">Hôm nay</SelectItem>
+                      <SelectItem value="week">7 ngày qua</SelectItem>
+                      <SelectItem value="month">30 ngày qua</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {contacts
-                  .filter((contact: any) => {
-                    if (contactStatusFilter === 'unread') return !contact.read_at;
-                    if (contactStatusFilter === 'read') return contact.read_at && !contact.replied_at;
-                    if (contactStatusFilter === 'replied') return contact.replied_at;
-                    return true;
-                  })
-                  .map((contact: any) => (
+                {filteredContacts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Không tìm thấy liên hệ nào</p>
+                  </div>
+                ) : filteredContacts.map((contact: any) => (
                   <Card key={contact.id} className={!contact.read_at ? 'border-primary' : ''}>
                     <CardContent className="pt-6">
                       <div className="flex gap-2 mb-4">
@@ -906,6 +1074,217 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+        );
+
+      case "reports":
+        // Generate report data
+        const getMonthlyStats = (data: any[], months: number) => {
+          return Array.from({ length: months }, (_, i) => {
+            const date = new Date();
+            date.setMonth(date.getMonth() - (months - 1 - i));
+            const monthName = date.toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' });
+            const count = data.filter((item: any) => {
+              const itemDate = new Date(item.created_at);
+              return itemDate.getMonth() === date.getMonth() && itemDate.getFullYear() === date.getFullYear();
+            }).length;
+            return { name: monthName, count };
+          });
+        };
+
+        const getQuarterlyStats = (data: any[]) => {
+          const quarters: { [key: string]: number } = {};
+          data.forEach((item: any) => {
+            const date = new Date(item.created_at);
+            const q = Math.floor(date.getMonth() / 3) + 1;
+            const key = `Q${q}/${date.getFullYear()}`;
+            quarters[key] = (quarters[key] || 0) + 1;
+          });
+          return Object.entries(quarters).slice(-8).map(([name, count]) => ({ name, count }));
+        };
+
+        const monthsToShow = reportPeriod === 'quarter' ? 12 : 6;
+        const bookingStats = reportPeriod === 'quarter' ? getQuarterlyStats(bookings) : getMonthlyStats(bookings, monthsToShow);
+        const contactStats = reportPeriod === 'quarter' ? getQuarterlyStats(contacts) : getMonthlyStats(contacts, monthsToShow);
+
+        // Category distribution for bookings
+        const categoryStats = categories.map((cat: any) => ({
+          name: cat.label,
+          count: bookings.filter((b: any) => b.selected_category === cat.name || b.pet_type === cat.name).length
+        })).filter((item: any) => item.count > 0);
+
+        // Status distribution
+        const statusStats = [
+          { name: 'Chưa đọc', bookings: bookings.filter((b: any) => !b.read_at).length, contacts: contacts.filter((c: any) => !c.read_at).length },
+          { name: 'Đã đọc', bookings: bookings.filter((b: any) => b.read_at && !b.replied_at).length, contacts: contacts.filter((c: any) => c.read_at && !c.replied_at).length },
+          { name: 'Đã phản hồi', bookings: bookings.filter((b: any) => b.replied_at).length, contacts: contacts.filter((c: any) => c.replied_at).length },
+        ];
+
+        const exportFullReport = () => {
+          // Bookings summary
+          let content = 'BÁO CÁO THỐNG KÊ - SNAPPUP STUDIO\n';
+          content += `Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}\n\n`;
+          content += '=== TỔNG QUAN ===\n';
+          content += `Tổng lịch đặt: ${bookings.length}\n`;
+          content += `Tổng liên hệ: ${contacts.length}\n`;
+          content += `Chưa đọc: ${bookings.filter((b: any) => !b.read_at).length} lịch đặt, ${contacts.filter((c: any) => !c.read_at).length} liên hệ\n\n`;
+          
+          content += '=== LỊCH ĐẶT THEO HẠNG MỤC ===\n';
+          categoryStats.forEach((cat: any) => {
+            content += `${cat.name}: ${cat.count}\n`;
+          });
+          
+          content += '\n=== THỐNG KÊ THEO THỜI GIAN ===\n';
+          bookingStats.forEach((stat: any) => {
+            content += `${stat.name}: ${stat.count} lịch đặt\n`;
+          });
+
+          const blob = new Blob(['\ufeff' + content], { type: 'text/plain;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `bao-cao-thong-ke_${new Date().toISOString().split('T')[0]}.txt`;
+          link.click();
+          toast.success('Đã xuất báo cáo thống kê!');
+        };
+
+        return (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Báo cáo thống kê</CardTitle>
+                    <CardDescription>Thống kê lịch đặt và liên hệ theo thời gian</CardDescription>
+                  </div>
+                  <div className="flex gap-3">
+                    <Select value={reportPeriod} onValueChange={setReportPeriod}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="month">Theo tháng</SelectItem>
+                        <SelectItem value="quarter">Theo quý</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={exportFullReport} variant="outline">
+                      <Download className="w-4 h-4 mr-2" />Xuất báo cáo
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Booking stats chart */}
+                  <div>
+                    <h3 className="font-semibold mb-4">Lịch đặt theo {reportPeriod === 'quarter' ? 'quý' : 'tháng'}</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={bookingStats}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" fontSize={12} />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" name="Lịch đặt" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Contact stats chart */}
+                  <div>
+                    <h3 className="font-semibold mb-4">Liên hệ theo {reportPeriod === 'quarter' ? 'quý' : 'tháng'}</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={contactStats}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" fontSize={12} />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" name="Liên hệ" fill="#10b981" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Category distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Phân bố theo hạng mục</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {categoryStats.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={categoryStats}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={90}
+                          paddingAngle={5}
+                          dataKey="count"
+                          label={({ name, count }) => `${name}: ${count}`}
+                        >
+                          {categoryStats.map((entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'][index % 6]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[250px] flex items-center justify-center text-muted-foreground">Chưa có dữ liệu</div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Status distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Trạng thái xử lý</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={statusStats}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" fontSize={12} />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="bookings" name="Lịch đặt" fill="#3b82f6" />
+                      <Bar dataKey="contacts" name="Liên hệ" fill="#10b981" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Summary table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tóm tắt số liệu</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-lg text-center">
+                    <p className="text-3xl font-bold text-blue-600">{bookings.length}</p>
+                    <p className="text-sm text-muted-foreground">Tổng lịch đặt</p>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg text-center">
+                    <p className="text-3xl font-bold text-green-600">{contacts.length}</p>
+                    <p className="text-sm text-muted-foreground">Tổng liên hệ</p>
+                  </div>
+                  <div className="p-4 bg-orange-50 rounded-lg text-center">
+                    <p className="text-3xl font-bold text-orange-600">{bookings.filter((b: any) => !b.read_at).length + contacts.filter((c: any) => !c.read_at).length}</p>
+                    <p className="text-sm text-muted-foreground">Chưa đọc</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 rounded-lg text-center">
+                    <p className="text-3xl font-bold text-purple-600">{bookings.filter((b: any) => b.replied_at).length + contacts.filter((c: any) => c.replied_at).length}</p>
+                    <p className="text-sm text-muted-foreground">Đã phản hồi</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         );
 
       case "replies":
