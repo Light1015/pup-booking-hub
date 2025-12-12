@@ -1,4 +1,4 @@
-import { Calendar, MessageSquare, Image, Settings, FileText, FolderOpen, Mail, LayoutDashboard } from "lucide-react";
+import { Calendar, MessageSquare, Image, Settings, FileText, FolderOpen, Mail, LayoutDashboard, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AdminSidebarProps {
@@ -11,6 +11,7 @@ const menuItems = [
   { id: "bookings", label: "Quản lý lịch đặt", icon: Calendar },
   { id: "calendar", label: "Lịch", icon: Calendar },
   { id: "contacts", label: "Quản lý liên hệ", icon: MessageSquare },
+  { id: "reports", label: "Báo cáo thống kê", icon: BarChart3 },
   { id: "replies", label: "Lịch sử phản hồi", icon: Mail },
   { id: "gallery", label: "Thư viện ảnh", icon: Image },
   { id: "albums", label: "Bộ ảnh", icon: FolderOpen },
