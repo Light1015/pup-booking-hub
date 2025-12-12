@@ -110,15 +110,16 @@ const Booking = () => {
 
       const adminEmail = config?.value || "admin@snappup.studio";
 
-      // Send email notification
+      // Send email notification with full form data
       const { error: emailError } = await supabase.functions.invoke("send-booking-email", {
         body: {
           customerName: formData.name,
           customerEmail: formData.email,
-          petName: categoryLabel,
+          customerPhone: formData.phone,
+          categoryName: categoryLabel,
           date: format(selectedDate, "yyyy-MM-dd"),
           time: selectedTime,
-          message: formData.notes,
+          notes: formData.notes,
           adminEmail: adminEmail,
         },
       });

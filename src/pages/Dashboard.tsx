@@ -11,11 +11,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye } from "lucide-react";
+import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar, MessageSquare, Image, FolderOpen, Bell } from "lucide-react";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { AdminReplies } from "@/components/AdminReplies";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const Dashboard = () => {
   const { signOut } = useAuth();
@@ -54,7 +55,10 @@ const Dashboard = () => {
   const [contactStatusFilter, setContactStatusFilter] = useState<string>("all");
   
   // Album states
-  const [newAlbum, setNewAlbum] = useState({ name: "", description: "", category_id: "", image_urls: [] as string[] });
+  const [newAlbum, setNewAlbum] = useState({ name: "", description: "", category_id: "", price: "", image_urls: [] as string[] });
+  
+  // Detail dialog states
+  const [detailDialog, setDetailDialog] = useState<{ open: boolean; type: 'booking' | 'contact'; data: any }>({ open: false, type: 'booking', data: null });
   const [editingAlbum, setEditingAlbum] = useState<any | null>(null);
   
   // Confirm dialog states
@@ -266,7 +270,7 @@ const Dashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["albums"] });
       toast.success("Đã thêm bộ ảnh!");
-      setNewAlbum({ name: "", description: "", category_id: "", image_urls: [] });
+      setNewAlbum({ name: "", description: "", category_id: "", price: "", image_urls: [] });
     },
     onError: (error: any) => {
       toast.error("Lỗi: " + error.message);
@@ -554,46 +558,192 @@ const Dashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
+        const unreadBookings = bookings.filter((b: any) => !b.read_at);
+        const unreadContacts = contacts.filter((c: any) => !c.read_at);
+        
+        // Chart data
+        const bookingsByCategory = categories.map((cat: any) => ({
+          name: cat.label,
+          value: bookings.filter((b: any) => b.selected_category === cat.name || b.pet_type === cat.name).length
+        })).filter((item: any) => item.value > 0);
+        
+        const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+        
+        // Monthly bookings for bar chart
+        const monthlyData = Array.from({ length: 6 }, (_, i) => {
+          const date = new Date();
+          date.setMonth(date.getMonth() - (5 - i));
+          const monthName = date.toLocaleDateString('vi-VN', { month: 'short' });
+          const monthBookings = bookings.filter((b: any) => {
+            const bookingDate = new Date(b.created_at);
+            return bookingDate.getMonth() === date.getMonth() && bookingDate.getFullYear() === date.getFullYear();
+          }).length;
+          return { name: monthName, bookings: monthBookings };
+        });
+
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Tổng quan</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader><CardTitle>Lịch đặt</CardTitle></CardHeader>
-                <CardContent><p className="text-3xl font-bold">{bookings.length}</p></CardContent>
+            
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="border-l-4 border-l-blue-500">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Lịch đặt</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{bookings.length}</p>
+                  <p className="text-xs text-muted-foreground">{unreadBookings.length} chưa đọc</p>
+                </CardContent>
               </Card>
-              <Card>
-                <CardHeader><CardTitle>Liên hệ</CardTitle></CardHeader>
-                <CardContent><p className="text-3xl font-bold">{contacts.length}</p></CardContent>
+              <Card className="border-l-4 border-l-green-500">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Liên hệ</CardTitle>
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{contacts.length}</p>
+                  <p className="text-xs text-muted-foreground">{unreadContacts.length} chưa đọc</p>
+                </CardContent>
               </Card>
-              <Card>
-                <CardHeader><CardTitle>Thư viện</CardTitle></CardHeader>
-                <CardContent><p className="text-3xl font-bold">{gallery.length}</p></CardContent>
+              <Card className="border-l-4 border-l-purple-500">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Thư viện</CardTitle>
+                  <Image className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{gallery.length}</p>
+                  <p className="text-xs text-muted-foreground">{albums.length} bộ ảnh</p>
+                </CardContent>
               </Card>
+              <Card className="border-l-4 border-l-orange-500">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Danh mục</CardTitle>
+                  <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{categories.length}</p>
+                  <p className="text-xs text-muted-foreground">{services.length} dịch vụ</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
-                <CardHeader><CardTitle>Dịch vụ</CardTitle></CardHeader>
-                <CardContent><p className="text-3xl font-bold">{services.length}</p></CardContent>
+                <CardHeader>
+                  <CardTitle>Lịch đặt theo tháng</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="bookings" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Phân bố theo hạng mục</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {bookingsByCategory.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={bookingsByCategory}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}`}
+                        >
+                          {bookingsByCategory.map((entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                      Chưa có dữ liệu
+                    </div>
+                  )}
+                </CardContent>
               </Card>
             </div>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Lịch đặt mới nhất</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {bookings.slice(0, 5).map((booking: any) => (
-                    <div key={booking.id} className="flex justify-between items-center p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{booking.name}</p>
-                        <p className="text-sm text-muted-foreground">{booking.pet_name} - {new Date(booking.booking_date).toLocaleDateString('vi-VN')}</p>
+            {/* Notifications */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-2">
+                  <Bell className="h-5 w-5 text-blue-500" />
+                  <CardTitle>Lịch đặt mới</CardTitle>
+                  {unreadBookings.length > 0 && <Badge variant="destructive">{unreadBookings.length}</Badge>}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                    {bookings.slice(0, 10).map((booking: any) => (
+                      <div 
+                        key={booking.id} 
+                        className={`flex justify-between items-center p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors ${!booking.read_at ? 'bg-blue-50 border-blue-200' : ''}`}
+                        onClick={() => setDetailDialog({ open: true, type: 'booking', data: booking })}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{booking.name}</p>
+                            {!booking.read_at && <Badge variant="default" className="text-xs">Mới</Badge>}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {booking.pet_name} - {new Date(booking.booking_date).toLocaleDateString('vi-VN')} {booking.booking_time}
+                          </p>
+                        </div>
+                        <Eye className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      {!booking.read_at && <Badge>Mới</Badge>}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                    {bookings.length === 0 && <p className="text-center text-muted-foreground py-4">Chưa có lịch đặt</p>}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-2">
+                  <Bell className="h-5 w-5 text-green-500" />
+                  <CardTitle>Tin nhắn liên hệ</CardTitle>
+                  {unreadContacts.length > 0 && <Badge variant="destructive">{unreadContacts.length}</Badge>}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                    {contacts.slice(0, 10).map((contact: any) => (
+                      <div 
+                        key={contact.id} 
+                        className={`flex justify-between items-center p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors ${!contact.read_at ? 'bg-green-50 border-green-200' : ''}`}
+                        onClick={() => setDetailDialog({ open: true, type: 'contact', data: contact })}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{contact.name}</p>
+                            {!contact.read_at && <Badge variant="default" className="text-xs">Mới</Badge>}
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-1">{contact.message}</p>
+                        </div>
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    ))}
+                    {contacts.length === 0 && <p className="text-center text-muted-foreground py-4">Chưa có tin nhắn</p>}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         );
 
@@ -972,13 +1122,16 @@ const Dashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Quản lý bộ ảnh</CardTitle>
-              <CardDescription>Thêm và chỉnh sửa bộ ảnh trong từng danh mục</CardDescription>
+              <CardDescription>Thêm và chỉnh sửa bộ ảnh trong từng danh mục (với tên, mô tả, giá)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6 p-4 border rounded-lg">
                 <h3 className="font-semibold mb-4">Thêm bộ ảnh mới</h3>
                 <div className="grid gap-4">
-                  <div><Label>Tên bộ ảnh</Label><Input placeholder="VD: Bộ ảnh gia đình..." value={newAlbum.name} onChange={(e) => setNewAlbum({ ...newAlbum, name: e.target.value })} /></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><Label>Tên bộ ảnh</Label><Input placeholder="VD: Bộ ảnh gia đình..." value={newAlbum.name} onChange={(e) => setNewAlbum({ ...newAlbum, name: e.target.value })} /></div>
+                    <div><Label>Giá bộ ảnh</Label><Input placeholder="VD: 500,000 VNĐ" value={newAlbum.price} onChange={(e) => setNewAlbum({ ...newAlbum, price: e.target.value })} /></div>
+                  </div>
                   <div><Label>Mô tả</Label><Textarea placeholder="Mô tả bộ ảnh..." value={newAlbum.description} onChange={(e) => setNewAlbum({ ...newAlbum, description: e.target.value })} /></div>
                   <div>
                     <Label>Danh mục</Label>
@@ -1007,76 +1160,120 @@ const Dashboard = () => {
                   <Button onClick={() => addAlbum.mutate(newAlbum)}><Plus className="w-4 h-4 mr-2" />Thêm bộ ảnh</Button>
                 </div>
               </div>
-              <div className="space-y-4">
-                {albums.map((album: any) => {
-                  const category = categories.find((c: any) => c.id === album.category_id);
-                  return (
-                    <Card key={album.id}>
-                      <CardContent className="pt-6">
-                        {editingAlbum?.id === album.id ? (
-                          <div className="grid gap-4">
-                            <Input value={editingAlbum.name} onChange={(e) => setEditingAlbum({ ...editingAlbum, name: e.target.value })} placeholder="Tên bộ ảnh" />
-                            <Textarea value={editingAlbum.description || ""} onChange={(e) => setEditingAlbum({ ...editingAlbum, description: e.target.value })} placeholder="Mô tả" />
-                            <Select value={editingAlbum.category_id || ""} onValueChange={(value) => setEditingAlbum({ ...editingAlbum, category_id: value })}>
-                              <SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
-                              <SelectContent>
-                                {categories.map((cat: any) => <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <div>
-                              <Label>Chọn ảnh</Label>
-                              <div className="grid grid-cols-4 gap-2 mt-2 max-h-40 overflow-y-auto border rounded-lg p-2">
-                                {gallery.map((img: any) => (
-                                  <div key={img.id} className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${(editingAlbum.image_urls || []).includes(img.image_url) ? 'border-primary' : 'border-transparent'}`}
-                                    onClick={() => {
-                                      const urls = (editingAlbum.image_urls || []).includes(img.image_url) 
-                                        ? (editingAlbum.image_urls || []).filter((url: string) => url !== img.image_url) 
-                                        : [...(editingAlbum.image_urls || []), img.image_url];
-                                      setEditingAlbum({ ...editingAlbum, image_urls: urls });
-                                    }}>
-                                    <img src={img.image_url} alt={img.title} className="w-full h-12 object-cover" />
+              
+              {/* Albums grouped by category */}
+              {categories.map((cat: any) => {
+                const categoryAlbums = albums.filter((a: any) => a.category_id === cat.id);
+                if (categoryAlbums.length === 0) return null;
+                return (
+                  <div key={cat.id} className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <FolderOpen className="h-5 w-5 text-primary" />
+                      {cat.label}
+                      <Badge variant="secondary">{categoryAlbums.length} bộ ảnh</Badge>
+                    </h3>
+                    <div className="grid gap-4">
+                      {categoryAlbums.map((album: any) => (
+                        <Card key={album.id}>
+                          <CardContent className="pt-6">
+                            {editingAlbum?.id === album.id ? (
+                              <div className="grid gap-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <Input value={editingAlbum.name} onChange={(e) => setEditingAlbum({ ...editingAlbum, name: e.target.value })} placeholder="Tên bộ ảnh" />
+                                  <Input value={editingAlbum.price || ""} onChange={(e) => setEditingAlbum({ ...editingAlbum, price: e.target.value })} placeholder="Giá bộ ảnh" />
+                                </div>
+                                <Textarea value={editingAlbum.description || ""} onChange={(e) => setEditingAlbum({ ...editingAlbum, description: e.target.value })} placeholder="Mô tả" />
+                                <Select value={editingAlbum.category_id || ""} onValueChange={(value) => setEditingAlbum({ ...editingAlbum, category_id: value })}>
+                                  <SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
+                                  <SelectContent>
+                                    {categories.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                                <div>
+                                  <Label>Chọn ảnh</Label>
+                                  <div className="grid grid-cols-6 gap-2 mt-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                                    {gallery.map((img: any) => (
+                                      <div key={img.id} className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${(editingAlbum.image_urls || []).includes(img.image_url) ? 'border-primary' : 'border-transparent'}`}
+                                        onClick={() => {
+                                          const urls = (editingAlbum.image_urls || []).includes(img.image_url) 
+                                            ? (editingAlbum.image_urls || []).filter((url: string) => url !== img.image_url) 
+                                            : [...(editingAlbum.image_urls || []), img.image_url];
+                                          setEditingAlbum({ ...editingAlbum, image_urls: urls });
+                                        }}>
+                                        <img src={img.image_url} alt={img.title} className="w-full h-12 object-cover" />
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button onClick={() => updateAlbum.mutate(editingAlbum)}>Lưu</Button>
+                                  <Button variant="outline" onClick={() => setEditingAlbum(null)}>Hủy</Button>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button onClick={() => updateAlbum.mutate(editingAlbum)}>Lưu</Button>
-                              <Button variant="outline" onClick={() => setEditingAlbum(null)}>Hủy</Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex justify-between items-start mb-4">
-                              <div>
-                                <h3 className="font-semibold text-lg">{album.name}</h3>
-                                <p className="text-sm text-muted-foreground">Danh mục: {category?.label || "Không xác định"}</p>
-                                {album.description && <p className="text-sm mt-2">{album.description}</p>}
-                              </div>
-                              <Badge>{(album.image_urls || []).length} ảnh</Badge>
-                            </div>
-                            {(album.image_urls || []).length > 0 && (
-                              <div className="grid grid-cols-4 gap-2 mb-4">
-                                {(album.image_urls || []).slice(0, 8).map((url: string, idx: number) => (
-                                  <img key={idx} src={url} alt={`${album.name} ${idx + 1}`} className="w-full h-16 object-cover rounded-lg" />
-                                ))}
-                                {(album.image_urls || []).length > 8 && (
-                                  <div className="w-full h-16 bg-muted rounded-lg flex items-center justify-center text-sm">+{(album.image_urls || []).length - 8} ảnh</div>
+                            ) : (
+                              <>
+                                <div className="flex justify-between items-start mb-4">
+                                  <div>
+                                    <h4 className="font-semibold text-lg">{album.name}</h4>
+                                    {album.price && <p className="text-primary font-bold text-lg">{album.price}</p>}
+                                    {album.description && <p className="text-sm text-muted-foreground mt-1">{album.description}</p>}
+                                  </div>
+                                  <Badge>{(album.image_urls || []).length} ảnh</Badge>
+                                </div>
+                                {(album.image_urls || []).length > 0 && (
+                                  <div className="grid grid-cols-6 gap-2 mb-4">
+                                    {(album.image_urls || []).slice(0, 6).map((url: string, idx: number) => (
+                                      <img key={idx} src={url} alt={`${album.name} ${idx + 1}`} className="w-full h-16 object-cover rounded-lg" />
+                                    ))}
+                                    {(album.image_urls || []).length > 6 && (
+                                      <div className="w-full h-16 bg-muted rounded-lg flex items-center justify-center text-sm">+{(album.image_urls || []).length - 6}</div>
+                                    )}
+                                  </div>
                                 )}
-                              </div>
+                                <div className="flex gap-2">
+                                  <Button size="sm" onClick={() => setEditingAlbum(album)}><Edit className="w-4 h-4 mr-2" />Sửa</Button>
+                                  <Button size="sm" variant="destructive" onClick={() => showConfirmDialog("Xóa bộ ảnh", `Bạn có chắc muốn xóa bộ ảnh "${album.name}"?`, () => deleteAlbum.mutate(album.id), "destructive")}>
+                                    <Trash2 className="w-4 h-4 mr-2" />Xóa
+                                  </Button>
+                                </div>
+                              </>
                             )}
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={() => setEditingAlbum(album)}><Edit className="w-4 h-4 mr-2" />Sửa</Button>
-                              <Button size="sm" variant="destructive" onClick={() => showConfirmDialog("Xóa bộ ảnh", `Bạn có chắc muốn xóa bộ ảnh "${album.name}"?`, () => deleteAlbum.mutate(album.id), "destructive")}>
-                                <Trash2 className="w-4 h-4 mr-2" />Xóa
-                              </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Albums without category */}
+              {albums.filter((a: any) => !a.category_id || !categories.find((c: any) => c.id === a.category_id)).length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold mb-4 text-muted-foreground">Chưa phân loại</h3>
+                  <div className="grid gap-4">
+                    {albums.filter((a: any) => !a.category_id || !categories.find((c: any) => c.id === a.category_id)).map((album: any) => (
+                      <Card key={album.id}>
+                        <CardContent className="pt-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h4 className="font-semibold text-lg">{album.name}</h4>
+                              {album.price && <p className="text-primary font-bold">{album.price}</p>}
+                              {album.description && <p className="text-sm text-muted-foreground mt-1">{album.description}</p>}
                             </div>
-                          </>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                            <Badge>{(album.image_urls || []).length} ảnh</Badge>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => setEditingAlbum(album)}><Edit className="w-4 h-4 mr-2" />Sửa</Button>
+                            <Button size="sm" variant="destructive" onClick={() => showConfirmDialog("Xóa bộ ảnh", `Bạn có chắc muốn xóa bộ ảnh "${album.name}"?`, () => deleteAlbum.mutate(album.id), "destructive")}>
+                              <Trash2 className="w-4 h-4 mr-2" />Xóa
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         );
@@ -1167,6 +1364,45 @@ const Dashboard = () => {
         isLoading={confirmDialog.isLoading}
         variant={confirmDialog.variant}
       />
+
+      {/* Detail Dialog */}
+      <Dialog open={detailDialog.open} onOpenChange={(open) => setDetailDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{detailDialog.type === 'booking' ? 'Chi tiết lịch đặt' : 'Chi tiết liên hệ'}</DialogTitle>
+          </DialogHeader>
+          {detailDialog.data && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+                <div><p className="text-sm text-muted-foreground">Họ tên</p><p className="font-medium">{detailDialog.data.name}</p></div>
+                <div><p className="text-sm text-muted-foreground">Email</p><p className="font-medium">{detailDialog.data.email}</p></div>
+                <div><p className="text-sm text-muted-foreground">Số điện thoại</p><p className="font-medium">{detailDialog.data.phone}</p></div>
+                {detailDialog.type === 'booking' && (
+                  <>
+                    <div><p className="text-sm text-muted-foreground">Hạng mục</p><p className="font-medium text-primary">{detailDialog.data.pet_name}</p></div>
+                    <div><p className="text-sm text-muted-foreground">Ngày chụp</p><p className="font-medium">{new Date(detailDialog.data.booking_date).toLocaleDateString('vi-VN')}</p></div>
+                    <div><p className="text-sm text-muted-foreground">Giờ chụp</p><p className="font-medium">{detailDialog.data.booking_time}</p></div>
+                  </>
+                )}
+                <div className="col-span-2"><p className="text-sm text-muted-foreground">Ngày gửi</p><p className="font-medium">{new Date(detailDialog.data.created_at).toLocaleString('vi-VN')}</p></div>
+                {(detailDialog.data.notes || detailDialog.data.message) && (
+                  <div className="col-span-2"><p className="text-sm text-muted-foreground">{detailDialog.type === 'booking' ? 'Ghi chú' : 'Tin nhắn'}</p><p className="font-medium">{detailDialog.data.notes || detailDialog.data.message}</p></div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {!detailDialog.data.read_at && (
+                  <Button size="sm" variant="outline" onClick={() => { markAsRead.mutate({ type: detailDialog.type, id: detailDialog.data.id }); setDetailDialog(prev => ({ ...prev, open: false })); }}>
+                    <Eye className="w-4 h-4 mr-2" />Đánh dấu đã đọc
+                  </Button>
+                )}
+                <Button size="sm" onClick={() => { setReplyData({ type: detailDialog.type, data: detailDialog.data, message: '' }); setReplyDialogOpen(true); setDetailDialog(prev => ({ ...prev, open: false })); }}>
+                  <Mail className="w-4 h-4 mr-2" />Gửi mail
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

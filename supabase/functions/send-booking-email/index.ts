@@ -12,10 +12,11 @@ const corsHeaders = {
 interface EmailRequest {
   customerName: string;
   customerEmail: string;
-  petName: string;
+  customerPhone: string;
+  categoryName: string;
   date: string;
   time: string;
-  message?: string;
+  notes?: string;
   adminEmail: string;
 }
 
@@ -41,6 +42,10 @@ const validateDate = (date: string): boolean => {
   return d instanceof Date && !isNaN(d.getTime());
 };
 
+const validatePhone = (phone: string): boolean => {
+  return /^[0-9+\-\s()]+$/.test(phone) && phone.length >= 8 && phone.length <= 20;
+};
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-booking-email function called");
   
@@ -52,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
     const body = await req.text();
     console.log("Request body:", body);
     
-    const { customerName, customerEmail, petName, date, time, message, adminEmail }: EmailRequest = JSON.parse(body);
+    const { customerName, customerEmail, customerPhone, categoryName, date, time, notes, adminEmail }: EmailRequest = JSON.parse(body);
 
     // Validate all inputs
     if (!validateString(customerName, 1, 100)) {
@@ -69,9 +74,16 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!validateString(petName, 1, 50)) {
+    if (!validatePhone(customerPhone)) {
       return new Response(
-        JSON.stringify({ error: "Tên thú cưng không hợp lệ (1-50 ký tự)" }),
+        JSON.stringify({ error: "Số điện thoại không hợp lệ" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!validateString(categoryName, 1, 100)) {
+      return new Response(
+        JSON.stringify({ error: "Hạng mục không hợp lệ" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -90,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (message && message.length > 500) {
+    if (notes && notes.length > 500) {
       return new Response(
         JSON.stringify({ error: "Ghi chú quá dài (tối đa 500 ký tự)" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -104,52 +116,160 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Format date for display
+    const formattedDate = new Date(date).toLocaleDateString('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
     console.log("All validations passed. Sending booking confirmation to customer:", customerEmail);
     console.log("RESEND_API_KEY exists:", !!Deno.env.get("RESEND_API_KEY"));
 
-    // Send confirmation email to customer
+    // Send confirmation email to customer with full form details
     const customerEmailResponse = await resend.emails.send({
       from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
       to: [customerEmail],
-      subject: "Xác nhận đặt lịch chụp ảnh",
+      subject: "Xác nhận đặt lịch chụp ảnh - SnapPup Studio",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Xác nhận đặt lịch chụp ảnh</h2>
-          <p>Xin chào ${customerName},</p>
-          <p>Cảm ơn bạn đã đặt lịch chụp ảnh tại SnapPup Studio. Chúng tôi đã nhận được yêu cầu của bạn với thông tin sau:</p>
-          
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Tên thú cưng:</strong> ${petName}</p>
-            <p><strong>Ngày:</strong> ${date}</p>
-            <p><strong>Giờ:</strong> ${time}</p>
-            ${message ? `<p><strong>Ghi chú:</strong> ${message}</p>` : ''}
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <div style="background-color: #3b82f6; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0;">SnapPup Studio</h1>
           </div>
+          
+          <div style="padding: 30px;">
+            <h2 style="color: #1f2937; margin-bottom: 20px;">Xác nhận đặt lịch chụp ảnh</h2>
+            
+            <p style="color: #4b5563; font-size: 16px;">Xin chào <strong>${customerName}</strong>,</p>
+            <p style="color: #4b5563; font-size: 16px;">Cảm ơn bạn đã đặt lịch chụp ảnh tại SnapPup Studio. Chúng tôi đã nhận được yêu cầu của bạn với thông tin chi tiết như sau:</p>
+            
+            <div style="background-color: #f3f4f6; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #3b82f6;">
+              <h3 style="color: #1f2937; margin-top: 0; margin-bottom: 15px;">📋 Thông tin đặt lịch</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; width: 140px;">Họ và tên:</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${customerName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Email:</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${customerEmail}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Số điện thoại:</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${customerPhone}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Hạng mục chụp:</td>
+                  <td style="padding: 8px 0; color: #3b82f6; font-weight: 600;">${categoryName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Ngày chụp:</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${formattedDate}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Giờ chụp:</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${time}</td>
+                </tr>
+                ${notes ? `
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; vertical-align: top;">Ghi chú:</td>
+                  <td style="padding: 8px 0; color: #1f2937;">${notes}</td>
+                </tr>
+                ` : ''}
+              </table>
+            </div>
 
-          <p>Chúng tôi sẽ liên hệ với bạn sớm để xác nhận lịch hẹn.</p>
-          <p>Trân trọng,<br>SnapPup Studio Team</p>
+            <div style="background-color: #fef3c7; padding: 20px; border-radius: 12px; margin: 25px 0;">
+              <h4 style="color: #92400e; margin: 0 0 10px 0;">⚠️ Lưu ý quan trọng</h4>
+              <ul style="color: #92400e; margin: 0; padding-left: 20px; font-size: 14px;">
+                <li>Vui lòng đặt cọc 300,000 VNĐ để giữ chỗ</li>
+                <li>Chúng tôi sẽ liên hệ xác nhận trong 24 giờ</li>
+                <li>Nếu cần dời lịch, vui lòng thông báo trước 1 ngày</li>
+              </ul>
+            </div>
+
+            <p style="color: #4b5563; font-size: 14px;">Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ hotline: <strong>037.213.0010</strong></p>
+            
+            <p style="color: #4b5563; margin-top: 30px;">Trân trọng,<br><strong>SnapPup Studio Team</strong></p>
+          </div>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
+            <p style="margin: 0;">© 2024 SnapPup Studio. All rights reserved.</p>
+          </div>
         </div>
       `,
     });
 
     console.log("Customer email sent successfully:", customerEmailResponse);
 
-    // Send notification email to admin
+    // Send notification email to admin with full form details
     const adminEmailResponse = await resend.emails.send({
       from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
       to: [adminEmail],
-      subject: `Đặt lịch mới từ ${customerName}`,
+      subject: `🔔 Đặt lịch mới: ${customerName} - ${categoryName}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Đặt lịch mới</h2>
-          <p>Có một đặt lịch mới từ khách hàng:</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <div style="background-color: #10b981; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0;">📅 Lịch Đặt Mới</h1>
+          </div>
           
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Tên khách hàng:</strong> ${customerName}</p>
-            <p><strong>Email:</strong> ${customerEmail}</p>
-            <p><strong>Tên thú cưng:</strong> ${petName}</p>
-            <p><strong>Ngày:</strong> ${date}</p>
-            <p><strong>Giờ:</strong> ${time}</p>
-            ${message ? `<p><strong>Ghi chú:</strong> ${message}</p>` : ''}
+          <div style="padding: 30px;">
+            <p style="color: #4b5563; font-size: 16px;">Có một đặt lịch mới từ khách hàng. Chi tiết như sau:</p>
+            
+            <div style="background-color: #f3f4f6; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #10b981;">
+              <h3 style="color: #1f2937; margin-top: 0; margin-bottom: 15px;">👤 Thông tin khách hàng</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; width: 140px; border-bottom: 1px solid #e5e7eb;">Họ và tên:</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${customerName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Email:</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">
+                    <a href="mailto:${customerEmail}" style="color: #3b82f6;">${customerEmail}</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Số điện thoại:</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">
+                    <a href="tel:${customerPhone}" style="color: #3b82f6;">${customerPhone}</a>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background-color: #eff6ff; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #3b82f6;">
+              <h3 style="color: #1f2937; margin-top: 0; margin-bottom: 15px;">📸 Chi tiết đặt lịch</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; width: 140px; border-bottom: 1px solid #dbeafe;">Hạng mục:</td>
+                  <td style="padding: 10px 0; color: #3b82f6; font-weight: 700; font-size: 18px; border-bottom: 1px solid #dbeafe;">${categoryName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #dbeafe;">Ngày chụp:</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #dbeafe;">${formattedDate}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #dbeafe;">Giờ chụp:</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #dbeafe;">${time}</td>
+                </tr>
+                ${notes ? `
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Ghi chú:</td>
+                  <td style="padding: 10px 0; color: #1f2937; background-color: #fef9c3; padding: 10px; border-radius: 6px;">${notes}</td>
+                </tr>
+                ` : ''}
+              </table>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+              <p style="color: #6b7280; font-size: 14px;">Vui lòng liên hệ khách hàng để xác nhận lịch đặt.</p>
+            </div>
+          </div>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
+            <p style="margin: 0;">Email này được gửi tự động từ hệ thống SnapPup Studio</p>
           </div>
         </div>
       `,

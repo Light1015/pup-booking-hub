@@ -77,23 +77,69 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    const currentDate = new Date().toLocaleDateString('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
     console.log("Sending contact notification to admin:", adminEmail);
 
     const emailResponse = await resend.emails.send({
       from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
       to: [adminEmail],
-      subject: `Liên hệ mới từ ${name}`,
+      subject: `📬 Liên hệ mới: ${name}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Liên hệ mới từ website</h2>
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Họ tên:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Số điện thoại:</strong> ${phone}</p>
-            <p><strong>Tin nhắn:</strong></p>
-            <p style="white-space: pre-wrap;">${message}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <div style="background-color: #8b5cf6; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0;">📬 Tin Nhắn Mới</h1>
           </div>
-          <p style="color: #666; font-size: 14px;">Email này được gửi từ form liên hệ trên website SnapPup Studio</p>
+          
+          <div style="padding: 30px;">
+            <p style="color: #4b5563; font-size: 16px;">Có một tin nhắn liên hệ mới từ website. Chi tiết như sau:</p>
+            
+            <div style="background-color: #f3f4f6; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #8b5cf6;">
+              <h3 style="color: #1f2937; margin-top: 0; margin-bottom: 15px;">👤 Thông tin người gửi</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; width: 140px; border-bottom: 1px solid #e5e7eb;">Họ và tên:</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${name}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Email:</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">
+                    <a href="mailto:${email}" style="color: #3b82f6;">${email}</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Số điện thoại:</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">
+                    <a href="tel:${phone}" style="color: #3b82f6;">${phone}</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280;">Thời gian gửi:</td>
+                  <td style="padding: 10px 0; color: #1f2937;">${currentDate}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background-color: #fef3c7; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #f59e0b;">
+              <h3 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">💬 Nội dung tin nhắn</h3>
+              <p style="color: #1f2937; white-space: pre-wrap; line-height: 1.6; margin: 0;">${message}</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="mailto:${email}" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600;">Trả lời email</a>
+            </div>
+          </div>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
+            <p style="margin: 0;">Email này được gửi tự động từ form liên hệ trên website SnapPup Studio</p>
+          </div>
         </div>
       `,
     });
