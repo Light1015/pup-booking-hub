@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.send-customer-reply]
 verify_jwt = true
+
+[functions.send-booking-reminder]
+verify_jwt = false
