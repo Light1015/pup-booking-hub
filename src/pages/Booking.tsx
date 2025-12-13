@@ -13,8 +13,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Phone, Mail, MapPin, CreditCard } from "lucide-react";
+import { Phone, Mail, MapPin, CreditCard, Clock } from "lucide-react";
 import LoadingDialog from "@/components/LoadingDialog";
+import { cn } from "@/lib/utils";
 
 // Validation schema
 const bookingSchema = z.object({
@@ -24,6 +25,20 @@ const bookingSchema = z.object({
   selectedCategory: z.string().min(1, "Vui lòng chọn hạng mục chụp ảnh"),
   notes: z.string().max(500, "Ghi chú quá dài (tối đa 500 ký tự)").optional(),
 });
+
+const timeSlots = [
+  "08:00 - 09:00",
+  "09:00 - 10:00",
+  "10:00 - 11:00",
+  "11:00 - 12:00",
+  "13:00 - 14:00",
+  "14:00 - 15:00",
+  "15:00 - 16:00",
+  "16:00 - 17:00",
+  "17:00 - 18:00",
+  "18:00 - 19:00",
+  "19:00 - 20:00",
+];
 
 const Booking = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -47,19 +62,35 @@ const Booking = () => {
     },
   });
 
-  const timeSlots = [
-    "08:00 - 09:00",
-    "09:00 - 10:00",
-    "10:00 - 11:00",
-    "11:00 - 12:00",
-    "13:00 - 14:00",
-    "14:00 - 15:00",
-    "15:00 - 16:00",
-    "16:00 - 17:00",
-    "17:00 - 18:00",
-    "18:00 - 19:00",
-    "19:00 - 20:00",
-  ];
+  // Fetch booked time slots for the selected date
+  const { data: bookedSlots = [], isLoading: isLoadingSlots } = useQuery({
+    queryKey: ["booked-slots", selectedDate ? format(selectedDate, "yyyy-MM-dd") : null],
+    queryFn: async () => {
+      if (!selectedDate) return [];
+      
+      const dateString = format(selectedDate, "yyyy-MM-dd");
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("booking_time")
+        .eq("booking_date", dateString)
+        .in("status", ["pending", "confirmed"]); // Only block pending and confirmed bookings
+      
+      if (error) throw error;
+      return data.map((b) => b.booking_time);
+    },
+    enabled: !!selectedDate,
+  });
+
+  // Check if a time slot is available
+  const isTimeSlotBooked = (slot: string) => {
+    return bookedSlots.includes(slot);
+  };
+
+  // Handle date selection - reset time when date changes
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    setSelectedTime(""); // Reset time selection when date changes
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -285,27 +316,45 @@ const Booking = () => {
                       <Calendar
                         mode="single"
                         selected={selectedDate}
-                        onSelect={setSelectedDate}
+                        onSelect={handleDateSelect}
                         disabled={(date) => date < new Date()}
-                        className="rounded-md border"
+                        className="rounded-md border pointer-events-auto"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Chọn giờ *</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {timeSlots.map((slot) => (
-                          <Button
-                            key={slot}
-                            type="button"
-                            variant={selectedTime === slot ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedTime(slot)}
-                          >
-                            {slot}
-                          </Button>
-                        ))}
-                      </div>
+                      <Label className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Chọn giờ *
+                        {isLoadingSlots && <span className="text-xs text-muted-foreground">(Đang tải...)</span>}
+                      </Label>
+                      {selectedDate ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {timeSlots.map((slot) => {
+                            const isBooked = isTimeSlotBooked(slot);
+                            return (
+                              <Button
+                                key={slot}
+                                type="button"
+                                variant={selectedTime === slot ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => !isBooked && setSelectedTime(slot)}
+                                disabled={isBooked}
+                                className={cn(
+                                  isBooked && "opacity-50 cursor-not-allowed line-through bg-muted text-muted-foreground"
+                                )}
+                              >
+                                {slot}
+                                {isBooked && <span className="ml-1 text-xs">(Đã đặt)</span>}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground p-4 border rounded-md bg-muted/50">
+                          Vui lòng chọn ngày trước để xem khung giờ trống
+                        </p>
+                      )}
                     </div>
 
                     <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
