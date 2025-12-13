@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { format } from "date-fns";
+import { useState, useMemo } from "react";
+import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
+import { vi } from "date-fns/locale";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -13,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Phone, Mail, MapPin, CreditCard, Clock } from "lucide-react";
+import { Phone, Mail, MapPin, CreditCard, Clock, Circle } from "lucide-react";
 import LoadingDialog from "@/components/LoadingDialog";
 import { cn } from "@/lib/utils";
 
@@ -40,10 +41,13 @@ const timeSlots = [
   "19:00 - 20:00",
 ];
 
+const TOTAL_SLOTS = timeSlots.length;
+
 const Booking = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -62,6 +66,45 @@ const Booking = () => {
     },
   });
 
+  // Fetch all bookings for the current month view (for calendar status)
+  const { data: monthlyBookings = [] } = useQuery({
+    queryKey: ["monthly-bookings", format(currentMonth, "yyyy-MM")],
+    queryFn: async () => {
+      const start = startOfMonth(currentMonth);
+      const end = endOfMonth(addMonths(currentMonth, 1)); // Fetch 2 months for smooth navigation
+      
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("booking_date, booking_time")
+        .gte("booking_date", format(start, "yyyy-MM-dd"))
+        .lte("booking_date", format(end, "yyyy-MM-dd"))
+        .in("status", ["pending", "confirmed"]);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Calculate booking count per day
+  const bookingsByDay = useMemo(() => {
+    const dayMap: Record<string, number> = {};
+    monthlyBookings.forEach((booking) => {
+      const date = booking.booking_date;
+      dayMap[date] = (dayMap[date] || 0) + 1;
+    });
+    return dayMap;
+  }, [monthlyBookings]);
+
+  // Get day status: 'full' | 'partial' | 'free'
+  const getDayStatus = (date: Date): 'full' | 'partial' | 'free' => {
+    const dateString = format(date, "yyyy-MM-dd");
+    const bookedCount = bookingsByDay[dateString] || 0;
+    
+    if (bookedCount >= TOTAL_SLOTS) return 'full';
+    if (bookedCount > 0) return 'partial';
+    return 'free';
+  };
+
   // Fetch booked time slots for the selected date
   const { data: bookedSlots = [], isLoading: isLoadingSlots } = useQuery({
     queryKey: ["booked-slots", selectedDate ? format(selectedDate, "yyyy-MM-dd") : null],
@@ -73,7 +116,7 @@ const Booking = () => {
         .from("bookings")
         .select("booking_time")
         .eq("booking_date", dateString)
-        .in("status", ["pending", "confirmed"]); // Only block pending and confirmed bookings
+        .in("status", ["pending", "confirmed"]);
       
       if (error) throw error;
       return data.map((b) => b.booking_time);
@@ -311,14 +354,45 @@ const Booking = () => {
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Chọn ngày *</Label>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Chọn ngày *</Label>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1 mb-2">
+                          <span className="flex items-center gap-1">
+                            <Circle className="h-3 w-3 fill-green-500 text-green-500" />
+                            Còn trống
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Circle className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                            Còn ít chỗ
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Circle className="h-3 w-3 fill-red-500 text-red-500" />
+                            Đã đầy
+                          </span>
+                        </div>
+                      </div>
                       <Calendar
                         mode="single"
                         selected={selectedDate}
                         onSelect={handleDateSelect}
-                        disabled={(date) => date < new Date()}
+                        onMonthChange={setCurrentMonth}
+                        disabled={(date) => {
+                          if (date < new Date()) return true;
+                          // Disable fully booked days
+                          return getDayStatus(date) === 'full';
+                        }}
                         className="rounded-md border pointer-events-auto"
+                        modifiers={{
+                          full: (date) => getDayStatus(date) === 'full',
+                          partial: (date) => getDayStatus(date) === 'partial',
+                          free: (date) => getDayStatus(date) === 'free' && date >= new Date(),
+                        }}
+                        modifiersClassNames={{
+                          full: "bg-red-100 text-red-600 hover:bg-red-100",
+                          partial: "bg-yellow-100 text-yellow-700 hover:bg-yellow-200",
+                          free: "bg-green-50 hover:bg-green-100",
+                        }}
                       />
                     </div>
 
