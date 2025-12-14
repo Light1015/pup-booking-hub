@@ -56,7 +56,9 @@ export type Database = {
           booking_time: string
           created_at: string
           email: string
+          expected_revenue: number | null
           id: string
+          manage_token: string | null
           name: string
           notes: string | null
           pet_age: string | null
@@ -73,7 +75,9 @@ export type Database = {
           booking_time: string
           created_at?: string
           email: string
+          expected_revenue?: number | null
           id?: string
+          manage_token?: string | null
           name: string
           notes?: string | null
           pet_age?: string | null
@@ -90,7 +94,9 @@ export type Database = {
           booking_time?: string
           created_at?: string
           email?: string
+          expected_revenue?: number | null
           id?: string
+          manage_token?: string | null
           name?: string
           notes?: string | null
           pet_age?: string | null
