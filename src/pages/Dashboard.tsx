@@ -566,6 +566,32 @@ const Dashboard = () => {
         const unreadBookings = bookings.filter((b: any) => !b.read_at);
         const unreadContacts = contacts.filter((c: any) => !c.read_at);
         
+        // Booking status stats
+        const confirmedBookings = bookings.filter((b: any) => b.status === 'confirmed');
+        const pendingBookings = bookings.filter((b: any) => b.status === 'pending');
+        const cancelledBookings = bookings.filter((b: any) => b.status === 'cancelled');
+        
+        // Cancellation rate
+        const totalProcessedBookings = confirmedBookings.length + cancelledBookings.length;
+        const cancellationRate = totalProcessedBookings > 0 
+          ? ((cancelledBookings.length / totalProcessedBookings) * 100).toFixed(1)
+          : '0';
+        
+        // Expected revenue calculation (based on confirmed bookings)
+        const AVERAGE_BOOKING_VALUE = 400000; // 400K VND average per booking
+        const expectedRevenue = confirmedBookings.length * AVERAGE_BOOKING_VALUE;
+        const potentialRevenue = pendingBookings.length * AVERAGE_BOOKING_VALUE;
+        
+        // This month stats
+        const thisMonth = new Date();
+        const thisMonthBookings = bookings.filter((b: any) => {
+          const bookingDate = new Date(b.booking_date);
+          return bookingDate.getMonth() === thisMonth.getMonth() && bookingDate.getFullYear() === thisMonth.getFullYear();
+        });
+        const thisMonthConfirmed = thisMonthBookings.filter((b: any) => b.status === 'confirmed');
+        const thisMonthCancelled = thisMonthBookings.filter((b: any) => b.status === 'cancelled');
+        const thisMonthRevenue = thisMonthConfirmed.length * AVERAGE_BOOKING_VALUE;
+        
         // Chart data
         const bookingsByCategory = categories.map((cat: any) => ({
           name: cat.label,
@@ -585,16 +611,23 @@ const Dashboard = () => {
           }).length;
           return { name: monthName, bookings: monthBookings };
         });
+        
+        // Booking status chart data
+        const statusChartData = [
+          { name: 'Đã xác nhận', value: confirmedBookings.length, color: '#10b981' },
+          { name: 'Chờ xác nhận', value: pendingBookings.length, color: '#f59e0b' },
+          { name: 'Đã hủy', value: cancelledBookings.length, color: '#ef4444' },
+        ].filter(item => item.value > 0);
 
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Tổng quan</h2>
             
-            {/* Stats Cards */}
+            {/* Stats Cards - Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="border-l-4 border-l-blue-500">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Lịch đặt</CardTitle>
+                  <CardTitle className="text-sm font-medium">Tổng lịch đặt</CardTitle>
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -603,6 +636,80 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
               <Card className="border-l-4 border-l-green-500">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Đã xác nhận</CardTitle>
+                  <Calendar className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-green-600">{confirmedBookings.length}</p>
+                  <p className="text-xs text-muted-foreground">{thisMonthConfirmed.length} tháng này</p>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-l-yellow-500">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Chờ xác nhận</CardTitle>
+                  <Calendar className="h-4 w-4 text-yellow-500" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-yellow-600">{pendingBookings.length}</p>
+                  <p className="text-xs text-muted-foreground">Cần xử lý</p>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-l-red-500">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Tỷ lệ hủy</CardTitle>
+                  <Calendar className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-red-600">{cancellationRate}%</p>
+                  <p className="text-xs text-muted-foreground">{cancelledBookings.length} đã hủy / {thisMonthCancelled.length} tháng này</p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Stats Cards - Row 2: Revenue */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-white">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Doanh thu dự kiến</CardTitle>
+                  <span className="text-lg">💰</span>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-emerald-600">
+                    {new Intl.NumberFormat('vi-VN').format(expectedRevenue)} đ
+                  </p>
+                  <p className="text-xs text-muted-foreground">Từ {confirmedBookings.length} lịch đã xác nhận</p>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Doanh thu tiềm năng</CardTitle>
+                  <span className="text-lg">📈</span>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-amber-600">
+                    {new Intl.NumberFormat('vi-VN').format(potentialRevenue)} đ
+                  </p>
+                  <p className="text-xs text-muted-foreground">Từ {pendingBookings.length} lịch chờ xác nhận</p>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-l-cyan-500 bg-gradient-to-r from-cyan-50 to-white">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Doanh thu tháng này</CardTitle>
+                  <span className="text-lg">📊</span>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-cyan-600">
+                    {new Intl.NumberFormat('vi-VN').format(thisMonthRevenue)} đ
+                  </p>
+                  <p className="text-xs text-muted-foreground">{thisMonthConfirmed.length} lịch đã xác nhận</p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Additional Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="border-l-4 border-l-indigo-500">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Liên hệ</CardTitle>
                   <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -630,6 +737,16 @@ const Dashboard = () => {
                 <CardContent>
                   <p className="text-3xl font-bold">{categories.length}</p>
                   <p className="text-xs text-muted-foreground">{services.length} dịch vụ</p>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-l-pink-500">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Giá trị TB/đơn</CardTitle>
+                  <span className="text-sm">💵</span>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{new Intl.NumberFormat('vi-VN').format(AVERAGE_BOOKING_VALUE)} đ</p>
+                  <p className="text-xs text-muted-foreground">Ước tính</p>
                 </CardContent>
               </Card>
             </div>

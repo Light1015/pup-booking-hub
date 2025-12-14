@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.send-booking-reminder]
 verify_jwt = false
+
+[functions.manage-booking]
+verify_jwt = false

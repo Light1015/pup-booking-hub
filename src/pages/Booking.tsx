@@ -160,8 +160,8 @@ const Booking = () => {
       const selectedCategoryData = categories.find((c: any) => c.name === formData.selectedCategory);
       const categoryLabel = selectedCategoryData?.label || formData.selectedCategory;
 
-      // Insert booking first
-      const { error: bookingError } = await supabase.from("bookings").insert([{
+      // Insert booking first and get the manage_token
+      const { data: bookingData, error: bookingError } = await supabase.from("bookings").insert([{
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
@@ -171,7 +171,7 @@ const Booking = () => {
         booking_date: format(selectedDate, "yyyy-MM-dd"),
         booking_time: selectedTime,
         notes: formData.notes,
-      }]);
+      }]).select("manage_token").single();
 
       if (bookingError) throw bookingError;
 
@@ -183,8 +183,11 @@ const Booking = () => {
         .maybeSingle();
 
       const adminEmail = config?.value || "admin@snappup.studio";
+      
+      // Generate manage booking URL
+      const manageUrl = `${window.location.origin}/manage-booking?token=${bookingData.manage_token}`;
 
-      // Send email notification with full form data
+      // Send email notification with full form data and manage link
       const { error: emailError } = await supabase.functions.invoke("send-booking-email", {
         body: {
           customerName: formData.name,
@@ -195,6 +198,7 @@ const Booking = () => {
           time: selectedTime,
           notes: formData.notes,
           adminEmail: adminEmail,
+          manageUrl: manageUrl,
         },
       });
 

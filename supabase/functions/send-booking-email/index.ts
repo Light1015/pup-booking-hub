@@ -18,6 +18,7 @@ interface EmailRequest {
   time: string;
   notes?: string;
   adminEmail: string;
+  manageUrl?: string;
 }
 
 // Validation helper functions
@@ -57,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
     const body = await req.text();
     console.log("Request body:", body);
     
-    const { customerName, customerEmail, customerPhone, categoryName, date, time, notes, adminEmail }: EmailRequest = JSON.parse(body);
+    const { customerName, customerEmail, customerPhone, categoryName, date, time, notes, adminEmail, manageUrl }: EmailRequest = JSON.parse(body);
 
     // Validate all inputs
     if (!validateString(customerName, 1, 100)) {
@@ -188,6 +189,22 @@ const handler = async (req: Request): Promise<Response> => {
                 <li>Nếu cần dời lịch, vui lòng thông báo trước 1 ngày</li>
               </ul>
             </div>
+
+            ${manageUrl ? `
+            <div style="background-color: #eff6ff; padding: 20px; border-radius: 12px; margin: 25px 0; text-align: center;">
+              <h4 style="color: #1e40af; margin: 0 0 15px 0;">📋 Quản lý lịch đặt của bạn</h4>
+              <p style="color: #3b82f6; font-size: 14px; margin-bottom: 15px;">
+                Bạn có thể xem, dời lịch hoặc hủy lịch đặt bất kỳ lúc nào:
+              </p>
+              <a href="${manageUrl}" 
+                 style="display: inline-block; background-color: #3b82f6; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                Quản lý lịch đặt
+              </a>
+              <p style="color: #6b7280; font-size: 12px; margin-top: 15px;">
+                Lưu ý: Chỉ có thể hủy lịch trước 24 giờ
+              </p>
+            </div>
+            ` : ''}
 
             <p style="color: #4b5563; font-size: 14px;">Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ hotline: <strong>037.213.0010</strong></p>
             
