@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -82,7 +82,17 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const resend = resendApiKey ? new Resend(resendApiKey) : null;
+    
+    // Get admin email
+    const { data: configData } = await supabase
+      .from("site_config")
+      .select("value")
+      .eq("key", "admin_email")
+      .maybeSingle();
+    const adminEmail = configData?.value || "snappupstudio@gmail.com";
 
     const { token, action, newDate, newTime }: ManageBookingRequest = await req.json();
 
@@ -175,6 +185,11 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         console.log(`Booking ${booking.id} cancelled successfully`);
+        
+        // Send admin notification
+        if (resend) {
+          await sendAdminNotification(resend, adminEmail, "cancel", booking);
+        }
 
         return new Response(
           JSON.stringify({ message: "Đã hủy lịch thành công", status: "cancelled" }),
@@ -225,6 +240,11 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         console.log(`Booking ${booking.id} rescheduled to ${newDate} ${newTime}`);
+        
+        // Send admin notification
+        if (resend) {
+          await sendAdminNotification(resend, adminEmail, "reschedule", booking, newDate, newTime);
+        }
 
         return new Response(
           JSON.stringify({ 
