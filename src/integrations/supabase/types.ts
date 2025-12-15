@@ -394,6 +394,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_booking_token: {
+        Args: { booking_token: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"

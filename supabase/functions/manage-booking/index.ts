@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,65 @@ interface ManageBookingRequest {
   action: "get" | "cancel" | "reschedule";
   newDate?: string;
   newTime?: string;
+}
+
+// Send notification email to admin
+async function sendAdminNotification(
+  resend: Resend,
+  adminEmail: string,
+  action: "cancel" | "reschedule",
+  booking: any,
+  newDate?: string,
+  newTime?: string
+) {
+  const actionText = action === "cancel" ? "HỦY LỊCH" : "DỜI LỊCH";
+  const subject = `[SNAPPUP] Khách hàng ${actionText} - ${booking.name}`;
+  
+  let html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #f97316;">🐾 Thông báo ${actionText}</h2>
+      <p>Khách hàng <strong>${booking.name}</strong> đã ${action === "cancel" ? "hủy" : "dời"} lịch chụp ảnh.</p>
+      
+      <h3>Thông tin lịch hẹn ban đầu:</h3>
+      <ul>
+        <li><strong>Khách hàng:</strong> ${booking.name}</li>
+        <li><strong>Email:</strong> ${booking.email}</li>
+        <li><strong>Điện thoại:</strong> ${booking.phone}</li>
+        <li><strong>Ngày:</strong> ${booking.booking_date}</li>
+        <li><strong>Giờ:</strong> ${booking.booking_time}</li>
+        <li><strong>Thú cưng:</strong> ${booking.pet_name}</li>
+        <li><strong>Gói chụp:</strong> ${booking.selected_category || "Chưa chọn"}</li>
+      </ul>
+  `;
+  
+  if (action === "reschedule" && newDate && newTime) {
+    html += `
+      <h3 style="color: #22c55e;">Lịch hẹn mới:</h3>
+      <ul>
+        <li><strong>Ngày mới:</strong> ${newDate}</li>
+        <li><strong>Giờ mới:</strong> ${newTime}</li>
+      </ul>
+      <p style="color: #f59e0b;"><em>Vui lòng xác nhận lịch hẹn mới trong hệ thống quản trị.</em></p>
+    `;
+  }
+  
+  html += `
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="color: #888; font-size: 12px;">Email này được gửi tự động từ hệ thống SNAPPUP.</p>
+    </div>
+  `;
+  
+  try {
+    await resend.emails.send({
+      from: "SNAPPUP <no-reply@snapup-booking.id.vn>",
+      to: [adminEmail],
+      subject,
+      html,
+    });
+    console.log(`Admin notification sent for ${action} action`);
+  } catch (error) {
+    console.error("Error sending admin notification:", error);
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
