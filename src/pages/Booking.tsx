@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
 import { vi } from "date-fns/locale";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,9 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Phone, Mail, MapPin, CreditCard, Clock, Circle } from "lucide-react";
+import { Phone, Mail, MapPin, CreditCard, Clock, Circle, Wallet, CheckCircle, XCircle } from "lucide-react";
 import LoadingDialog from "@/components/LoadingDialog";
 import { cn } from "@/lib/utils";
 
@@ -42,12 +44,15 @@ const timeSlots = [
 ];
 
 const TOTAL_SLOTS = timeSlots.length;
+const DEPOSIT_AMOUNT = 300000; // 300,000 VND
 
 const Booking = () => {
+  const [searchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [paymentMethod, setPaymentMethod] = useState<"bank" | "vnpay">("bank");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -55,6 +60,22 @@ const Booking = () => {
     selectedCategory: "",
     notes: "",
   });
+
+  // Check for payment result from VNPay callback
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    const txn = searchParams.get("txn");
+    const code = searchParams.get("code");
+
+    if (paymentStatus === "success" && txn) {
+      toast.success(`Thanh toán thành công! Mã giao dịch: ${txn}`);
+      // Clear URL params
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === "failed") {
+      toast.error(`Thanh toán thất bại. Mã lỗi: ${code || "Không xác định"}`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [searchParams]);
 
   // Fetch categories for selection
   const { data: categories = [] } = useQuery({
@@ -171,9 +192,33 @@ const Booking = () => {
         booking_date: format(selectedDate, "yyyy-MM-dd"),
         booking_time: selectedTime,
         notes: formData.notes,
-      }]).select("manage_token").single();
+        status: paymentMethod === "vnpay" ? "pending_payment" : "pending",
+      }]).select("id, manage_token").single();
 
       if (bookingError) throw bookingError;
+
+      // If VNPay payment selected, redirect to payment
+      if (paymentMethod === "vnpay") {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const callbackUrl = `${supabaseUrl}/functions/v1/vnpay-callback`;
+
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke("create-vnpay-payment", {
+          body: {
+            bookingId: bookingData.id,
+            amount: DEPOSIT_AMOUNT,
+            orderInfo: `Dat coc chup anh ${categoryLabel}`,
+            returnUrl: callbackUrl,
+          },
+        });
+
+        if (paymentError || !paymentData?.paymentUrl) {
+          throw new Error(paymentError?.message || "Không thể tạo link thanh toán");
+        }
+
+        // Redirect to VNPay
+        window.location.href = paymentData.paymentUrl;
+        return;
+      }
 
       // Get admin email
       const { data: config } = await supabase
@@ -435,8 +480,45 @@ const Booking = () => {
                       )}
                     </div>
 
+                    {/* Payment Method Selection */}
+                    <div className="space-y-3">
+                      <Label>Phương thức thanh toán đặt cọc *</Label>
+                      <RadioGroup
+                        value={paymentMethod}
+                        onValueChange={(value: "bank" | "vnpay") => setPaymentMethod(value)}
+                        className="space-y-3"
+                      >
+                        <div className={cn(
+                          "flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all",
+                          paymentMethod === "bank" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                        )}>
+                          <RadioGroupItem value="bank" id="bank" />
+                          <Label htmlFor="bank" className="flex items-center gap-2 cursor-pointer flex-1">
+                            <CreditCard className="h-5 w-5" />
+                            <div>
+                              <p className="font-medium">Chuyển khoản ngân hàng</p>
+                              <p className="text-xs text-muted-foreground">Chuyển khoản thủ công sau khi đặt lịch</p>
+                            </div>
+                          </Label>
+                        </div>
+                        <div className={cn(
+                          "flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all",
+                          paymentMethod === "vnpay" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                        )}>
+                          <RadioGroupItem value="vnpay" id="vnpay" />
+                          <Label htmlFor="vnpay" className="flex items-center gap-2 cursor-pointer flex-1">
+                            <Wallet className="h-5 w-5 text-blue-600" />
+                            <div>
+                              <p className="font-medium">Thanh toán VNPay</p>
+                              <p className="text-xs text-muted-foreground">Thanh toán online qua VNPay (ATM, Visa, QR)</p>
+                            </div>
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+
                     <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                      {isLoading ? "Đang xử lý..." : "Đặt lịch"}
+                      {isLoading ? "Đang xử lý..." : paymentMethod === "vnpay" ? "Tiến hành thanh toán" : "Đặt lịch"}
                     </Button>
                   </form>
                 </CardContent>
