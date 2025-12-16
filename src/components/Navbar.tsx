@@ -1,12 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import logoIcon from "@/assets/logo-icon.png";
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { isAdmin, user } = useAuth();
 
   const navItems = [
     { name: "Trang chủ", path: "/" },
@@ -56,6 +59,17 @@ const Navbar = () => {
 
           {/* Social Icons */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Dashboard link for admin */}
+            {isAdmin && (
+              <Link 
+                to="/admin-dashboard" 
+                className="flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors"
+                title="Quản trị"
+              >
+                <Settings className="w-5 h-5" />
+                <span className="text-sm font-medium">Dashboard</span>
+              </Link>
+            )}
             <a href="https://www.facebook.com/profile.php?id=61581392236844" className="text-accent hover:text-accent/80 transition-colors">
               <Facebook className="w-5 h-5" />
             </a>
@@ -88,6 +102,17 @@ const Navbar = () => {
                 {item.name}
               </Link>
             ))}
+            {/* Dashboard link for admin on mobile */}
+            {isAdmin && (
+              <Link
+                to="/admin-dashboard"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-400 hover:text-orange-300 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Dashboard
+              </Link>
+            )}
             <div className="px-4 pt-2">
               <Button asChild className="w-full">
                 <Link to="/booking" onClick={() => setIsOpen(false)}>
