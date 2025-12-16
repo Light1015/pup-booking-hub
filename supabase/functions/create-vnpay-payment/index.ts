@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,9 +21,22 @@ function sortObject(obj: Record<string, string>): Record<string, string> {
   return sorted;
 }
 
-function formatDate(date: Date): string {
+function formatDateVN(date: Date): string {
+  // VNPay requires Vietnam timezone (GMT+7)
+  const vnDate = new Date(date.getTime() + 7 * 60 * 60 * 1000);
   const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+  return `${vnDate.getUTCFullYear()}${pad(vnDate.getUTCMonth() + 1)}${pad(vnDate.getUTCDate())}${pad(vnDate.getUTCHours())}${pad(vnDate.getUTCMinutes())}${pad(vnDate.getUTCSeconds())}`;
+}
+
+// Remove Vietnamese diacritics for VNPay compatibility
+function removeVietnameseTones(str: string): string {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^\w\s-]/g, "") // Remove special characters
+    .trim();
 }
 
 async function hmacSha512(key: string, data: string): Promise<string> {
@@ -75,10 +87,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Creating VNPay payment for booking ${bookingId}, amount: ${amount}`);
 
+    // Get client IP from request headers
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
+      || req.headers.get("x-real-ip") 
+      || "127.0.0.1";
+
     const date = new Date();
-    const createDate = formatDate(date);
-    const expireDate = formatDate(new Date(date.getTime() + 15 * 60 * 1000)); // 15 minutes
+    const createDate = formatDateVN(date);
+    const expireDate = formatDateVN(new Date(date.getTime() + 30 * 60 * 1000)); // 30 minutes
     const orderId = `${bookingId.slice(0, 8)}-${Date.now()}`;
+
+    // Remove Vietnamese diacritics for VNPay compatibility
+    const sanitizedOrderInfo = removeVietnameseTones(orderInfo || `Thanh toan dat lich ${bookingId}`);
 
     const vnpParams: Record<string, string> = {
       vnp_Version: "2.1.0",
@@ -87,11 +107,11 @@ const handler = async (req: Request): Promise<Response> => {
       vnp_Locale: "vn",
       vnp_CurrCode: "VND",
       vnp_TxnRef: orderId,
-      vnp_OrderInfo: orderInfo || `Thanh toan dat lich ${bookingId}`,
+      vnp_OrderInfo: sanitizedOrderInfo,
       vnp_OrderType: "other",
       vnp_Amount: (amount * 100).toString(), // VNPay requires amount in VND * 100
       vnp_ReturnUrl: returnUrl,
-      vnp_IpAddr: "127.0.0.1",
+      vnp_IpAddr: clientIp,
       vnp_CreateDate: createDate,
       vnp_ExpireDate: expireDate,
     };
