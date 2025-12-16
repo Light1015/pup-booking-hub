@@ -181,19 +181,26 @@ const Booking = () => {
       const selectedCategoryData = categories.find((c: any) => c.name === formData.selectedCategory);
       const categoryLabel = selectedCategoryData?.label || formData.selectedCategory;
 
-      // Insert booking first and get the manage_token
-      const { data: bookingData, error: bookingError } = await supabase.from("bookings").insert([{
-        name: formData.name,
-        phone: formData.phone,
-        email: formData.email,
-        pet_name: categoryLabel,
-        pet_type: formData.selectedCategory,
-        selected_category: formData.selectedCategory,
-        booking_date: format(selectedDate, "yyyy-MM-dd"),
-        booking_time: selectedTime,
-        notes: formData.notes,
-        status: paymentMethod === "vnpay" ? "pending_payment" : "pending",
-      }]).select("id, manage_token").single();
+      // Prepare IDs client-side to avoid SELECT after INSERT (RLS-safe)
+      const bookingId = crypto.randomUUID();
+      const manageToken = crypto.randomUUID();
+
+      const { error: bookingError } = await supabase.from("bookings").insert([
+        {
+          id: bookingId,
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          pet_name: categoryLabel,
+          pet_type: formData.selectedCategory,
+          selected_category: formData.selectedCategory,
+          booking_date: format(selectedDate, "yyyy-MM-dd"),
+          booking_time: selectedTime,
+          notes: formData.notes,
+          status: paymentMethod === "vnpay" ? "pending_payment" : "pending",
+          manage_token: manageToken,
+        },
+      ]);
 
       if (bookingError) throw bookingError;
 
@@ -204,7 +211,7 @@ const Booking = () => {
 
         const { data: paymentData, error: paymentError } = await supabase.functions.invoke("create-vnpay-payment", {
           body: {
-            bookingId: bookingData.id,
+            bookingId,
             amount: DEPOSIT_AMOUNT,
             orderInfo: `Dat coc chup anh ${categoryLabel}`,
             returnUrl: callbackUrl,
@@ -230,7 +237,7 @@ const Booking = () => {
       const adminEmail = config?.value || "admin@snappup.studio";
       
       // Generate manage booking URL
-      const manageUrl = `${window.location.origin}/manage-booking?token=${bookingData.manage_token}`;
+      const manageUrl = `${window.location.origin}/manage-booking?token=${manageToken}`;
 
       // Send email notification with full form data and manage link
       const { error: emailError } = await supabase.functions.invoke("send-booking-email", {
