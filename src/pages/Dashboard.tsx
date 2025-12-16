@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar, MessageSquare, Image, FolderOpen, Bell, Search, Download, FileText } from "lucide-react";
+import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar, MessageSquare, Image, FolderOpen, Bell, Search, Download, FileText, CreditCard, Clock, CheckCircle, XCircle, AlertCircle, Ban } from "lucide-react";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { AdminReplies } from "@/components/AdminReplies";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -52,6 +52,7 @@ const Dashboard = () => {
   const [newCategory, setNewCategory] = useState({ name: "", label: "", image_urls: [] as string[] });
   const [adminEmail, setAdminEmail] = useState("");
   const [bookingStatusFilter, setBookingStatusFilter] = useState<string>("all");
+  const [bookingPaymentFilter, setBookingPaymentFilter] = useState<string>("all");
   const [contactStatusFilter, setContactStatusFilter] = useState<string>("all");
   const [bookingSearch, setBookingSearch] = useState("");
   const [contactSearch, setContactSearch] = useState("");
@@ -210,6 +211,40 @@ const Dashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Đã xóa liên hệ");
+      setConfirmDialog(prev => ({ ...prev, open: false, isLoading: false }));
+    },
+    onError: (error: any) => {
+      toast.error("Lỗi: " + error.message);
+      setConfirmDialog(prev => ({ ...prev, isLoading: false }));
+    },
+  });
+
+  // Cancel booking mutation
+  const cancelBooking = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      toast.success("Đã hủy lịch đặt");
+      setConfirmDialog(prev => ({ ...prev, open: false, isLoading: false }));
+    },
+    onError: (error: any) => {
+      toast.error("Lỗi: " + error.message);
+      setConfirmDialog(prev => ({ ...prev, isLoading: false }));
+    },
+  });
+
+  // Confirm booking mutation
+  const confirmBookingStatus = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("bookings").update({ status: "confirmed" }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      toast.success("Đã xác nhận lịch đặt");
       setConfirmDialog(prev => ({ ...prev, open: false, isLoading: false }));
     },
     onError: (error: any) => {
@@ -877,6 +912,12 @@ const Dashboard = () => {
           if (bookingStatusFilter === 'read' && (!booking.read_at || booking.replied_at)) return false;
           if (bookingStatusFilter === 'replied' && !booking.replied_at) return false;
           
+          // Payment/Booking status filter
+          if (bookingPaymentFilter === 'pending_payment' && booking.status !== 'pending_payment') return false;
+          if (bookingPaymentFilter === 'pending' && booking.status !== 'pending') return false;
+          if (bookingPaymentFilter === 'confirmed' && booking.status !== 'confirmed') return false;
+          if (bookingPaymentFilter === 'cancelled' && booking.status !== 'cancelled') return false;
+          
           // Date filter
           if (bookingDateFilter !== 'all') {
             const bookingDate = new Date(booking.created_at);
@@ -962,6 +1003,18 @@ const Dashboard = () => {
                       <SelectItem value="replied">Đã phản hồi</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Select value={bookingPaymentFilter} onValueChange={setBookingPaymentFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Thanh toán" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả TT</SelectItem>
+                      <SelectItem value="pending_payment">Chờ thanh toán</SelectItem>
+                      <SelectItem value="pending">Chờ xác nhận</SelectItem>
+                      <SelectItem value="confirmed">Đã xác nhận</SelectItem>
+                      <SelectItem value="cancelled">Đã hủy</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Select value={bookingDateFilter} onValueChange={setBookingDateFilter}>
                     <SelectTrigger className="w-[150px]">
                       <SelectValue placeholder="Thời gian" />
@@ -987,12 +1040,33 @@ const Dashboard = () => {
                   <Card key={booking.id} className={!booking.read_at ? 'border-primary' : ''}>
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-start mb-4">
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          {/* Read status badges */}
                           {!booking.read_at && <Badge variant="default">Chưa đọc</Badge>}
                           {booking.read_at && !booking.replied_at && <Badge variant="secondary">Đã đọc</Badge>}
                           {booking.replied_at && <Badge variant="outline">Đã phản hồi</Badge>}
-                          {booking.status === 'confirmed' && <Badge className="bg-green-600">Đã xác nhận</Badge>}
-                          {booking.status === 'cancelled' && <Badge variant="destructive">Đã hủy</Badge>}
+                          
+                          {/* Payment/Booking status badges */}
+                          {booking.status === 'pending_payment' && (
+                            <Badge className="bg-orange-500 hover:bg-orange-600">
+                              <CreditCard className="w-3 h-3 mr-1" />Chờ thanh toán
+                            </Badge>
+                          )}
+                          {booking.status === 'pending' && (
+                            <Badge className="bg-yellow-500 hover:bg-yellow-600">
+                              <Clock className="w-3 h-3 mr-1" />Chờ xác nhận
+                            </Badge>
+                          )}
+                          {booking.status === 'confirmed' && (
+                            <Badge className="bg-green-600 hover:bg-green-700">
+                              <CheckCircle className="w-3 h-3 mr-1" />Đã xác nhận
+                            </Badge>
+                          )}
+                          {booking.status === 'cancelled' && (
+                            <Badge variant="destructive">
+                              <XCircle className="w-3 h-3 mr-1" />Đã hủy
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -1008,16 +1082,52 @@ const Dashboard = () => {
                         </div>
                       </div>
                       {booking.notes && <p className="mt-4"><strong>Ghi chú:</strong> {booking.notes}</p>}
-                      <div className="flex gap-2 mt-4">
+                      <div className="flex flex-wrap gap-2 mt-4">
                         {!booking.read_at && (
                           <Button size="sm" variant="outline" onClick={() => markAsRead.mutate({ type: 'booking', id: booking.id })}>
                             <Eye className="w-4 h-4 mr-2" />Đánh dấu đã đọc
                           </Button>
                         )}
-                        <Button size="sm" onClick={() => { setReplyData({ type: 'booking', data: booking, message: '' }); setReplyDialogOpen(true); }}>
+                        {/* Confirm booking button - only show for pending/pending_payment status */}
+                        {(booking.status === 'pending' || booking.status === 'pending_payment') && (
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => showConfirmDialog(
+                              "Xác nhận lịch đặt", 
+                              `Bạn có chắc chắn muốn xác nhận lịch đặt của ${booking.name} vào ngày ${new Date(booking.booking_date).toLocaleDateString('vi-VN')} lúc ${booking.booking_time}?`, 
+                              () => confirmBookingStatus.mutate(booking.id),
+                              "default"
+                            )}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />Xác nhận
+                          </Button>
+                        )}
+                        {/* Cancel booking button - only show for non-cancelled status */}
+                        {booking.status !== 'cancelled' && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                            onClick={() => showConfirmDialog(
+                              "Hủy lịch đặt", 
+                              `Bạn có chắc chắn muốn hủy lịch đặt của ${booking.name}? Hành động này không thể hoàn tác.`, 
+                              () => cancelBooking.mutate(booking.id),
+                              "destructive"
+                            )}
+                          >
+                            <Ban className="w-4 h-4 mr-2" />Hủy lịch
+                          </Button>
+                        )}
+                        <Button size="sm" onClick={() => showConfirmDialog(
+                          "Gửi email", 
+                          `Bạn có muốn gửi email cho ${booking.name} (${booking.email})?`, 
+                          () => { setReplyData({ type: 'booking', data: booking, message: '' }); setReplyDialogOpen(true); setConfirmDialog(prev => ({ ...prev, open: false })); },
+                          "default"
+                        )}>
                           <Mail className="w-4 h-4 mr-2" />Gửi mail
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => showConfirmDialog("Xóa lịch đặt", `Bạn có chắc muốn xóa lịch đặt của ${booking.name}?`, () => deleteBooking.mutate(booking.id), "destructive")}>
+                        <Button size="sm" variant="destructive" onClick={() => showConfirmDialog("Xóa lịch đặt", `Bạn có chắc muốn xóa vĩnh viễn lịch đặt của ${booking.name}? Hành động này không thể hoàn tác.`, () => deleteBooking.mutate(booking.id), "destructive")}>
                           <Trash2 className="w-4 h-4 mr-2" />Xóa
                         </Button>
                       </div>
