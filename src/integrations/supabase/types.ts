@@ -61,6 +61,7 @@ export type Database = {
           manage_token: string | null
           name: string
           notes: string | null
+          payment_proof_url: string | null
           pet_age: string | null
           pet_name: string
           pet_type: string
@@ -80,6 +81,7 @@ export type Database = {
           manage_token?: string | null
           name: string
           notes?: string | null
+          payment_proof_url?: string | null
           pet_age?: string | null
           pet_name: string
           pet_type: string
@@ -99,6 +101,7 @@ export type Database = {
           manage_token?: string | null
           name?: string
           notes?: string | null
+          payment_proof_url?: string | null
           pet_age?: string | null
           pet_name?: string
           pet_type?: string
