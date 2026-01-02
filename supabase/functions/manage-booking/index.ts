@@ -9,10 +9,12 @@ const corsHeaders = {
 };
 
 interface ManageBookingRequest {
-  token: string;
-  action: "get" | "cancel" | "reschedule";
+  token?: string;
+  action: "get" | "cancel" | "reschedule" | "update_payment_proof";
   newDate?: string;
   newTime?: string;
+  bookingId?: string;
+  paymentProofUrl?: string;
 }
 
 // Send notification email to admin
@@ -94,7 +96,36 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
     const adminEmail = configData?.value || "snappupstudio@gmail.com";
 
-    const { token, action, newDate, newTime }: ManageBookingRequest = await req.json();
+    const { token, action, newDate, newTime, bookingId, paymentProofUrl }: ManageBookingRequest = await req.json();
+
+    // Handle update_payment_proof action separately (no token required)
+    if (action === "update_payment_proof") {
+      if (!bookingId || !paymentProofUrl) {
+        return new Response(
+          JSON.stringify({ error: "Thiếu thông tin cần thiết" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      console.log(`Updating payment proof for booking ${bookingId}`);
+
+      const { error: updateError } = await supabase
+        .from("bookings")
+        .update({ payment_proof_url: paymentProofUrl })
+        .eq("id", bookingId);
+
+      if (updateError) {
+        console.error("Error updating payment proof:", updateError);
+        throw updateError;
+      }
+
+      console.log(`Payment proof updated successfully for booking ${bookingId}`);
+
+      return new Response(
+        JSON.stringify({ message: "Đã cập nhật ảnh xác nhận thanh toán" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     if (!token) {
       return new Response(

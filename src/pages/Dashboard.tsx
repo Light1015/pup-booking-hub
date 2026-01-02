@@ -60,6 +60,12 @@ const Dashboard = () => {
   const [contactDateFilter, setContactDateFilter] = useState<string>("all");
   const [reportPeriod, setReportPeriod] = useState<string>("month");
   
+  // Bank config states
+  const [bankAccountName, setBankAccountName] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [bankQrUrl, setBankQrUrl] = useState("");
+  
   // Album states
   const [newAlbum, setNewAlbum] = useState({ name: "", description: "", category_id: "", price: "", image_urls: [] as string[] });
   
@@ -83,18 +89,27 @@ const Dashboard = () => {
     isLoading: false,
   });
 
-  // Fetch admin email
+  // Fetch admin email and bank config
   const { data: siteConfig } = useQuery({
     queryKey: ["siteConfig"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("site_config")
-        .select("*")
-        .eq("key", "admin_email")
-        .single();
+        .select("*");
       if (error) throw error;
-      setAdminEmail(data.value);
-      return data;
+      
+      const configMap: Record<string, string> = {};
+      data?.forEach((item) => {
+        configMap[item.key] = item.value;
+      });
+      
+      setAdminEmail(configMap.admin_email || "");
+      setBankAccountName(configMap.bank_account_name || "");
+      setBankAccountNumber(configMap.bank_account_number || "");
+      setBankName(configMap.bank_name || "");
+      setBankQrUrl(configMap.bank_qr_url || "");
+      
+      return configMap;
     },
   });
 
@@ -110,6 +125,37 @@ const Dashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["siteConfig"] });
       toast.success("Đã cập nhật email admin!");
+    },
+    onError: (error: any) => {
+      toast.error("Lỗi: " + error.message);
+    },
+  });
+
+  // Update bank config
+  const updateBankConfig = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const { data: existing } = await supabase
+        .from("site_config")
+        .select("id")
+        .eq("key", key)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from("site_config")
+          .update({ value })
+          .eq("key", key);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("site_config")
+          .insert({ key, value });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["siteConfig"] });
+      toast.success("Đã cập nhật thông tin ngân hàng!");
     },
     onError: (error: any) => {
       toast.error("Lỗi: " + error.message);
@@ -1082,6 +1128,23 @@ const Dashboard = () => {
                         </div>
                       </div>
                       {booking.notes && <p className="mt-4"><strong>Ghi chú:</strong> {booking.notes}</p>}
+                      
+                      {/* Payment proof image */}
+                      {booking.payment_proof_url && (
+                        <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                          <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <CreditCard className="h-4 w-4" />
+                            Ảnh xác nhận chuyển khoản:
+                          </p>
+                          <a href={booking.payment_proof_url} target="_blank" rel="noopener noreferrer">
+                            <img 
+                              src={booking.payment_proof_url} 
+                              alt="Ảnh chuyển khoản" 
+                              className="max-h-40 rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
+                            />
+                          </a>
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-2 mt-4">
                         {!booking.read_at && (
                           <Button size="sm" variant="outline" onClick={() => markAsRead.mutate({ type: 'booking', id: booking.id })}>
@@ -1892,12 +1955,54 @@ const Dashboard = () => {
               <CardDescription>Cấu hình hệ thống</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div>
                   <Label>Email admin nhận thông báo</Label>
                   <div className="flex gap-4 mt-2">
                     <Input type="email" placeholder="admin@example.com" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} />
                     <Button onClick={() => updateAdminEmail.mutate(adminEmail)}>Lưu</Button>
+                  </div>
+                </div>
+
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Thông tin chuyển khoản
+                  </h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <Label>Tên chủ tài khoản</Label>
+                      <div className="flex gap-4 mt-2">
+                        <Input placeholder="SnapPup Studio" value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} />
+                        <Button onClick={() => updateBankConfig.mutate({ key: "bank_account_name", value: bankAccountName })}>Lưu</Button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Số tài khoản</Label>
+                      <div className="flex gap-4 mt-2">
+                        <Input placeholder="19031267227016" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} />
+                        <Button onClick={() => updateBankConfig.mutate({ key: "bank_account_number", value: bankAccountNumber })}>Lưu</Button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Tên ngân hàng</Label>
+                      <div className="flex gap-4 mt-2">
+                        <Input placeholder="Techcombank - Chi nhánh Phú Mỹ Hưng" value={bankName} onChange={(e) => setBankName(e.target.value)} />
+                        <Button onClick={() => updateBankConfig.mutate({ key: "bank_name", value: bankName })}>Lưu</Button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>URL mã QR chuyển khoản</Label>
+                      <div className="flex gap-4 mt-2">
+                        <Input placeholder="https://..." value={bankQrUrl} onChange={(e) => setBankQrUrl(e.target.value)} />
+                        <Button onClick={() => updateBankConfig.mutate({ key: "bank_qr_url", value: bankQrUrl })}>Lưu</Button>
+                      </div>
+                      {bankQrUrl && (
+                        <div className="mt-2">
+                          <img src={bankQrUrl} alt="QR Preview" className="max-h-32 rounded-lg border" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

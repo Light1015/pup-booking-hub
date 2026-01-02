@@ -1,9 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
-import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
-import { vi } from "date-fns/locale";
+import { useState, useMemo } from "react";
+import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -13,11 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Phone, Mail, MapPin, CreditCard, Clock, Circle, Wallet, CheckCircle, XCircle } from "lucide-react";
+import { Phone, Mail, MapPin, CreditCard, Clock, Circle } from "lucide-react";
 import LoadingDialog from "@/components/LoadingDialog";
+import { PaymentConfirmDialog } from "@/components/PaymentConfirmDialog";
 import { cn } from "@/lib/utils";
 
 // Validation schema
@@ -44,15 +42,12 @@ const timeSlots = [
 ];
 
 const TOTAL_SLOTS = timeSlots.length;
-const DEPOSIT_AMOUNT = 300000; // 300,000 VND
 
 const Booking = () => {
-  const [searchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [paymentMethod, setPaymentMethod] = useState<"bank" | "vnpay">("bank");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -60,22 +55,35 @@ const Booking = () => {
     selectedCategory: "",
     notes: "",
   });
+  
+  // Payment dialog state
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [currentBookingId, setCurrentBookingId] = useState("");
 
-  // Check for payment result from VNPay callback
-  useEffect(() => {
-    const paymentStatus = searchParams.get("payment");
-    const txn = searchParams.get("txn");
-    const code = searchParams.get("code");
-
-    if (paymentStatus === "success" && txn) {
-      toast.success(`Thanh toán thành công! Mã giao dịch: ${txn}`);
-      // Clear URL params
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (paymentStatus === "failed") {
-      toast.error(`Thanh toán thất bại. Mã lỗi: ${code || "Không xác định"}`);
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [searchParams]);
+  // Fetch bank config
+  const { data: bankConfig } = useQuery({
+    queryKey: ["bank-config"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("site_config")
+        .select("*")
+        .in("key", ["bank_account_name", "bank_account_number", "bank_name", "bank_qr_url"]);
+      
+      if (error) throw error;
+      
+      const config: Record<string, string> = {};
+      data?.forEach((item) => {
+        config[item.key] = item.value;
+      });
+      
+      return {
+        accountName: config.bank_account_name || "SnapPup Studio",
+        accountNumber: config.bank_account_number || "19031267227016",
+        bankName: config.bank_name || "Techcombank",
+        qrUrl: config.bank_qr_url || "",
+      };
+    },
+  });
 
   // Fetch categories for selection
   const { data: categories = [] } = useQuery({
@@ -197,35 +205,16 @@ const Booking = () => {
           booking_date: format(selectedDate, "yyyy-MM-dd"),
           booking_time: selectedTime,
           notes: formData.notes,
-          status: paymentMethod === "vnpay" ? "pending_payment" : "pending",
+          status: "pending",
           manage_token: manageToken,
         },
       ]);
 
       if (bookingError) throw bookingError;
 
-      // If VNPay payment selected, redirect to payment
-      if (paymentMethod === "vnpay") {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const callbackUrl = `${supabaseUrl}/functions/v1/vnpay-callback`;
-
-        const { data: paymentData, error: paymentError } = await supabase.functions.invoke("create-vnpay-payment", {
-          body: {
-            bookingId,
-            amount: DEPOSIT_AMOUNT,
-            orderInfo: `Dat coc chup anh ${categoryLabel}`,
-            returnUrl: callbackUrl,
-          },
-        });
-
-        if (paymentError || !paymentData?.paymentUrl) {
-          throw new Error(paymentError?.message || "Không thể tạo link thanh toán");
-        }
-
-        // Redirect to VNPay
-        window.location.href = paymentData.paymentUrl;
-        return;
-      }
+      // Store booking ID and show payment dialog
+      setCurrentBookingId(bookingId);
+      setPaymentDialogOpen(true);
 
       // Get admin email
       const { data: config } = await supabase
@@ -240,7 +229,7 @@ const Booking = () => {
       const manageUrl = `${window.location.origin}/manage-booking?token=${manageToken}`;
 
       // Send email notification with full form data and manage link
-      const { error: emailError } = await supabase.functions.invoke("send-booking-email", {
+      await supabase.functions.invoke("send-booking-email", {
         body: {
           customerName: formData.name,
           customerEmail: formData.email,
@@ -253,28 +242,25 @@ const Booking = () => {
           manageUrl: manageUrl,
         },
       });
-
-      if (emailError) {
-        console.error("Email error:", emailError);
-        toast.warning("Đặt lịch thành công nhưng không gửi được email thông báo");
-      } else {
-        toast.success("Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận.");
-      }
-    
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        selectedCategory: "",
-        notes: "",
-      });
-      setSelectedDate(undefined);
-      setSelectedTime("");
     } catch (error: any) {
       toast.error("Đặt lịch thất bại: " + error.message);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    toast.success("Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận.");
+    setFormData({
+      name: "",
+      phone: "",
+      email: "",
+      selectedCategory: "",
+      notes: "",
+    });
+    setSelectedDate(undefined);
+    setSelectedTime("");
+    setCurrentBookingId("");
   };
 
   return (
@@ -314,7 +300,7 @@ const Booking = () => {
                   </div>
                   <h3 className="font-semibold">Đặt cọc</h3>
                   <p className="text-sm text-muted-foreground">
-                    Chuyển khoản 300,000 VNĐ để giữ chỗ
+                    Chuyển khoản 300,000 VNĐ và upload ảnh xác nhận
                   </p>
                 </div>
                 <div className="text-center space-y-2">
@@ -487,45 +473,8 @@ const Booking = () => {
                       )}
                     </div>
 
-                    {/* Payment Method Selection */}
-                    <div className="space-y-3">
-                      <Label>Phương thức thanh toán đặt cọc *</Label>
-                      <RadioGroup
-                        value={paymentMethod}
-                        onValueChange={(value: "bank" | "vnpay") => setPaymentMethod(value)}
-                        className="space-y-3"
-                      >
-                        <div className={cn(
-                          "flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all",
-                          paymentMethod === "bank" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                        )}>
-                          <RadioGroupItem value="bank" id="bank" />
-                          <Label htmlFor="bank" className="flex items-center gap-2 cursor-pointer flex-1">
-                            <CreditCard className="h-5 w-5" />
-                            <div>
-                              <p className="font-medium">Chuyển khoản ngân hàng</p>
-                              <p className="text-xs text-muted-foreground">Chuyển khoản thủ công sau khi đặt lịch</p>
-                            </div>
-                          </Label>
-                        </div>
-                        <div className={cn(
-                          "flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all",
-                          paymentMethod === "vnpay" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                        )}>
-                          <RadioGroupItem value="vnpay" id="vnpay" />
-                          <Label htmlFor="vnpay" className="flex items-center gap-2 cursor-pointer flex-1">
-                            <Wallet className="h-5 w-5 text-blue-600" />
-                            <div>
-                              <p className="font-medium">Thanh toán VNPay</p>
-                              <p className="text-xs text-muted-foreground">Thanh toán online qua VNPay (ATM, Visa, QR)</p>
-                            </div>
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-
                     <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                      {isLoading ? "Đang xử lý..." : paymentMethod === "vnpay" ? "Tiến hành thanh toán" : "Đặt lịch"}
+                      {isLoading ? "Đang xử lý..." : "Đặt lịch"}
                     </Button>
                   </form>
                 </CardContent>
@@ -546,9 +495,9 @@ const Booking = () => {
                   <div className="bg-accent/20 p-4 rounded-lg space-y-3">
                     <h4 className="font-semibold">Chuyển khoản ngân hàng</h4>
                     <div className="space-y-1 text-sm">
-                      <p>Chủ tài khoản: <span className="font-semibold">SnapPup Studio</span></p>
-                      <p>STK: <span className="font-semibold">19031267227016</span></p>
-                      <p>Ngân hàng: <span className="font-semibold">Techcombank - Chi nhánh Phú Mỹ Hưng</span></p>
+                      <p>Chủ tài khoản: <span className="font-semibold">{bankConfig?.accountName}</span></p>
+                      <p>STK: <span className="font-semibold">{bankConfig?.accountNumber}</span></p>
+                      <p>Ngân hàng: <span className="font-semibold">{bankConfig?.bankName}</span></p>
                       <p className="text-destructive font-medium mt-2">
                         Nội dung: Số điện thoại_Tên khách hàng
                       </p>
@@ -612,6 +561,19 @@ const Booking = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Confirmation Dialog */}
+      {bankConfig && (
+        <PaymentConfirmDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          bookingId={currentBookingId}
+          customerPhone={formData.phone}
+          customerName={formData.name}
+          bankConfig={bankConfig}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
 
       <Footer />
     </div>
