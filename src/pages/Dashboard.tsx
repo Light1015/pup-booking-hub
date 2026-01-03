@@ -11,11 +11,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar, MessageSquare, Image, FolderOpen, Bell, Search, Download, FileText, CreditCard, Clock, CheckCircle, XCircle, AlertCircle, Ban } from "lucide-react";
+import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar, MessageSquare, Image, FolderOpen, Bell, Search, Download, FileText, CreditCard, Clock, CheckCircle, XCircle, AlertCircle, Ban, CalendarDays } from "lucide-react";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { AdminReplies } from "@/components/AdminReplies";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { AdminCalendarView } from "@/components/AdminCalendarView";
+import { AdminNotificationBell } from "@/components/AdminNotificationBell";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const Dashboard = () => {
@@ -947,6 +949,12 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Calendar View */}
+            <AdminCalendarView 
+              bookings={bookings}
+              onSelectBooking={(booking) => setDetailDialog({ open: true, type: 'booking', data: booking })}
+            />
           </div>
         );
 
@@ -2022,9 +2030,22 @@ const Dashboard = () => {
       <div className="flex-1">
         <header className="h-16 border-b flex items-center justify-between px-6">
           <h1 className="text-xl font-semibold">Admin Dashboard</h1>
-          <Button onClick={signOut} variant="outline">
-            <LogOut className="w-4 h-4 mr-2" />Đăng xuất
-          </Button>
+          <div className="flex items-center gap-4">
+            <AdminNotificationBell 
+              onNotificationClick={(notification) => {
+                if (notification.type === "booking" || notification.type === "payment") {
+                  setActiveTab("bookings");
+                  setDetailDialog({ open: true, type: "booking", data: notification.data });
+                } else if (notification.type === "contact") {
+                  setActiveTab("contacts");
+                  setDetailDialog({ open: true, type: "contact", data: notification.data });
+                }
+              }}
+            />
+            <Button onClick={signOut} variant="outline">
+              <LogOut className="w-4 h-4 mr-2" />Đăng xuất
+            </Button>
+          </div>
         </header>
         
         <main className="p-6">

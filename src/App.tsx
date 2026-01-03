@@ -16,6 +16,8 @@ import ServiceDetail from "./pages/ServiceDetail";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import ManageBooking from "./pages/ManageBooking";
+import BookingConfirmation from "./pages/BookingConfirmation";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -32,6 +34,7 @@ const App = () => (
             <Route path="/services" element={<Services />} />
             <Route path="/services/:id" element={<ServiceDetail />} />
             <Route path="/booking" element={<Booking />} />
+            <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             <Route path="/manage-booking" element={<ManageBooking />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />

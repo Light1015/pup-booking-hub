@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -13,10 +14,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Phone, Mail, MapPin, CreditCard, Clock, Circle } from "lucide-react";
+import { Phone, Mail, MapPin, CreditCard, Clock, Circle, Search, Calculator } from "lucide-react";
 import LoadingDialog from "@/components/LoadingDialog";
 import { PaymentConfirmDialog } from "@/components/PaymentConfirmDialog";
+import { BookingFAQ } from "@/components/BookingFAQ";
 import { cn } from "@/lib/utils";
+
+// Auto-fill storage key
+const CUSTOMER_STORAGE_KEY = "snappup_customer_info";
 
 // Validation schema
 const bookingSchema = z.object({
@@ -60,6 +65,40 @@ const Booking = () => {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [currentBookingId, setCurrentBookingId] = useState("");
 
+  // Load saved customer info
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CUSTOMER_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setFormData((prev) => ({
+          ...prev,
+          name: parsed.name || "",
+          phone: parsed.phone || "",
+          email: parsed.email || "",
+        }));
+      }
+    } catch (error) {
+      console.error("Error loading saved customer info:", error);
+    }
+  }, []);
+
+  // Save customer info when form changes
+  const saveCustomerInfo = () => {
+    try {
+      localStorage.setItem(
+        CUSTOMER_STORAGE_KEY,
+        JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+        })
+      );
+    } catch (error) {
+      console.error("Error saving customer info:", error);
+    }
+  };
+
   // Fetch bank config
   const { data: bankConfig } = useQuery({
     queryKey: ["bank-config"],
@@ -94,6 +133,48 @@ const Booking = () => {
       return data;
     },
   });
+
+  // Fetch albums with prices for estimated price display
+  const { data: albums = [] } = useQuery({
+    queryKey: ["albums-prices"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("photo_albums")
+        .select("category_id, price, name")
+        .not("price", "is", null);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Calculate estimated price based on selected category
+  const estimatedPrice = useMemo(() => {
+    if (!formData.selectedCategory) return null;
+    
+    const category = categories.find((c: any) => c.name === formData.selectedCategory);
+    if (!category) return null;
+
+    const categoryAlbums = albums.filter((a: any) => a.category_id === category.id);
+    if (categoryAlbums.length === 0) return { min: 300000, max: 500000 }; // Default range
+
+    const prices = categoryAlbums
+      .map((a: any) => {
+        // Parse price string like "400K" to number
+        const priceStr = a.price?.toLowerCase().replace(/[^0-9k]/g, "") || "0";
+        if (priceStr.includes("k")) {
+          return parseInt(priceStr.replace("k", "")) * 1000;
+        }
+        return parseInt(priceStr) || 0;
+      })
+      .filter((p: number) => p > 0);
+
+    if (prices.length === 0) return { min: 300000, max: 500000 };
+
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
+  }, [formData.selectedCategory, categories, albums]);
 
   // Fetch all bookings for the current month view (for calendar status)
   const { data: monthlyBookings = [] } = useQuery({
@@ -250,6 +331,9 @@ const Booking = () => {
   };
 
   const handlePaymentSuccess = () => {
+    // Save customer info for auto-fill next time
+    saveCustomerInfo();
+    
     toast.success("Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận.");
     setFormData({
       name: "",
@@ -261,6 +345,10 @@ const Booking = () => {
     setSelectedDate(undefined);
     setSelectedTime("");
     setCurrentBookingId("");
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("vi-VN").format(price) + " VNĐ";
   };
 
   return (
@@ -381,6 +469,21 @@ const Booking = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      
+                      {/* Estimated Price Display */}
+                      {estimatedPrice && (
+                        <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg text-sm">
+                          <Calculator className="h-4 w-4 text-primary" />
+                          <div>
+                            <span className="text-muted-foreground">Giá ước tính: </span>
+                            <span className="font-semibold text-primary">
+                              {estimatedPrice.min === estimatedPrice.max
+                                ? formatPrice(estimatedPrice.min)
+                                : `${formatPrice(estimatedPrice.min)} - ${formatPrice(estimatedPrice.max)}`}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -557,7 +660,29 @@ const Booking = () => {
                   </ul>
                 </CardContent>
               </Card>
+
+              {/* Lookup Link */}
+              <Card className="bg-muted/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Search className="h-4 w-4" />
+                      <span>Đã đặt lịch? Tra cứu trạng thái</span>
+                    </div>
+                    <Link to="/booking/confirmation">
+                      <Button variant="outline" size="sm">
+                        Tra cứu
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
+
+          {/* FAQ Section */}
+          <div className="mt-12">
+            <BookingFAQ />
           </div>
         </div>
       </div>
