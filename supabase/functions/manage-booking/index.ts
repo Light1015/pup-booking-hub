@@ -10,11 +10,13 @@ const corsHeaders = {
 
 interface ManageBookingRequest {
   token?: string;
-  action: "get" | "cancel" | "reschedule" | "update_payment_proof";
+  action: "get" | "cancel" | "reschedule" | "update_payment_proof" | "lookup";
   newDate?: string;
   newTime?: string;
   bookingId?: string;
   paymentProofUrl?: string;
+  phone?: string;
+  email?: string;
 }
 
 // Send notification email to admin
@@ -96,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
     const adminEmail = configData?.value || "snappupstudio@gmail.com";
 
-    const { token, action, newDate, newTime, bookingId, paymentProofUrl }: ManageBookingRequest = await req.json();
+    const { token, action, newDate, newTime, bookingId, paymentProofUrl, phone, email }: ManageBookingRequest = await req.json();
 
     // Handle update_payment_proof action separately (no token required)
     if (action === "update_payment_proof") {
@@ -123,6 +125,45 @@ const handler = async (req: Request): Promise<Response> => {
 
       return new Response(
         JSON.stringify({ message: "Đã cập nhật ảnh xác nhận thanh toán" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Handle lookup action (search by phone/email)
+    if (action === "lookup") {
+      if (!phone && !email) {
+        return new Response(
+          JSON.stringify({ error: "Vui lòng nhập số điện thoại hoặc email" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      console.log(`Looking up bookings for phone: ${phone}, email: ${email}`);
+
+      let query = supabase
+        .from("bookings")
+        .select("id, name, phone, email, booking_date, booking_time, pet_name, status, payment_proof_url, created_at")
+        .order("booking_date", { ascending: false });
+
+      if (phone && email) {
+        query = query.or(`phone.eq.${phone},email.eq.${email}`);
+      } else if (phone) {
+        query = query.eq("phone", phone);
+      } else if (email) {
+        query = query.eq("email", email);
+      }
+
+      const { data: bookings, error: lookupError } = await query.limit(20);
+
+      if (lookupError) {
+        console.error("Error looking up bookings:", lookupError);
+        throw lookupError;
+      }
+
+      console.log(`Found ${bookings?.length || 0} bookings`);
+
+      return new Response(
+        JSON.stringify({ bookings: bookings || [] }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -180,6 +221,7 @@ const handler = async (req: Request): Promise<Response> => {
               selected_category: booking.selected_category,
               notes: booking.notes,
               status: booking.status,
+              payment_proof_url: booking.payment_proof_url,
               created_at: booking.created_at,
             }
           }),
