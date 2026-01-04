@@ -113,43 +113,67 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { token, action, newDate, newTime, bookingId, paymentProofUrl, phone, email }: ManageBookingRequest = await req.json();
 
-    // Handle update_payment_proof action - requires token for security
+    // Handle update_payment_proof action - accepts either token or bookingId
     if (action === "update_payment_proof") {
-      if (!token || !paymentProofUrl) {
+      if ((!token && !bookingId) || !paymentProofUrl) {
         return new Response(
           JSON.stringify({ error: "Thiếu thông tin cần thiết" }),
           { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
 
-      console.log(`Updating payment proof for booking with token ${token.substring(0, 8)}...`);
+      let targetBookingId: string;
 
-      // Find booking by token first
-      const { data: tokenBooking, error: tokenError } = await supabase
-        .from("bookings")
-        .select("id")
-        .eq("manage_token", token)
-        .maybeSingle();
+      // If token is provided, find booking by token
+      if (token) {
+        console.log(`Updating payment proof for booking with token ${token.substring(0, 8)}...`);
 
-      if (tokenError || !tokenBooking) {
-        console.error("Booking not found for payment proof update:", tokenError);
-        return new Response(
-          JSON.stringify({ error: "Không tìm thấy lịch đặt" }),
-          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
+        const { data: tokenBooking, error: tokenError } = await supabase
+          .from("bookings")
+          .select("id")
+          .eq("manage_token", token)
+          .maybeSingle();
+
+        if (tokenError || !tokenBooking) {
+          console.error("Booking not found for payment proof update:", tokenError);
+          return new Response(
+            JSON.stringify({ error: "Không tìm thấy lịch đặt" }),
+            { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+        targetBookingId = tokenBooking.id;
+      } else {
+        // Use bookingId directly (for new bookings that don't have token yet)
+        console.log(`Updating payment proof for booking with id ${bookingId}...`);
+        targetBookingId = bookingId!;
+
+        // Verify booking exists
+        const { data: existingBooking, error: checkError } = await supabase
+          .from("bookings")
+          .select("id")
+          .eq("id", targetBookingId)
+          .maybeSingle();
+
+        if (checkError || !existingBooking) {
+          console.error("Booking not found for payment proof update:", checkError);
+          return new Response(
+            JSON.stringify({ error: "Không tìm thấy lịch đặt" }),
+            { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
       }
 
       const { error: updateError } = await supabase
         .from("bookings")
         .update({ payment_proof_url: paymentProofUrl })
-        .eq("id", tokenBooking.id);
+        .eq("id", targetBookingId);
 
       if (updateError) {
         console.error("Error updating payment proof:", updateError);
         throw updateError;
       }
 
-      console.log(`Payment proof updated successfully for booking ${tokenBooking.id}`);
+      console.log(`Payment proof updated successfully for booking ${targetBookingId}`);
 
       return new Response(
         JSON.stringify({ message: "Đã cập nhật ảnh xác nhận thanh toán" }),
