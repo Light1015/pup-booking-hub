@@ -17,6 +17,19 @@ interface ReplyEmailRequest {
   message: string;
 }
 
+// HTML escape function to prevent XSS in email content
+const escapeHtml = (text: string): string => {
+  if (!text) return '';
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+};
+
 // Validation helper functions
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -116,13 +129,13 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
       to: [customerEmail],
-      subject: subject,
+      subject: escapeHtml(subject),
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">${subject}</h2>
-          <p>Xin chào ${customerName},</p>
+          <h2 style="color: #333;">${escapeHtml(subject)}</h2>
+          <p>Xin chào ${escapeHtml(customerName)},</p>
           <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="white-space: pre-wrap;">${message}</p>
+            <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
           </div>
           <p>Trân trọng,<br>SnapPup Studio Team</p>
           <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">

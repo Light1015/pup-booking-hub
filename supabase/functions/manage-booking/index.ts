@@ -8,6 +8,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// HTML escape function to prevent XSS in email content
+const escapeHtml = (text: string | null | undefined): string => {
+  if (!text) return '';
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return String(text).replace(/[&<>"']/g, m => map[m]);
+};
+
 interface ManageBookingRequest {
   token?: string;
   action: "get" | "cancel" | "reschedule" | "update_payment_proof" | "lookup";
@@ -29,22 +42,22 @@ async function sendAdminNotification(
   newTime?: string
 ) {
   const actionText = action === "cancel" ? "HỦY LỊCH" : "DỜI LỊCH";
-  const subject = `[SNAPPUP] Khách hàng ${actionText} - ${booking.name}`;
+  const subject = `[SNAPPUP] Khách hàng ${actionText} - ${escapeHtml(booking.name)}`;
   
   let html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #f97316;">🐾 Thông báo ${actionText}</h2>
-      <p>Khách hàng <strong>${booking.name}</strong> đã ${action === "cancel" ? "hủy" : "dời"} lịch chụp ảnh.</p>
+      <p>Khách hàng <strong>${escapeHtml(booking.name)}</strong> đã ${action === "cancel" ? "hủy" : "dời"} lịch chụp ảnh.</p>
       
       <h3>Thông tin lịch hẹn ban đầu:</h3>
       <ul>
-        <li><strong>Khách hàng:</strong> ${booking.name}</li>
-        <li><strong>Email:</strong> ${booking.email}</li>
-        <li><strong>Điện thoại:</strong> ${booking.phone}</li>
-        <li><strong>Ngày:</strong> ${booking.booking_date}</li>
-        <li><strong>Giờ:</strong> ${booking.booking_time}</li>
-        <li><strong>Thú cưng:</strong> ${booking.pet_name}</li>
-        <li><strong>Gói chụp:</strong> ${booking.selected_category || "Chưa chọn"}</li>
+        <li><strong>Khách hàng:</strong> ${escapeHtml(booking.name)}</li>
+        <li><strong>Email:</strong> ${escapeHtml(booking.email)}</li>
+        <li><strong>Điện thoại:</strong> ${escapeHtml(booking.phone)}</li>
+        <li><strong>Ngày:</strong> ${escapeHtml(booking.booking_date)}</li>
+        <li><strong>Giờ:</strong> ${escapeHtml(booking.booking_time)}</li>
+        <li><strong>Thú cưng:</strong> ${escapeHtml(booking.pet_name)}</li>
+        <li><strong>Gói chụp:</strong> ${escapeHtml(booking.selected_category) || "Chưa chọn"}</li>
       </ul>
   `;
   
@@ -52,8 +65,8 @@ async function sendAdminNotification(
     html += `
       <h3 style="color: #22c55e;">Lịch hẹn mới:</h3>
       <ul>
-        <li><strong>Ngày mới:</strong> ${newDate}</li>
-        <li><strong>Giờ mới:</strong> ${newTime}</li>
+        <li><strong>Ngày mới:</strong> ${escapeHtml(newDate)}</li>
+        <li><strong>Giờ mới:</strong> ${escapeHtml(newTime)}</li>
       </ul>
       <p style="color: #f59e0b;"><em>Vui lòng xác nhận lịch hẹn mới trong hệ thống quản trị.</em></p>
     `;

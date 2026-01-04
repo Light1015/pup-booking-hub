@@ -17,6 +17,19 @@ interface ContactEmailRequest {
   adminEmail: string;
 }
 
+// HTML escape function to prevent XSS in email content
+const escapeHtml = (text: string): string => {
+  if (!text) return '';
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+};
+
 // Validation helper functions
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -91,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
       to: [adminEmail],
-      subject: `📬 Liên hệ mới: ${name}`,
+      subject: `📬 Liên hệ mới: ${escapeHtml(name)}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           <div style="background-color: #8b5cf6; padding: 20px; text-align: center;">
@@ -106,18 +119,18 @@ const handler = async (req: Request): Promise<Response> => {
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; width: 140px; border-bottom: 1px solid #e5e7eb;">Họ và tên:</td>
-                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${name}</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${escapeHtml(name)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Email:</td>
                   <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">
-                    <a href="mailto:${email}" style="color: #3b82f6;">${email}</a>
+                    <a href="mailto:${escapeHtml(email)}" style="color: #3b82f6;">${escapeHtml(email)}</a>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Số điện thoại:</td>
                   <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">
-                    <a href="tel:${phone}" style="color: #3b82f6;">${phone}</a>
+                    <a href="tel:${escapeHtml(phone)}" style="color: #3b82f6;">${escapeHtml(phone)}</a>
                   </td>
                 </tr>
                 <tr>
@@ -129,11 +142,11 @@ const handler = async (req: Request): Promise<Response> => {
 
             <div style="background-color: #fef3c7; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #f59e0b;">
               <h3 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">💬 Nội dung tin nhắn</h3>
-              <p style="color: #1f2937; white-space: pre-wrap; line-height: 1.6; margin: 0;">${message}</p>
+              <p style="color: #1f2937; white-space: pre-wrap; line-height: 1.6; margin: 0;">${escapeHtml(message)}</p>
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="mailto:${email}" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600;">Trả lời email</a>
+              <a href="mailto:${escapeHtml(email)}" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600;">Trả lời email</a>
             </div>
           </div>
           

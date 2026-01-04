@@ -21,6 +21,19 @@ interface EmailRequest {
   manageUrl?: string;
 }
 
+// HTML escape function to prevent XSS in email content
+const escapeHtml = (text: string): string => {
+  if (!text) return '';
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+};
+
 // Validation helper functions
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -142,7 +155,7 @@ const handler = async (req: Request): Promise<Response> => {
           <div style="padding: 30px;">
             <h2 style="color: #1f2937; margin-bottom: 20px;">Xác nhận đặt lịch chụp ảnh</h2>
             
-            <p style="color: #4b5563; font-size: 16px;">Xin chào <strong>${customerName}</strong>,</p>
+            <p style="color: #4b5563; font-size: 16px;">Xin chào <strong>${escapeHtml(customerName)}</strong>,</p>
             <p style="color: #4b5563; font-size: 16px;">Cảm ơn bạn đã đặt lịch chụp ảnh tại SnapPup Studio. Chúng tôi đã nhận được yêu cầu của bạn với thông tin chi tiết như sau:</p>
             
             <div style="background-color: #f3f4f6; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #3b82f6;">
@@ -150,19 +163,19 @@ const handler = async (req: Request): Promise<Response> => {
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 8px 0; color: #6b7280; width: 140px;">Họ và tên:</td>
-                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${customerName}</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(customerName)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #6b7280;">Email:</td>
-                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${customerEmail}</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(customerEmail)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #6b7280;">Số điện thoại:</td>
-                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${customerPhone}</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(customerPhone)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #6b7280;">Hạng mục chụp:</td>
-                  <td style="padding: 8px 0; color: #3b82f6; font-weight: 600;">${categoryName}</td>
+                  <td style="padding: 8px 0; color: #3b82f6; font-weight: 600;">${escapeHtml(categoryName)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #6b7280;">Ngày chụp:</td>
@@ -170,12 +183,12 @@ const handler = async (req: Request): Promise<Response> => {
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #6b7280;">Giờ chụp:</td>
-                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${time}</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(time)}</td>
                 </tr>
                 ${notes ? `
                 <tr>
                   <td style="padding: 8px 0; color: #6b7280; vertical-align: top;">Ghi chú:</td>
-                  <td style="padding: 8px 0; color: #1f2937;">${notes}</td>
+                  <td style="padding: 8px 0; color: #1f2937;">${escapeHtml(notes)}</td>
                 </tr>
                 ` : ''}
               </table>
@@ -239,18 +252,18 @@ const handler = async (req: Request): Promise<Response> => {
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; width: 140px; border-bottom: 1px solid #e5e7eb;">Họ và tên:</td>
-                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${customerName}</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${escapeHtml(customerName)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Email:</td>
                   <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">
-                    <a href="mailto:${customerEmail}" style="color: #3b82f6;">${customerEmail}</a>
+                    <a href="mailto:${escapeHtml(customerEmail)}" style="color: #3b82f6;">${escapeHtml(customerEmail)}</a>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Số điện thoại:</td>
                   <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #e5e7eb;">
-                    <a href="tel:${customerPhone}" style="color: #3b82f6;">${customerPhone}</a>
+                    <a href="tel:${escapeHtml(customerPhone)}" style="color: #3b82f6;">${escapeHtml(customerPhone)}</a>
                   </td>
                 </tr>
               </table>
@@ -261,7 +274,7 @@ const handler = async (req: Request): Promise<Response> => {
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; width: 140px; border-bottom: 1px solid #dbeafe;">Hạng mục:</td>
-                  <td style="padding: 10px 0; color: #3b82f6; font-weight: 700; font-size: 18px; border-bottom: 1px solid #dbeafe;">${categoryName}</td>
+                  <td style="padding: 10px 0; color: #3b82f6; font-weight: 700; font-size: 18px; border-bottom: 1px solid #dbeafe;">${escapeHtml(categoryName)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #dbeafe;">Ngày chụp:</td>
@@ -269,12 +282,12 @@ const handler = async (req: Request): Promise<Response> => {
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; border-bottom: 1px solid #dbeafe;">Giờ chụp:</td>
-                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #dbeafe;">${time}</td>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: 600; border-bottom: 1px solid #dbeafe;">${escapeHtml(time)}</td>
                 </tr>
                 ${notes ? `
                 <tr>
                   <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Ghi chú:</td>
-                  <td style="padding: 10px 0; color: #1f2937; background-color: #fef9c3; padding: 10px; border-radius: 6px;">${notes}</td>
+                  <td style="padding: 10px 0; color: #1f2937; background-color: #fef9c3; padding: 10px; border-radius: 6px;">${escapeHtml(notes)}</td>
                 </tr>
                 ` : ''}
               </table>
