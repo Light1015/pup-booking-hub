@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Heart, X, ChevronLeft, ChevronRight, Image as ImageIcon, FolderOpen } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, Image as ImageIcon, FolderOpen, Filter, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 
 interface Album {
   id: string;
@@ -27,8 +28,17 @@ interface Category {
   image_urls: string[] | null;
 }
 
+interface AlbumLike {
+  album_id: string;
+  like_count: number;
+}
+
+type SortOption = "newest" | "oldest" | "most_liked" | "name_asc" | "name_desc";
+
 const Gallery = () => {
+  const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [likedAlbums, setLikedAlbums] = useState<Set<string>>(() => {
@@ -54,25 +64,82 @@ const Gallery = () => {
     },
   });
 
+  // Fetch like counts for all albums
+  const { data: albumLikes = [] } = useQuery({
+    queryKey: ["album-likes"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("album_likes").select("album_id, like_count");
+      if (error) throw error;
+      return data as AlbumLike[];
+    },
+  });
+
+  // Create a map of album_id to like_count
+  const likeCounts: Record<string, number> = {};
+  albumLikes.forEach((like) => {
+    likeCounts[like.album_id] = like.like_count;
+  });
+
+  // Toggle like mutation
+  const toggleLikeMutation = useMutation({
+    mutationFn: async ({ albumId, increment }: { albumId: string; increment: boolean }) => {
+      const { data, error } = await supabase.rpc("toggle_album_like", {
+        p_album_id: albumId,
+        p_increment: increment,
+      });
+      if (error) throw error;
+      return { albumId, newCount: data as number };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["album-likes"] });
+    },
+  });
+
   // Filter albums by category
   const filteredAlbums = activeFilter === "all" 
     ? albums 
+    : activeFilter === "liked"
+    ? albums.filter((album) => likedAlbums.has(album.id))
     : albums.filter((album) => {
         const category = categories.find(c => c.id === album.category_id);
         return category?.name === activeFilter;
       });
 
+  // Sort albums
+  const sortedAlbums = [...filteredAlbums].sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return 0; // Already sorted by created_at desc
+      case "oldest":
+        return -1; // Reverse order
+      case "most_liked":
+        return (likeCounts[b.id] || 0) - (likeCounts[a.id] || 0);
+      case "name_asc":
+        return a.name.localeCompare(b.name);
+      case "name_desc":
+        return b.name.localeCompare(a.name);
+      default:
+        return 0;
+    }
+  });
+
   // Toggle like for an album
   const toggleLike = (albumId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const isCurrentlyLiked = likedAlbums.has(albumId);
     const newLiked = new Set(likedAlbums);
-    if (newLiked.has(albumId)) {
+    
+    if (isCurrentlyLiked) {
       newLiked.delete(albumId);
     } else {
       newLiked.add(albumId);
     }
+    
     setLikedAlbums(newLiked);
     localStorage.setItem("snappup_liked_albums", JSON.stringify([...newLiked]));
+    
+    // Update server-side count
+    toggleLikeMutation.mutate({ albumId, increment: !isCurrentlyLiked });
   };
 
   // Open album detail
@@ -115,6 +182,22 @@ const Gallery = () => {
     return "/placeholder.svg";
   };
 
+  // Format like count
+  const formatLikeCount = (count: number) => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}k`;
+    }
+    return count.toString();
+  };
+
+  const sortOptions: { value: SortOption; label: string }[] = [
+    { value: "newest", label: "Mới nhất" },
+    { value: "oldest", label: "Cũ nhất" },
+    { value: "most_liked", label: "Nhiều tim nhất" },
+    { value: "name_asc", label: "Tên A-Z" },
+    { value: "name_desc", label: "Tên Z-A" },
+  ];
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -128,38 +211,80 @@ const Gallery = () => {
           </p>
         </div>
 
-        {/* Category Filters */}
-        <div className="flex flex-wrap justify-center gap-3 mb-12">
-          <Button
-            variant={activeFilter === "all" ? "default" : "outline"}
-            onClick={() => setActiveFilter("all")}
-          >
-            <FolderOpen className="h-4 w-4 mr-2" />
-            Tất cả
-          </Button>
-          {categories.map((filter) => (
+        {/* Filters and Sort */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          {/* Category Filters */}
+          <div className="flex flex-wrap gap-2">
             <Button
-              key={filter.name}
-              variant={activeFilter === filter.name ? "default" : "outline"}
-              onClick={() => setActiveFilter(filter.name)}
+              size="sm"
+              variant={activeFilter === "all" ? "default" : "outline"}
+              onClick={() => setActiveFilter("all")}
             >
-              {filter.label}
+              <FolderOpen className="h-4 w-4 mr-2" />
+              Tất cả
             </Button>
-          ))}
+            {categories.map((filter) => (
+              <Button
+                key={filter.name}
+                size="sm"
+                variant={activeFilter === filter.name ? "default" : "outline"}
+                onClick={() => setActiveFilter(filter.name)}
+              >
+                {filter.label}
+              </Button>
+            ))}
+            <Button
+              size="sm"
+              variant={activeFilter === "liked" ? "default" : "outline"}
+              onClick={() => setActiveFilter("liked")}
+              className={activeFilter === "liked" ? "bg-red-500 hover:bg-red-600" : ""}
+            >
+              <Heart className={cn("h-4 w-4 mr-2", activeFilter === "liked" && "fill-current")} />
+              Đã thích ({likedAlbums.size})
+            </Button>
+          </div>
+
+          {/* Sort Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                Sắp xếp
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Sắp xếp theo</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {sortOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => setSortBy(option.value)}
+                  className={sortBy === option.value ? "bg-accent" : ""}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Albums Grid - Instagram-like layout */}
-        {filteredAlbums.length === 0 ? (
+        {sortedAlbums.length === 0 ? (
           <div className="text-center py-20">
             <ImageIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-            <p className="text-muted-foreground">Chưa có album nào trong danh mục này</p>
+            <p className="text-muted-foreground">
+              {activeFilter === "liked" 
+                ? "Bạn chưa thích album nào" 
+                : "Chưa có album nào trong danh mục này"}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredAlbums.map((album) => {
+            {sortedAlbums.map((album) => {
               const isLiked = likedAlbums.has(album.id);
               const imageCount = album.image_urls?.length || 0;
               const categoryLabel = getCategoryLabel(album.category_id);
+              const likeCount = likeCounts[album.id] || 0;
               
               return (
                 <Card 
@@ -205,7 +330,7 @@ const Gallery = () => {
                       <button
                         onClick={(e) => toggleLike(album.id, e)}
                         className={cn(
-                          "absolute bottom-3 right-3 p-2 rounded-full transition-all duration-200",
+                          "absolute bottom-3 right-3 p-2 rounded-full transition-all duration-200 flex items-center gap-1",
                           isLiked 
                             ? "bg-red-500 text-white scale-110" 
                             : "bg-white/90 text-gray-600 hover:bg-white opacity-0 group-hover:opacity-100"
@@ -224,6 +349,7 @@ const Gallery = () => {
                         )}
                         <div className="flex items-center gap-1 text-muted-foreground text-sm">
                           <Heart className={cn("h-4 w-4", isLiked && "fill-red-500 text-red-500")} />
+                          <span>{formatLikeCount(likeCount)}</span>
                         </div>
                       </div>
                     </div>
@@ -237,7 +363,7 @@ const Gallery = () => {
         {/* Stats */}
         <div className="text-center mt-12">
           <p className="text-muted-foreground">
-            Hiển thị {filteredAlbums.length} album
+            Hiển thị {sortedAlbums.length} album
             {likedAlbums.size > 0 && ` • ${likedAlbums.size} album đã thích`}
           </p>
         </div>
@@ -301,6 +427,12 @@ const Gallery = () => {
                     <Badge className="mb-2">{getCategoryLabel(selectedAlbum.category_id)}</Badge>
                   )}
                   
+                  {/* Like count display */}
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Heart className={cn("h-5 w-5", likedAlbums.has(selectedAlbum.id) && "fill-red-500 text-red-500")} />
+                    <span>{formatLikeCount(likeCounts[selectedAlbum.id] || 0)} lượt thích</span>
+                  </div>
+                  
                   {/* Price */}
                   {selectedAlbum.price && (
                     <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
@@ -349,7 +481,7 @@ const Gallery = () => {
                   {/* Like button */}
                   <Button
                     variant={likedAlbums.has(selectedAlbum.id) ? "default" : "outline"}
-                    className="w-full"
+                    className={cn("w-full", likedAlbums.has(selectedAlbum.id) && "bg-red-500 hover:bg-red-600")}
                     onClick={(e) => toggleLike(selectedAlbum.id, e)}
                   >
                     <Heart className={cn(

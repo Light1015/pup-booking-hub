@@ -113,28 +113,43 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { token, action, newDate, newTime, bookingId, paymentProofUrl, phone, email }: ManageBookingRequest = await req.json();
 
-    // Handle update_payment_proof action separately (no token required)
+    // Handle update_payment_proof action - requires token for security
     if (action === "update_payment_proof") {
-      if (!bookingId || !paymentProofUrl) {
+      if (!token || !paymentProofUrl) {
         return new Response(
           JSON.stringify({ error: "Thiếu thông tin cần thiết" }),
           { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
 
-      console.log(`Updating payment proof for booking ${bookingId}`);
+      console.log(`Updating payment proof for booking with token ${token.substring(0, 8)}...`);
+
+      // Find booking by token first
+      const { data: tokenBooking, error: tokenError } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("manage_token", token)
+        .maybeSingle();
+
+      if (tokenError || !tokenBooking) {
+        console.error("Booking not found for payment proof update:", tokenError);
+        return new Response(
+          JSON.stringify({ error: "Không tìm thấy lịch đặt" }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
 
       const { error: updateError } = await supabase
         .from("bookings")
         .update({ payment_proof_url: paymentProofUrl })
-        .eq("id", bookingId);
+        .eq("id", tokenBooking.id);
 
       if (updateError) {
         console.error("Error updating payment proof:", updateError);
         throw updateError;
       }
 
-      console.log(`Payment proof updated successfully for booking ${bookingId}`);
+      console.log(`Payment proof updated successfully for booking ${tokenBooking.id}`);
 
       return new Response(
         JSON.stringify({ message: "Đã cập nhật ảnh xác nhận thanh toán" }),
