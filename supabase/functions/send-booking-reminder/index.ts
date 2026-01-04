@@ -10,6 +10,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// HTML escape function to prevent XSS in email content
+const escapeHtml = (text: string | null | undefined): string => {
+  if (!text) return '';
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return String(text).replace(/[&<>"']/g, m => map[m]);
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -77,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
                   🐾 Nhắc lịch chụp ảnh
                 </h1>
                 
-                <p style="font-size: 16px; color: #555;">Xin chào <strong>${booking.name}</strong>,</p>
+                <p style="font-size: 16px; color: #555;">Xin chào <strong>${escapeHtml(booking.name)}</strong>,</p>
                 
                 <p style="font-size: 16px; color: #555;">
                   Đây là email nhắc nhở về buổi chụp ảnh của bạn tại <strong>SnapPup Studio</strong> vào ngày mai.
@@ -90,12 +103,12 @@ const handler = async (req: Request): Promise<Response> => {
                       <strong>Ngày:</strong> ${formattedDate}
                     </li>
                     <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">
-                      <strong>Giờ:</strong> ${booking.booking_time}
+                      <strong>Giờ:</strong> ${escapeHtml(booking.booking_time)}
                     </li>
                     <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">
-                      <strong>Hạng mục:</strong> ${booking.pet_name || booking.selected_category}
+                      <strong>Hạng mục:</strong> ${escapeHtml(booking.pet_name || booking.selected_category)}
                     </li>
-                    ${booking.notes ? `<li style="padding: 8px 0;"><strong>Ghi chú:</strong> ${booking.notes}</li>` : ""}
+                    ${booking.notes ? `<li style="padding: 8px 0;"><strong>Ghi chú:</strong> ${escapeHtml(booking.notes)}</li>` : ""}
                   </ul>
                 </div>
                 

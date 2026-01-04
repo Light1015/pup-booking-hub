@@ -10,6 +10,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// HTML escape function to prevent XSS in email content
+const escapeHtml = (text: string | null | undefined): string => {
+  if (!text) return '';
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return String(text).replace(/[&<>"']/g, m => map[m]);
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -73,7 +86,7 @@ const handler = async (req: Request): Promise<Response> => {
                   🐾 Nhắc nhở đặt lịch
                 </h1>
                 
-                <p style="font-size: 16px; color: #555;">Xin chào <strong>${booking.name}</strong>,</p>
+                <p style="font-size: 16px; color: #555;">Xin chào <strong>${escapeHtml(booking.name)}</strong>,</p>
                 
                 <p style="font-size: 16px; color: #555;">
                   Chúng tôi nhận thấy bạn đã đặt lịch chụp ảnh nhưng chưa hoàn tất thanh toán đặt cọc.
@@ -89,13 +102,13 @@ const handler = async (req: Request): Promise<Response> => {
                   <h3 style="color: #333; margin-top: 0;">📅 Thông tin lịch hẹn:</h3>
                   <ul style="list-style: none; padding: 0; margin: 0;">
                     <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">
-                      <strong>Ngày:</strong> ${booking.booking_date}
+                      <strong>Ngày:</strong> ${escapeHtml(booking.booking_date)}
                     </li>
                     <li style="padding: 8px 0; border-bottom: 1px solid #ddd;">
-                      <strong>Giờ:</strong> ${booking.booking_time}
+                      <strong>Giờ:</strong> ${escapeHtml(booking.booking_time)}
                     </li>
                     <li style="padding: 8px 0;">
-                      <strong>Hạng mục:</strong> ${booking.pet_name || booking.selected_category}
+                      <strong>Hạng mục:</strong> ${escapeHtml(booking.pet_name || booking.selected_category)}
                     </li>
                   </ul>
                 </div>
