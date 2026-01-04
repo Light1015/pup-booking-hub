@@ -646,6 +646,36 @@ const Booking = () => {
                 </CardContent>
               </Card>
 
+              {/* Cancellation Policy */}
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    Chính sách hủy / dời lịch
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="text-sm space-y-3 text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600">✓</span>
+                      <span><strong>Dời lịch miễn phí:</strong> Báo trước tối thiểu 24 giờ</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600">✓</span>
+                      <span><strong>Hủy lịch:</strong> Hoàn tiền đặt cọc nếu báo trước 24 giờ</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-yellow-600">⚠</span>
+                      <span><strong>Hủy muộn:</strong> Không hoàn tiền nếu hủy trong vòng 24 giờ</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600">ℹ</span>
+                      <span>Sau khi đặt lịch, bạn sẽ nhận email với link quản lý để dời/hủy lịch</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
               {/* Notes */}
               <Card>
                 <CardHeader>

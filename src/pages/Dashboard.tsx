@@ -527,6 +527,13 @@ const Dashboard = () => {
           customerName: booking.name,
           subject: "Phản hồi về lịch đặt chụp ảnh",
           message: replyMessage,
+          bookingDetails: {
+            booking_date: booking.booking_date,
+            booking_time: booking.booking_time,
+            pet_name: booking.pet_name,
+            selected_category: booking.selected_category,
+            notes: booking.notes,
+          },
         },
       });
       if (error) throw error;
@@ -566,6 +573,11 @@ const Dashboard = () => {
           customerName: contact.name,
           subject: "Phản hồi liên hệ từ SnapPup Studio",
           message: replyMessage,
+          contactDetails: {
+            phone: contact.phone,
+            original_message: contact.message,
+            created_at: contact.created_at,
+          },
         },
       });
       if (error) throw error;
@@ -2000,16 +2012,75 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div>
-                      <Label>URL mã QR chuyển khoản</Label>
-                      <div className="flex gap-4 mt-2">
-                        <Input placeholder="https://..." value={bankQrUrl} onChange={(e) => setBankQrUrl(e.target.value)} />
-                        <Button onClick={() => updateBankConfig.mutate({ key: "bank_qr_url", value: bankQrUrl })}>Lưu</Button>
-                      </div>
-                      {bankQrUrl && (
-                        <div className="mt-2">
-                          <img src={bankQrUrl} alt="QR Preview" className="max-h-32 rounded-lg border" />
+                      <Label>Mã QR chuyển khoản</Label>
+                      <div className="mt-2 space-y-3">
+                        {/* File upload option */}
+                        <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
+                          <label className="cursor-pointer block">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (!file.type.startsWith("image/")) {
+                                  toast.error("Vui lòng chọn file ảnh");
+                                  return;
+                                }
+                                if (file.size > 5 * 1024 * 1024) {
+                                  toast.error("Ảnh quá lớn (tối đa 5MB)");
+                                  return;
+                                }
+                                try {
+                                  const fileExt = file.name.split(".").pop();
+                                  const fileName = `qr-code/bank-qr-${Date.now()}.${fileExt}`;
+                                  const { error: uploadError } = await supabase.storage
+                                    .from("gallery")
+                                    .upload(fileName, file);
+                                  if (uploadError) throw uploadError;
+                                  const { data: { publicUrl } } = supabase.storage
+                                    .from("gallery")
+                                    .getPublicUrl(fileName);
+                                  setBankQrUrl(publicUrl);
+                                  updateBankConfig.mutate({ key: "bank_qr_url", value: publicUrl });
+                                } catch (error: any) {
+                                  toast.error("Lỗi tải ảnh: " + error.message);
+                                }
+                              }}
+                            />
+                            <div className="flex flex-col items-center gap-2">
+                              <Upload className="h-8 w-8 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">Nhấn để tải ảnh QR code</span>
+                            </div>
+                          </label>
                         </div>
-                      )}
+                        
+                        {/* Or enter URL manually */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-px bg-border" />
+                          <span className="text-xs text-muted-foreground">hoặc nhập URL</span>
+                          <div className="flex-1 h-px bg-border" />
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Input placeholder="https://..." value={bankQrUrl} onChange={(e) => setBankQrUrl(e.target.value)} className="flex-1" />
+                          <Button size="sm" onClick={() => updateBankConfig.mutate({ key: "bank_qr_url", value: bankQrUrl })}>Lưu</Button>
+                        </div>
+                        
+                        {/* Preview */}
+                        {bankQrUrl && (
+                          <div className="flex items-start gap-4 p-3 bg-muted rounded-lg">
+                            <img src={bankQrUrl} alt="QR Preview" className="max-h-40 rounded-lg border" />
+                            <Button size="sm" variant="destructive" onClick={() => {
+                              setBankQrUrl("");
+                              updateBankConfig.mutate({ key: "bank_qr_url", value: "" });
+                            }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
