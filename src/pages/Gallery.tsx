@@ -205,44 +205,75 @@ const Gallery = () => {
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-display font-bold mb-4">Kho ảnh đẹp</h1>
+          <div className="inline-flex items-center justify-center gap-3 mb-4">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <ImageIcon className="h-6 w-6 text-primary" />
+            </div>
+            <h1 className="text-5xl font-display font-bold">Kho ảnh đẹp</h1>
+          </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Khám phá những khoảnh khắc đáng yêu của các bé cưng được chụp tại SnapPup Studio
+            Khám phá bộ sưu tập ảnh từ các buổi chụp tại SnapPup Studio - 
+            mỗi bức ảnh là một câu chuyện được kể qua ánh sáng và màu sắc
           </p>
+          
+          {/* Stats */}
+          <div className="flex items-center justify-center gap-8 mt-6">
+            <div className="text-center">
+              <p className="text-3xl font-bold text-primary">{albums.length}</p>
+              <p className="text-sm text-muted-foreground">Album ảnh</p>
+            </div>
+            <div className="h-8 w-px bg-border" />
+            <div className="text-center">
+              <p className="text-3xl font-bold text-primary">{categories.length}</p>
+              <p className="text-sm text-muted-foreground">Danh mục</p>
+            </div>
+            <div className="h-8 w-px bg-border" />
+            <div className="text-center">
+              <p className="text-3xl font-bold text-red-500">{likedAlbums.size}</p>
+              <p className="text-sm text-muted-foreground">Đã thích</p>
+            </div>
+          </div>
         </div>
 
         {/* Filters and Sort */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          {/* Category Filters */}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant={activeFilter === "all" ? "default" : "outline"}
-              onClick={() => setActiveFilter("all")}
-            >
-              <FolderOpen className="h-4 w-4 mr-2" />
-              Tất cả
-            </Button>
-            {categories.map((filter) => (
+        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4 -mx-4 px-4 mb-8 border-b">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            {/* Category Filters */}
+            <div className="flex flex-wrap gap-2">
               <Button
-                key={filter.name}
                 size="sm"
-                variant={activeFilter === filter.name ? "default" : "outline"}
-                onClick={() => setActiveFilter(filter.name)}
+                variant={activeFilter === "all" ? "default" : "outline"}
+                onClick={() => setActiveFilter("all")}
               >
-                {filter.label}
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Tất cả ({albums.length})
               </Button>
-            ))}
-            <Button
-              size="sm"
-              variant={activeFilter === "liked" ? "default" : "outline"}
-              onClick={() => setActiveFilter("liked")}
-              className={activeFilter === "liked" ? "bg-red-500 hover:bg-red-600" : ""}
-            >
-              <Heart className={cn("h-4 w-4 mr-2", activeFilter === "liked" && "fill-current")} />
-              Đã thích ({likedAlbums.size})
-            </Button>
-          </div>
+              {categories.map((filter) => {
+                const count = albums.filter(a => {
+                  const cat = categories.find(c => c.id === a.category_id);
+                  return cat?.name === filter.name;
+                }).length;
+                return (
+                  <Button
+                    key={filter.name}
+                    size="sm"
+                    variant={activeFilter === filter.name ? "default" : "outline"}
+                    onClick={() => setActiveFilter(filter.name)}
+                  >
+                    {filter.label} ({count})
+                  </Button>
+                );
+              })}
+              <Button
+                size="sm"
+                variant={activeFilter === "liked" ? "default" : "outline"}
+                onClick={() => setActiveFilter("liked")}
+                className={activeFilter === "liked" ? "bg-red-500 hover:bg-red-600" : ""}
+              >
+                <Heart className={cn("h-4 w-4 mr-2", activeFilter === "liked" && "fill-current")} />
+                Đã thích ({likedAlbums.size})
+              </Button>
+            </div>
 
           {/* Sort Dropdown */}
           <DropdownMenu>
@@ -266,6 +297,7 @@ const Gallery = () => {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
 
         {/* Albums Grid - Instagram-like layout */}
