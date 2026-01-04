@@ -390,10 +390,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_booking_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          booking_date: string
+          booking_time: string
+          created_at: string
+          email: string
+          id: string
+          manage_token: string
+          name: string
+          notes: string
+          payment_proof_url: string
+          pet_age: string
+          pet_name: string
+          pet_type: string
+          phone: string
+          selected_category: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      update_booking_by_token: {
+        Args: {
+          p_booking_date?: string
+          p_booking_time?: string
+          p_payment_proof_url?: string
+          p_status?: string
+          p_token: string
         }
         Returns: boolean
       }
