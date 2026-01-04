@@ -66,7 +66,8 @@ const Index = () => {
               <span className="text-primary">đáng nhớ nhất</span>
             </h1>
             <p className="text-xl text-muted-foreground">
-              Studio chụp ảnh chuyên nghiệp tại TP.HCM - Chụp ảnh CV, Profile, Gia đình, Sản phẩm và nhiều hơn nữa
+              Studio chụp ảnh chuyên nghiệp tại Cần Thơ - Chụp ảnh CV, Profile,
+              Gia đình, Sản phẩm và nhiều hơn nữa
             </p>
             <div className="flex flex-wrap gap-4">
               <Button size="lg" asChild>

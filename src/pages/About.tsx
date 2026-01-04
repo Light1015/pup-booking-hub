@@ -8,12 +8,14 @@ const About = () => {
     {
       icon: Camera,
       title: "Chuyên nghiệp",
-      description: "Đội ngũ nhiếp ảnh gia có kinh nghiệm lâu năm trong lĩnh vực chụp ảnh thú cưng",
+      description:
+        "Đội ngũ nhiếp ảnh gia có kinh nghiệm lâu năm trong lĩnh vực chụp ảnh",
     },
     {
       icon: Heart,
-      title: "Yêu thương",
-      description: "Chúng tôi đối xử với mỗi bé cưng như thành viên trong gia đình",
+      title: "Tiện lợi",
+      description:
+        "Đặt lịch chụp ảnh, makeup và trang phục nhanh chóng trên một nền tảng duy nhất, tiết kiệm thời gian và công sức",
     },
     {
       icon: Award,
@@ -36,10 +38,12 @@ const About = () => {
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <h1 className="text-5xl font-display font-bold">Về SnapPup Studio</h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            Chúng tôi là một studio chụp ảnh thú cưng chuyên nghiệp tại Hà Nội, 
-            với sứ mệnh lưu giữ những khoảnh khắc đáng yêu nhất của các bé cưng. 
-            Với hơn 5 năm kinh nghiệm, chúng tôi tự hào đã phục vụ hàng nghìn 
-            khách hàng và tạo ra vô số kỷ niệm đẹp.
+            SnapPup là nền tảng đặt lịch chụp ảnh trực tuyến, được xây dựng nhằm
+            mang đến trải nghiệm nhanh chóng – minh bạch – trọn gói cho khách
+            hàng trong thời đại số. Chúng tôi kết nối khách hàng với các studio,
+            nhiếp ảnh gia, dịch vụ makeup và cho thuê trang phục uy tín, giúp
+            quá trình chuẩn bị cho một buổi chụp ảnh trở nên đơn giản và thuận
+            tiện hơn bao giờ hết.
           </p>
         </div>
       </section>
@@ -50,7 +54,7 @@ const About = () => {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-display font-bold mb-4">Giá trị cốt lõi</h2>
             <p className="text-muted-foreground text-lg">
-              Những gì chúng tôi mang đến cho bạn và bé cưng
+              Những gì chúng tôi mang đến cho bạn
             </p>
           </div>
 
@@ -76,25 +80,23 @@ const About = () => {
           <div className="space-y-4">
             <h2 className="text-3xl font-display font-bold">Câu chuyện của chúng tôi</h2>
             <p className="text-muted-foreground leading-relaxed">
-              SnapPup Studio được thành lập vào năm 2019 bởi một nhóm nhiếp ảnh gia 
-              yêu động vật. Chúng tôi tin rằng mỗi thú cưng đều có cá tính riêng và 
-              những khoảnh khắc đáng yêu cần được lưu giữ một cách chuyên nghiệp.
-            </p>
-            <p className="text-muted-foreground leading-relaxed">
-              Với trang thiết bị hiện đại và không gian studio rộng rãi, thoải mái, 
-              chúng tôi tạo ra môi trường lý tưởng để các bé cưng có thể thoải mái 
-              thể hiện bản thân. Mỗi buổi chụp đều được chuẩn bị kỹ lưỡng để đảm bảo 
-              cả bé cưng và chủ nhân đều có trải nghiệm tuyệt vời nhất.
+              SnapPup được tạo ra với mong muốn đơn giản hóa việc đặt lịch chụp
+              ảnh trong thời đại số. Chúng tôi nhận thấy khách hàng thường mất
+              nhiều thời gian tìm kiếm concept, so sánh giá và liên hệ nhiều
+              dịch vụ riêng lẻ. SnapPup ra đời như một nền tảng kết nối trọn
+              gói, giúp khách hàng dễ dàng khám phá ý tưởng, lựa chọn dịch vụ và
+              đặt lịch chụp ảnh nhanh chóng, minh bạch trên một nền tảng duy
+              nhất.
             </p>
           </div>
 
           <div className="space-y-4">
             <h2 className="text-3xl font-display font-bold">Đội ngũ của chúng tôi</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Đội ngũ nhiếp ảnh gia của SnapPup không chỉ có chuyên môn cao mà còn 
-              là những người yêu động vật thực sự. Chúng tôi hiểu rằng việc chụp ảnh 
-              thú cưng đòi hỏi sự kiên nhẫn, yêu thương và kỹ năng giao tiếp đặc biệt 
-              với các bé.
+              Đội ngũ SnapPup là những người trẻ đam mê nhiếp ảnh và công nghệ.
+              Chúng tôi tập trung xây dựng một nền tảng thân thiện, đáng tin
+              cậy, giúp khách hàng và các studio, nhiếp ảnh gia, dịch vụ makeup
+              – trang phục kết nối hiệu quả và phát triển bền vững cùng nhau.
             </p>
           </div>
         </div>

@@ -108,7 +108,7 @@ const Contact = () => {
     {
       icon: MapPin,
       title: "Địa chỉ",
-      content: "Hà Nội, Việt Nam",
+      content: "Cần Thơ, Việt Nam",
     },
     {
       icon: Clock,

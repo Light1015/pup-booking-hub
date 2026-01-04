@@ -62,10 +62,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Dịch vụ</h3>
             <ul className="space-y-2 text-sm text-[#FFFFFF]">
-              <li>Chụp ảnh chó</li>
-              <li>Chụp ảnh mèo</li>
-              <li>Chụp ảnh thú cưng khác</li>
-              <li>Chụp ảnh ngoại cảnh</li>
+              <li>Chụp ảnh cá nhân</li>
+              <li>Chụp ảnh gia đình</li>
+              <li>Chụp ảnh kỷ yếu</li>
+              <li>Chụp ảnh sản phẩm & thương hiệu</li>
             </ul>
           </div>
 
@@ -83,7 +83,7 @@ const Footer = () => {
               </li>
               <li className="flex items-start space-x-2 text-sm text-[#FFFFFF]">
                 <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <span>Hà Nội, Việt Nam</span>
+                <span>Cần Thơ, Việt Nam</span>
               </li>
             </ul>
           </div>
