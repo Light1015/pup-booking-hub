@@ -223,11 +223,11 @@ const ManageBooking = () => {
 
       setUploadedUrl(publicUrl);
 
-      // Update booking with payment proof
+      // Update booking with payment proof using token for security
       const { error } = await supabase.functions.invoke("manage-booking", {
         body: {
           action: "update_payment_proof",
-          bookingId: bookingData?.id,
+          token: token,
           paymentProofUrl: publicUrl,
         },
       });

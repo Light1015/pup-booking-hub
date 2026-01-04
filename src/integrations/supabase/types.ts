@@ -50,6 +50,38 @@ export type Database = {
         }
         Relationships: []
       }
+      album_likes: {
+        Row: {
+          album_id: string
+          created_at: string
+          id: string
+          like_count: number
+          updated_at: string
+        }
+        Insert: {
+          album_id: string
+          created_at?: string
+          id?: string
+          like_count?: number
+          updated_at?: string
+        }
+        Update: {
+          album_id?: string
+          created_at?: string
+          id?: string
+          like_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_likes_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: true
+            referencedRelation: "photo_albums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booking_date: string
@@ -416,6 +448,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      toggle_album_like: {
+        Args: { p_album_id: string; p_increment: boolean }
+        Returns: number
       }
       update_booking_by_token: {
         Args: {
