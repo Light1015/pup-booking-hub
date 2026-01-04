@@ -640,7 +640,9 @@ const Booking = () => {
                     <MapPin className="h-5 w-5 text-primary mt-0.5" />
                     <div>
                       <p className="font-semibold">Địa chỉ</p>
-                      <p className="text-sm text-muted-foreground">Hà Nội, Việt Nam</p>
+                      <p className="text-sm text-muted-foreground">
+                        Cần Thơ, Việt Nam
+                      </p>
                     </div>
                   </div>
                 </CardContent>
