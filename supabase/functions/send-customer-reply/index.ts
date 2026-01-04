@@ -15,6 +15,20 @@ interface ReplyEmailRequest {
   customerName: string;
   subject: string;
   message: string;
+  // Optional booking details
+  bookingDetails?: {
+    booking_date: string;
+    booking_time: string;
+    pet_name: string;
+    selected_category?: string;
+    notes?: string;
+  };
+  // Optional contact details
+  contactDetails?: {
+    phone: string;
+    original_message: string;
+    created_at: string;
+  };
 }
 
 // HTML escape function to prevent XSS in email content
@@ -93,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Admin verified:", user.email);
 
-    const { customerEmail, customerName, subject, message }: ReplyEmailRequest = await req.json();
+    const { customerEmail, customerName, subject, message, bookingDetails, contactDetails }: ReplyEmailRequest = await req.json();
 
     // Validate all inputs
     if (!validateEmail(customerEmail)) {
@@ -126,24 +140,97 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending reply to customer:", customerEmail, "by admin:", user.email);
 
+    // Build booking details section if available
+    let bookingSection = '';
+    if (bookingDetails) {
+      const bookingDate = new Date(bookingDetails.booking_date).toLocaleDateString('vi-VN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      bookingSection = `
+        <div style="background-color: #e8f4f8; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+          <h3 style="color: #1e40af; margin: 0 0 15px 0;">📅 Thông tin lịch đặt của bạn:</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; color: #6b7280; width: 120px;">Hạng mục:</td>
+              <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(bookingDetails.pet_name || bookingDetails.selected_category || '')}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #6b7280;">Ngày chụp:</td>
+              <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${bookingDate}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #6b7280;">Giờ chụp:</td>
+              <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(bookingDetails.booking_time)}</td>
+            </tr>
+            ${bookingDetails.notes ? `
+            <tr>
+              <td style="padding: 8px 0; color: #6b7280; vertical-align: top;">Ghi chú:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${escapeHtml(bookingDetails.notes)}</td>
+            </tr>
+            ` : ''}
+          </table>
+        </div>
+      `;
+    }
+
+    // Build contact details section if available
+    let contactSection = '';
+    if (contactDetails) {
+      const contactDate = new Date(contactDetails.created_at).toLocaleDateString('vi-VN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      contactSection = `
+        <div style="background-color: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+          <h3 style="color: #92400e; margin: 0 0 15px 0;">💬 Tin nhắn gốc của bạn:</h3>
+          <p style="color: #6b7280; font-size: 12px; margin: 0 0 10px 0;">Gửi lúc: ${contactDate}</p>
+          <p style="color: #6b7280; font-size: 12px; margin: 0 0 10px 0;">SĐT: ${escapeHtml(contactDetails.phone)}</p>
+          <div style="background-color: #fffbeb; padding: 15px; border-radius: 8px;">
+            <p style="color: #1f2937; white-space: pre-wrap; margin: 0; line-height: 1.6;">${escapeHtml(contactDetails.original_message)}</p>
+          </div>
+        </div>
+      `;
+    }
+
     const emailResponse = await resend.emails.send({
       from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
       to: [customerEmail],
       subject: escapeHtml(subject),
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">${escapeHtml(subject)}</h2>
-          <p>Xin chào ${escapeHtml(customerName)},</p>
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <div style="background-color: #8b5cf6; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0;">SnapPup Studio</h1>
           </div>
-          <p>Trân trọng,<br>SnapPup Studio Team</p>
-          <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-          <p style="color: #666; font-size: 12px;">
-            Hotline: 037.213.0010<br>
-            Email: snappup@gmail.com<br>
-            Website: snappup.studio
-          </p>
+          
+          <div style="padding: 30px;">
+            <h2 style="color: #333;">${escapeHtml(subject)}</h2>
+            <p style="color: #4b5563; font-size: 16px;">Xin chào <strong>${escapeHtml(customerName)}</strong>,</p>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #1f2937; margin: 0 0 15px 0;">📝 Phản hồi từ SnapPup Studio:</h3>
+              <p style="white-space: pre-wrap; color: #1f2937; line-height: 1.6; margin: 0;">${escapeHtml(message)}</p>
+            </div>
+
+            ${bookingSection}
+            ${contactSection}
+            
+            <p style="color: #4b5563; margin-top: 30px;">Trân trọng,<br><strong>SnapPup Studio Team</strong></p>
+          </div>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
+            <p style="margin: 0 0 10px 0;">
+              📞 Hotline: <strong>037.213.0010</strong> | 
+              ✉️ Email: <strong>snappup@gmail.com</strong>
+            </p>
+            <p style="margin: 0;">© 2024 SnapPup Studio. All rights reserved.</p>
+          </div>
         </div>
       `,
     });
