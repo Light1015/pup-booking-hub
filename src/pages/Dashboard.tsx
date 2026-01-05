@@ -716,247 +716,306 @@ const Dashboard = () => {
 
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Tổng quan</h2>
+            {/* Welcome Banner */}
+            <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-6 text-primary-foreground">
+              <h2 className="text-2xl font-bold mb-1">Xin chào! 👋</h2>
+              <p className="opacity-90">Đây là tổng quan hoạt động của SnapPup Studio hôm nay</p>
+            </div>
             
             {/* Stats Cards - Row 1 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-l-4 border-l-blue-500">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Tổng lịch đặt</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+                <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+                <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Tổng lịch đặt</CardTitle>
+                  <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pb-4">
                   <p className="text-3xl font-bold">{bookings.length}</p>
-                  <p className="text-xs text-muted-foreground">{unreadBookings.length} chưa đọc</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <span className="text-blue-600 font-medium">{unreadBookings.length}</span> chưa đọc
+                  </p>
                 </CardContent>
               </Card>
-              <Card className="border-l-4 border-l-green-500">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Đã xác nhận</CardTitle>
-                  <Calendar className="h-4 w-4 text-green-500" />
+              
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
+                <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Đã xác nhận</CardTitle>
+                  <div className="h-9 w-9 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-green-600">{confirmedBookings.length}</p>
-                  <p className="text-xs text-muted-foreground">{thisMonthConfirmed.length} tháng này</p>
+                <CardContent className="pb-4">
+                  <p className="text-3xl font-bold text-emerald-600">{confirmedBookings.length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <span className="text-emerald-600 font-medium">{thisMonthConfirmed.length}</span> tháng này
+                  </p>
                 </CardContent>
               </Card>
-              <Card className="border-l-4 border-l-yellow-500">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Chờ xác nhận</CardTitle>
-                  <Calendar className="h-4 w-4 text-yellow-500" />
+              
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+                <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
+                <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Chờ xác nhận</CardTitle>
+                  <div className="h-9 w-9 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-amber-600" />
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-yellow-600">{pendingBookings.length}</p>
-                  <p className="text-xs text-muted-foreground">Cần xử lý</p>
+                <CardContent className="pb-4">
+                  <p className="text-3xl font-bold text-amber-600">{pendingBookings.length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Cần xử lý</p>
                 </CardContent>
               </Card>
-              <Card className="border-l-4 border-l-red-500">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Tỷ lệ hủy</CardTitle>
-                  <Calendar className="h-4 w-4 text-red-500" />
+              
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+                <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
+                <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Tỷ lệ hủy</CardTitle>
+                  <div className="h-9 w-9 rounded-lg bg-rose-100 flex items-center justify-center">
+                    <XCircle className="h-5 w-5 text-rose-600" />
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-red-600">{cancellationRate}%</p>
-                  <p className="text-xs text-muted-foreground">{cancelledBookings.length} đã hủy / {thisMonthCancelled.length} tháng này</p>
+                <CardContent className="pb-4">
+                  <p className="text-3xl font-bold text-rose-600">{cancellationRate}%</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <span className="text-rose-600 font-medium">{cancelledBookings.length}</span> đã hủy
+                  </p>
                 </CardContent>
               </Card>
             </div>
             
-            {/* Stats Cards - Row 2: Revenue */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-white">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Doanh thu dự kiến</CardTitle>
-                  <span className="text-lg">💰</span>
+            {/* Revenue Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg">
+                <CardHeader className="pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu dự kiến</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-emerald-600">
+                <CardContent className="pb-4">
+                  <p className="text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(expectedRevenue)} đ
                   </p>
-                  <p className="text-xs text-muted-foreground">Từ {confirmedBookings.length} lịch đã xác nhận</p>
+                  <p className="text-xs opacity-80 mt-1">Từ {confirmedBookings.length} lịch đã xác nhận</p>
                 </CardContent>
               </Card>
-              <Card className="border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Doanh thu tiềm năng</CardTitle>
-                  <span className="text-lg">📈</span>
+              
+              <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 shadow-lg">
+                <CardHeader className="pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu tiềm năng</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-amber-600">
+                <CardContent className="pb-4">
+                  <p className="text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(potentialRevenue)} đ
                   </p>
-                  <p className="text-xs text-muted-foreground">Từ {pendingBookings.length} lịch chờ xác nhận</p>
+                  <p className="text-xs opacity-80 mt-1">Từ {pendingBookings.length} lịch chờ xác nhận</p>
                 </CardContent>
               </Card>
-              <Card className="border-l-4 border-l-cyan-500 bg-gradient-to-r from-cyan-50 to-white">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Doanh thu tháng này</CardTitle>
-                  <span className="text-lg">📊</span>
+              
+              <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-0 shadow-lg">
+                <CardHeader className="pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu tháng này</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-cyan-600">
+                <CardContent className="pb-4">
+                  <p className="text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(thisMonthRevenue)} đ
                   </p>
-                  <p className="text-xs text-muted-foreground">{thisMonthConfirmed.length} lịch đã xác nhận</p>
+                  <p className="text-xs opacity-80 mt-1">{thisMonthConfirmed.length} lịch đã xác nhận</p>
                 </CardContent>
               </Card>
             </div>
             
-            {/* Additional Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-l-4 border-l-indigo-500">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Liên hệ</CardTitle>
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{contacts.length}</p>
-                  <p className="text-xs text-muted-foreground">{unreadContacts.length} chưa đọc</p>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{contacts.length}</p>
+                    <p className="text-xs text-muted-foreground">Liên hệ ({unreadContacts.length} mới)</p>
+                  </div>
                 </CardContent>
               </Card>
-              <Card className="border-l-4 border-l-purple-500">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Thư viện</CardTitle>
-                  <Image className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{gallery.length}</p>
-                  <p className="text-xs text-muted-foreground">{albums.length} bộ ảnh</p>
+              
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <Image className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{gallery.length}</p>
+                    <p className="text-xs text-muted-foreground">Ảnh ({albums.length} bộ)</p>
+                  </div>
                 </CardContent>
               </Card>
-              <Card className="border-l-4 border-l-orange-500">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Danh mục</CardTitle>
-                  <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{categories.length}</p>
-                  <p className="text-xs text-muted-foreground">{services.length} dịch vụ</p>
+              
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <FolderOpen className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{categories.length}</p>
+                    <p className="text-xs text-muted-foreground">Danh mục</p>
+                  </div>
                 </CardContent>
               </Card>
-              <Card className="border-l-4 border-l-pink-500">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Giá trị TB/đơn</CardTitle>
-                  <span className="text-sm">💵</span>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{new Intl.NumberFormat('vi-VN').format(AVERAGE_BOOKING_VALUE)} đ</p>
-                  <p className="text-xs text-muted-foreground">Ước tính</p>
+              
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-5 w-5 text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{services.length}</p>
+                    <p className="text-xs text-muted-foreground">Dịch vụ</p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Lịch đặt theo tháng</CardTitle>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold">Lịch đặt theo tháng</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={250}>
+                  <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={monthlyData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="bookings" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
+                      <YAxis axisLine={false} tickLine={false} fontSize={12} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      />
+                      <Bar dataKey="bookings" fill="hsl(215 90% 28%)" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
               
-              <Card>
-                <CardHeader>
-                  <CardTitle>Phân bố theo hạng mục</CardTitle>
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold">Phân bố theo hạng mục</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {bookingsByCategory.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
                         <Pie
                           data={bookingsByCategory}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={5}
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={3}
                           dataKey="value"
-                          label={({ name, value }) => `${name}: ${value}`}
                         >
                           {bookingsByCategory.map((entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                          contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                    <div className="h-[220px] flex items-center justify-center text-muted-foreground">
                       Chưa có dữ liệu
                     </div>
                   )}
+                  {/* Legend */}
+                  <div className="flex flex-wrap justify-center gap-3 mt-2">
+                    {bookingsByCategory.map((entry: any, index: number) => (
+                      <div key={entry.name} className="flex items-center gap-1.5 text-xs">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                        <span>{entry.name}: {entry.value}</span>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
             
-            {/* Notifications */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2">
-                  <Bell className="h-5 w-5 text-blue-500" />
-                  <CardTitle>Lịch đặt mới</CardTitle>
-                  {unreadBookings.length > 0 && <Badge variant="destructive">{unreadBookings.length}</Badge>}
+            {/* Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <CardTitle className="text-base font-semibold">Lịch đặt gần đây</CardTitle>
+                  </div>
+                  {unreadBookings.length > 0 && (
+                    <Badge className="bg-blue-500 hover:bg-blue-600">{unreadBookings.length} mới</Badge>
+                  )}
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                    {bookings.slice(0, 10).map((booking: any) => (
+                <CardContent className="pt-0">
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto">
+                    {bookings.slice(0, 8).map((booking: any) => (
                       <div 
                         key={booking.id} 
-                        className={`flex justify-between items-center p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors ${!booking.read_at ? 'bg-blue-50 border-blue-200' : ''}`}
+                        className={`flex justify-between items-center p-3 rounded-lg cursor-pointer transition-all ${!booking.read_at ? 'bg-blue-50 hover:bg-blue-100' : 'bg-muted/50 hover:bg-muted'}`}
                         onClick={() => setDetailDialog({ open: true, type: 'booking', data: booking })}
                       >
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium">{booking.name}</p>
-                            {!booking.read_at && <Badge variant="default" className="text-xs">Mới</Badge>}
+                            <p className="font-medium text-sm truncate">{booking.name}</p>
+                            {!booking.read_at && <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />}
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {booking.pet_name} - {new Date(booking.booking_date).toLocaleDateString('vi-VN')} {booking.booking_time}
+                          <p className="text-xs text-muted-foreground truncate">
+                            {booking.pet_name} • {new Date(booking.booking_date).toLocaleDateString('vi-VN')} {booking.booking_time}
                           </p>
                         </div>
-                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        <Eye className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
                       </div>
                     ))}
-                    {bookings.length === 0 && <p className="text-center text-muted-foreground py-4">Chưa có lịch đặt</p>}
+                    {bookings.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8 text-sm">Chưa có lịch đặt</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2">
-                  <Bell className="h-5 w-5 text-green-500" />
-                  <CardTitle>Tin nhắn liên hệ</CardTitle>
-                  {unreadContacts.length > 0 && <Badge variant="destructive">{unreadContacts.length}</Badge>}
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                      <MessageSquare className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <CardTitle className="text-base font-semibold">Tin nhắn liên hệ</CardTitle>
+                  </div>
+                  {unreadContacts.length > 0 && (
+                    <Badge className="bg-emerald-500 hover:bg-emerald-600">{unreadContacts.length} mới</Badge>
+                  )}
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                    {contacts.slice(0, 10).map((contact: any) => (
+                <CardContent className="pt-0">
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto">
+                    {contacts.slice(0, 8).map((contact: any) => (
                       <div 
                         key={contact.id} 
-                        className={`flex justify-between items-center p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors ${!contact.read_at ? 'bg-green-50 border-green-200' : ''}`}
+                        className={`flex justify-between items-center p-3 rounded-lg cursor-pointer transition-all ${!contact.read_at ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-muted/50 hover:bg-muted'}`}
                         onClick={() => setDetailDialog({ open: true, type: 'contact', data: contact })}
                       >
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium">{contact.name}</p>
-                            {!contact.read_at && <Badge variant="default" className="text-xs">Mới</Badge>}
+                            <p className="font-medium text-sm truncate">{contact.name}</p>
+                            {!contact.read_at && <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />}
                           </div>
-                          <p className="text-sm text-muted-foreground line-clamp-1">{contact.message}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{contact.message}</p>
                         </div>
-                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        <Eye className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
                       </div>
                     ))}
-                    {contacts.length === 0 && <p className="text-center text-muted-foreground py-4">Chưa có tin nhắn</p>}
+                    {contacts.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8 text-sm">Chưa có tin nhắn</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1036,198 +1095,188 @@ const Dashboard = () => {
         };
 
         return (
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Quản lý lịch đặt</CardTitle>
-                    <CardDescription>Danh sách các lịch đặt chụp ảnh ({filteredBookings.length} kết quả)</CardDescription>
+          <div className="space-y-4">
+            {/* Header & Filters */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <h2 className="text-lg font-semibold">Quản lý lịch đặt</h2>
+                      <p className="text-sm text-muted-foreground">{filteredBookings.length} kết quả</p>
+                    </div>
+                    <Button onClick={exportBookings} variant="outline" size="sm" className="gap-2">
+                      <Download className="w-4 h-4" />Xuất CSV
+                    </Button>
                   </div>
-                  <Button onClick={exportBookings} variant="outline">
-                    <Download className="w-4 h-4 mr-2" />Xuất CSV
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <div className="relative flex-1 min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Tìm theo tên, email, SĐT, hạng mục..." 
-                      value={bookingSearch} 
-                      onChange={(e) => setBookingSearch(e.target.value)}
-                      className="pl-10"
-                    />
+                  <div className="flex flex-wrap gap-3">
+                    <div className="relative flex-1 min-w-[200px]">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="Tìm theo tên, email, SĐT, hạng mục..." 
+                        value={bookingSearch} 
+                        onChange={(e) => setBookingSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Select value={bookingStatusFilter} onValueChange={setBookingStatusFilter}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả</SelectItem>
+                        <SelectItem value="unread">Chưa đọc</SelectItem>
+                        <SelectItem value="read">Đã đọc</SelectItem>
+                        <SelectItem value="replied">Đã phản hồi</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={bookingPaymentFilter} onValueChange={setBookingPaymentFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Thanh toán" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả TT</SelectItem>
+                        <SelectItem value="pending_payment">Chờ thanh toán</SelectItem>
+                        <SelectItem value="pending">Chờ xác nhận</SelectItem>
+                        <SelectItem value="confirmed">Đã xác nhận</SelectItem>
+                        <SelectItem value="cancelled">Đã hủy</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={bookingDateFilter} onValueChange={setBookingDateFilter}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Thời gian" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả</SelectItem>
+                        <SelectItem value="today">Hôm nay</SelectItem>
+                        <SelectItem value="week">7 ngày qua</SelectItem>
+                        <SelectItem value="month">30 ngày qua</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select value={bookingStatusFilter} onValueChange={setBookingStatusFilter}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả</SelectItem>
-                      <SelectItem value="unread">Chưa đọc</SelectItem>
-                      <SelectItem value="read">Đã đọc</SelectItem>
-                      <SelectItem value="replied">Đã phản hồi</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={bookingPaymentFilter} onValueChange={setBookingPaymentFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Thanh toán" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả TT</SelectItem>
-                      <SelectItem value="pending_payment">Chờ thanh toán</SelectItem>
-                      <SelectItem value="pending">Chờ xác nhận</SelectItem>
-                      <SelectItem value="confirmed">Đã xác nhận</SelectItem>
-                      <SelectItem value="cancelled">Đã hủy</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={bookingDateFilter} onValueChange={setBookingDateFilter}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Thời gian" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả</SelectItem>
-                      <SelectItem value="today">Hôm nay</SelectItem>
-                      <SelectItem value="week">7 ngày qua</SelectItem>
-                      <SelectItem value="month">30 ngày qua</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {filteredBookings.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
+              </CardContent>
+            </Card>
+
+            {/* Booking List */}
+            <div className="space-y-3">
+              {filteredBookings.length === 0 ? (
+                <Card className="border-0 shadow-sm">
+                  <CardContent className="py-12 text-center text-muted-foreground">
                     <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>Không tìm thấy lịch đặt nào</p>
-                  </div>
-                ) : filteredBookings.map((booking: any) => (
-                  <Card key={booking.id} className={!booking.read_at ? 'border-primary' : ''}>
-                    <CardContent className="pt-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex flex-wrap gap-2">
-                          {/* Read status badges */}
-                          {!booking.read_at && <Badge variant="default">Chưa đọc</Badge>}
-                          {booking.read_at && !booking.replied_at && <Badge variant="secondary">Đã đọc</Badge>}
-                          {booking.replied_at && <Badge variant="outline">Đã phản hồi</Badge>}
-                          
-                          {/* Payment/Booking status badges */}
-                          {booking.status === 'pending_payment' && (
-                            <Badge className="bg-orange-500 hover:bg-orange-600">
-                              <CreditCard className="w-3 h-3 mr-1" />Chờ thanh toán
-                            </Badge>
-                          )}
-                          {booking.status === 'pending' && (
-                            <Badge className="bg-yellow-500 hover:bg-yellow-600">
-                              <Clock className="w-3 h-3 mr-1" />Chờ xác nhận
-                            </Badge>
-                          )}
-                          {booking.status === 'confirmed' && (
-                            <Badge className="bg-green-600 hover:bg-green-700">
-                              <CheckCircle className="w-3 h-3 mr-1" />Đã xác nhận
-                            </Badge>
-                          )}
-                          {booking.status === 'cancelled' && (
-                            <Badge variant="destructive">
-                              <XCircle className="w-3 h-3 mr-1" />Đã hủy
-                            </Badge>
+                  </CardContent>
+                </Card>
+              ) : filteredBookings.map((booking: any) => (
+                <Card key={booking.id} className={`border-0 shadow-sm hover:shadow-md transition-shadow ${!booking.read_at ? 'ring-2 ring-primary/20' : ''}`}>
+                  <CardContent className="p-4">
+                    <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                      {/* Status Badges */}
+                      <div className="flex flex-wrap gap-2">
+                        {!booking.read_at && <Badge className="bg-blue-500">Mới</Badge>}
+                        {booking.read_at && !booking.replied_at && <Badge variant="secondary">Đã đọc</Badge>}
+                        {booking.replied_at && <Badge variant="outline" className="border-green-500 text-green-600">Đã phản hồi</Badge>}
+                        
+                        {booking.status === 'pending_payment' && (
+                          <Badge className="bg-orange-500"><CreditCard className="w-3 h-3 mr-1" />Chờ TT</Badge>
+                        )}
+                        {booking.status === 'pending' && (
+                          <Badge className="bg-yellow-500"><Clock className="w-3 h-3 mr-1" />Chờ XN</Badge>
+                        )}
+                        {booking.status === 'confirmed' && (
+                          <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" />Đã XN</Badge>
+                        )}
+                        {booking.status === 'cancelled' && (
+                          <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Đã hủy</Badge>
+                        )}
+                      </div>
+
+                      {/* Main Info */}
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <p className="font-semibold text-base">{booking.name}</p>
+                          <p className="text-sm text-muted-foreground">{booking.email}</p>
+                          <p className="text-sm text-muted-foreground">{booking.phone}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm"><span className="text-muted-foreground">Hạng mục:</span> <span className="font-medium text-primary">{booking.pet_name}</span></p>
+                          <p className="text-sm"><span className="text-muted-foreground">Ngày:</span> {new Date(booking.booking_date).toLocaleDateString('vi-VN')}</p>
+                          <p className="text-sm"><span className="text-muted-foreground">Giờ:</span> {booking.booking_time}</p>
+                        </div>
+                        <div>
+                          {booking.notes && <p className="text-sm text-muted-foreground line-clamp-2">{booking.notes}</p>}
+                          {booking.payment_proof_url && (
+                            <a href={booking.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1">
+                              <CreditCard className="h-3 w-3" />Xem ảnh TT
+                            </a>
                           )}
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p><strong>Tên:</strong> {booking.name}</p>
-                          <p><strong>Email:</strong> {booking.email}</p>
-                          <p><strong>SĐT:</strong> {booking.phone}</p>
-                        </div>
-                        <div>
-                          <p><strong>Hạng mục:</strong> {booking.pet_name}</p>
-                          <p><strong>Ngày:</strong> {new Date(booking.booking_date).toLocaleDateString('vi-VN')}</p>
-                          <p><strong>Giờ:</strong> {booking.booking_time}</p>
-                        </div>
-                      </div>
-                      {booking.notes && <p className="mt-4"><strong>Ghi chú:</strong> {booking.notes}</p>}
-                      
-                      {/* Payment proof image */}
-                      {booking.payment_proof_url && (
-                        <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                          <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            Ảnh xác nhận chuyển khoản:
-                          </p>
-                          <a href={booking.payment_proof_url} target="_blank" rel="noopener noreferrer">
-                            <img 
-                              src={booking.payment_proof_url} 
-                              alt="Ảnh chuyển khoản" 
-                              className="max-h-40 rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
-                            />
-                          </a>
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-2 mt-4">
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end">
                         {!booking.read_at && (
-                          <Button size="sm" variant="outline" onClick={() => markAsRead.mutate({ type: 'booking', id: booking.id })}>
-                            <Eye className="w-4 h-4 mr-2" />Đánh dấu đã đọc
+                          <Button size="sm" variant="ghost" onClick={() => markAsRead.mutate({ type: 'booking', id: booking.id })}>
+                            <Eye className="w-4 h-4" />
                           </Button>
                         )}
-                        {/* Confirm booking button - only show for pending/pending_payment status */}
                         {(booking.status === 'pending' || booking.status === 'pending_payment') && (
                           <Button 
                             size="sm" 
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-emerald-500 hover:bg-emerald-600"
                             onClick={() => showConfirmDialog(
                               "Xác nhận lịch đặt", 
-                              `Bạn có chắc chắn muốn xác nhận lịch đặt của ${booking.name} vào ngày ${new Date(booking.booking_date).toLocaleDateString('vi-VN')} lúc ${booking.booking_time}?`, 
+                              `Xác nhận lịch đặt của ${booking.name}?`, 
                               () => confirmBookingStatus.mutate(booking.id),
                               "default"
                             )}
                           >
-                            <CheckCircle className="w-4 h-4 mr-2" />Xác nhận
+                            <CheckCircle className="w-4 h-4" />
                           </Button>
                         )}
-                        {/* Cancel booking button - only show for non-cancelled status */}
                         {booking.status !== 'cancelled' && (
                           <Button 
                             size="sm" 
                             variant="outline"
-                            className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                            className="text-orange-600 border-orange-300"
                             onClick={() => showConfirmDialog(
                               "Hủy lịch đặt", 
-                              `Bạn có chắc chắn muốn hủy lịch đặt của ${booking.name}? Hành động này không thể hoàn tác.`, 
+                              `Hủy lịch đặt của ${booking.name}?`, 
                               () => cancelBooking.mutate(booking.id),
                               "destructive"
                             )}
                           >
-                            <Ban className="w-4 h-4 mr-2" />Hủy lịch
+                            <Ban className="w-4 h-4" />
                           </Button>
                         )}
-                        <Button size="sm" onClick={() => showConfirmDialog(
-                          "Gửi email", 
-                          `Bạn có muốn gửi email cho ${booking.name} (${booking.email})?`, 
-                          () => { setReplyData({ type: 'booking', data: booking, message: '' }); setReplyDialogOpen(true); setConfirmDialog(prev => ({ ...prev, open: false })); },
-                          "default"
-                        )}>
-                          <Mail className="w-4 h-4 mr-2" />Gửi mail
+                        <Button size="sm" variant="outline" onClick={() => { setReplyData({ type: 'booking', data: booking, message: '' }); setReplyDialogOpen(true); }}>
+                          <Mail className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => showConfirmDialog("Xóa lịch đặt", `Bạn có chắc muốn xóa vĩnh viễn lịch đặt của ${booking.name}? Hành động này không thể hoàn tác.`, () => deleteBooking.mutate(booking.id), "destructive")}>
-                          <Trash2 className="w-4 h-4 mr-2" />Xóa
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => showConfirmDialog("Xóa", `Xóa lịch đặt của ${booking.name}?`, () => deleteBooking.mutate(booking.id), "destructive")}>
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         );
 
       case "calendar":
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Quản lý lịch</CardTitle>
-              <CardDescription>Xem và tạo lịch đặt mới, ngăn chặn đặt trùng</CardDescription>
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <CalendarDays className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Xem lịch</CardTitle>
+                  <CardDescription>Xem và quản lý lịch đặt theo ngày</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <BookingCalendar bookings={bookings} />
@@ -1292,98 +1341,110 @@ const Dashboard = () => {
         };
 
         return (
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Quản lý liên hệ</CardTitle>
-                    <CardDescription>Danh sách tin nhắn liên hệ ({filteredContacts.length} kết quả)</CardDescription>
+          <div className="space-y-4">
+            {/* Header & Filters */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <h2 className="text-lg font-semibold">Quản lý liên hệ</h2>
+                      <p className="text-sm text-muted-foreground">{filteredContacts.length} kết quả</p>
+                    </div>
+                    <Button onClick={exportContacts} variant="outline" size="sm" className="gap-2">
+                      <Download className="w-4 h-4" />Xuất CSV
+                    </Button>
                   </div>
-                  <Button onClick={exportContacts} variant="outline">
-                    <Download className="w-4 h-4 mr-2" />Xuất CSV
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <div className="relative flex-1 min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Tìm theo tên, email, SĐT, tin nhắn..." 
-                      value={contactSearch} 
-                      onChange={(e) => setContactSearch(e.target.value)}
-                      className="pl-10"
-                    />
+                  <div className="flex flex-wrap gap-3">
+                    <div className="relative flex-1 min-w-[200px]">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="Tìm theo tên, email, SĐT, tin nhắn..." 
+                        value={contactSearch} 
+                        onChange={(e) => setContactSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Select value={contactStatusFilter} onValueChange={setContactStatusFilter}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả</SelectItem>
+                        <SelectItem value="unread">Chưa đọc</SelectItem>
+                        <SelectItem value="read">Đã đọc</SelectItem>
+                        <SelectItem value="replied">Đã phản hồi</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={contactDateFilter} onValueChange={setContactDateFilter}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Thời gian" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả</SelectItem>
+                        <SelectItem value="today">Hôm nay</SelectItem>
+                        <SelectItem value="week">7 ngày qua</SelectItem>
+                        <SelectItem value="month">30 ngày qua</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select value={contactStatusFilter} onValueChange={setContactStatusFilter}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả</SelectItem>
-                      <SelectItem value="unread">Chưa đọc</SelectItem>
-                      <SelectItem value="read">Đã đọc</SelectItem>
-                      <SelectItem value="replied">Đã phản hồi</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={contactDateFilter} onValueChange={setContactDateFilter}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Thời gian" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả</SelectItem>
-                      <SelectItem value="today">Hôm nay</SelectItem>
-                      <SelectItem value="week">7 ngày qua</SelectItem>
-                      <SelectItem value="month">30 ngày qua</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {filteredContacts.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              </CardContent>
+            </Card>
+
+            {/* Contact List */}
+            <div className="space-y-3">
+              {filteredContacts.length === 0 ? (
+                <Card className="border-0 shadow-sm">
+                  <CardContent className="py-12 text-center text-muted-foreground">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>Không tìm thấy liên hệ nào</p>
-                  </div>
-                ) : filteredContacts.map((contact: any) => (
-                  <Card key={contact.id} className={!contact.read_at ? 'border-primary' : ''}>
-                    <CardContent className="pt-6">
-                      <div className="flex gap-2 mb-4">
-                        {!contact.read_at && <Badge variant="default">Chưa đọc</Badge>}
+                  </CardContent>
+                </Card>
+              ) : filteredContacts.map((contact: any) => (
+                <Card key={contact.id} className={`border-0 shadow-sm hover:shadow-md transition-shadow ${!contact.read_at ? 'ring-2 ring-emerald-500/20' : ''}`}>
+                  <CardContent className="p-4">
+                    <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                      {/* Status Badges */}
+                      <div className="flex flex-wrap gap-2">
+                        {!contact.read_at && <Badge className="bg-emerald-500">Mới</Badge>}
                         {contact.read_at && !contact.replied_at && <Badge variant="secondary">Đã đọc</Badge>}
-                        {contact.replied_at && <Badge variant="outline">Đã phản hồi</Badge>}
+                        {contact.replied_at && <Badge variant="outline" className="border-green-500 text-green-600">Đã phản hồi</Badge>}
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+
+                      {/* Main Info */}
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <p><strong>Tên:</strong> {contact.name}</p>
-                          <p><strong>Email:</strong> {contact.email}</p>
-                          <p><strong>SĐT:</strong> {contact.phone}</p>
+                          <p className="font-semibold text-base">{contact.name}</p>
+                          <p className="text-sm text-muted-foreground">{contact.email}</p>
+                          <p className="text-sm text-muted-foreground">{contact.phone}</p>
                         </div>
                         <div>
-                          <p><strong>Tin nhắn:</strong> {contact.message}</p>
-                          <p><strong>Ngày:</strong> {new Date(contact.created_at).toLocaleDateString('vi-VN')}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{contact.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{new Date(contact.created_at).toLocaleDateString('vi-VN')}</p>
                         </div>
                       </div>
-                      <div className="flex gap-2 mt-4">
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end">
                         {!contact.read_at && (
-                          <Button size="sm" variant="outline" onClick={() => markAsRead.mutate({ type: 'contact', id: contact.id })}>
-                            <Eye className="w-4 h-4 mr-2" />Đánh dấu đã đọc
+                          <Button size="sm" variant="ghost" onClick={() => markAsRead.mutate({ type: 'contact', id: contact.id })}>
+                            <Eye className="w-4 h-4" />
                           </Button>
                         )}
-                        <Button size="sm" onClick={() => { setReplyData({ type: 'contact', data: contact, message: '' }); setReplyDialogOpen(true); }}>
-                          <Mail className="w-4 h-4 mr-2" />Gửi mail
+                        <Button size="sm" variant="outline" onClick={() => { setReplyData({ type: 'contact', data: contact, message: '' }); setReplyDialogOpen(true); }}>
+                          <Mail className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => showConfirmDialog("Xóa liên hệ", `Bạn có chắc muốn xóa liên hệ của ${contact.name}?`, () => deleteContact.mutate(contact.id), "destructive")}>
-                          <Trash2 className="w-4 h-4 mr-2" />Xóa
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => showConfirmDialog("Xóa", `Xóa liên hệ của ${contact.name}?`, () => deleteContact.mutate(contact.id), "destructive")}>
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         );
 
       case "reports":
@@ -2094,14 +2155,40 @@ const Dashboard = () => {
     }
   };
 
+  // Get current tab title
+  const getCurrentTabTitle = () => {
+    const allItems = [
+      { id: "overview", label: "Dashboard" },
+      { id: "reports", label: "Báo cáo thống kê" },
+      { id: "bookings", label: "Quản lý lịch đặt" },
+      { id: "calendar", label: "Xem lịch" },
+      { id: "contacts", label: "Quản lý liên hệ" },
+      { id: "replies", label: "Lịch sử phản hồi" },
+      { id: "gallery", label: "Thư viện ảnh" },
+      { id: "albums", label: "Bộ ảnh" },
+      { id: "categories", label: "Quản lý danh mục" },
+      { id: "services", label: "Quản lý dịch vụ" },
+      { id: "settings", label: "Cài đặt hệ thống" },
+    ];
+    return allItems.find(item => item.id === activeTab)?.label || "Dashboard";
+  };
+
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-muted/30 flex">
       <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
       
-      <div className="flex-1">
-        <header className="h-16 border-b flex items-center justify-between px-6">
-          <h1 className="text-xl font-semibold">Admin Dashboard</h1>
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-16 bg-card border-b flex items-center justify-between px-6 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">{getCurrentTabTitle()}</h1>
+              <p className="text-xs text-muted-foreground">
+                {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
             <AdminNotificationBell 
               onNotificationClick={(notification) => {
                 if (notification.type === "booking" || notification.type === "payment") {
@@ -2113,14 +2200,19 @@ const Dashboard = () => {
                 }
               }}
             />
-            <Button onClick={signOut} variant="outline">
-              <LogOut className="w-4 h-4 mr-2" />Đăng xuất
+            <div className="h-8 w-px bg-border" />
+            <Button onClick={signOut} variant="outline" size="sm" className="gap-2">
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Đăng xuất</span>
             </Button>
           </div>
         </header>
         
-        <main className="p-6">
-          {renderContent()}
+        {/* Main Content */}
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="max-w-7xl mx-auto">
+            {renderContent()}
+          </div>
         </main>
       </div>
 
