@@ -191,11 +191,22 @@ const ManageBooking = () => {
     },
   });
 
+  // Allowed file extensions for security
+  const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+
   // Handle payment proof upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file extension (whitelist)
+    const fileExt = file.name.split(".").pop()?.toLowerCase();
+    if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+      toast.error("Chỉ chấp nhận file: JPG, PNG, WEBP");
+      return;
+    }
+
+    // Validate MIME type
     if (!file.type.startsWith("image/")) {
       toast.error("Vui lòng chọn file ảnh");
       return;
@@ -208,7 +219,6 @@ const ManageBooking = () => {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
       const fileName = `payment-proof/${bookingData?.id}-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
