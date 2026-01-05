@@ -52,6 +52,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Validate API key to prevent abuse
+    const authHeader = req.headers.get("apikey");
+    if (authHeader !== Deno.env.get("SUPABASE_ANON_KEY")) {
+      console.error("Unauthorized: Invalid or missing API key");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const { name, email, phone, message, adminEmail }: ContactEmailRequest = await req.json();
 
     // Validate all inputs
