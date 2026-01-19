@@ -112,7 +112,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending contact notification to admin:", adminEmail);
 
     const emailResponse = await resend.emails.send({
-      from: "SnapPup Studio <noreply@snappup.vn>",
+      from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
       to: [adminEmail],
       subject: `📬 Liên hệ mới: ${escapeHtml(name)}`,
       html: `
