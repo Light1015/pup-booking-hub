@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Phone, Mail, MapPin, CreditCard, Clock, Circle, Search, Calculator } from "lucide-react";
+import { Phone, Mail, MapPin, CreditCard, Clock, Circle, Search, Calculator, Package } from "lucide-react";
 import LoadingDialog from "@/components/LoadingDialog";
 import { PaymentConfirmDialog } from "@/components/PaymentConfirmDialog";
 import { BookingFAQ } from "@/components/BookingFAQ";
@@ -49,6 +49,7 @@ const timeSlots = [
 const TOTAL_SLOTS = timeSlots.length;
 
 const Booking = () => {
+  const [searchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -61,11 +62,36 @@ const Booking = () => {
     notes: "",
   });
   
+  // Package info from URL params
+  const packageInfo = useMemo(() => {
+    const service = searchParams.get("service");
+    const package1 = parseInt(searchParams.get("package1") || "0");
+    const package1_name = searchParams.get("package1_name") || "";
+    const package1_price = searchParams.get("package1_price") || "";
+    const package2 = parseInt(searchParams.get("package2") || "0");
+    const package2_name = searchParams.get("package2_name") || "";
+    const package2_price = searchParams.get("package2_price") || "";
+    const total = parseInt(searchParams.get("total") || "0");
+    
+    if (!service || total === 0) return null;
+    
+    return {
+      service,
+      package1,
+      package1_name,
+      package1_price,
+      package2,
+      package2_name,
+      package2_price,
+      total
+    };
+  }, [searchParams]);
+  
   // Payment dialog state
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [currentBookingId, setCurrentBookingId] = useState("");
 
-  // Load saved customer info
+  // Load saved customer info and set category from URL params
   useEffect(() => {
     try {
       const saved = localStorage.getItem(CUSTOMER_STORAGE_KEY);
@@ -78,10 +104,28 @@ const Booking = () => {
           email: parsed.email || "",
         }));
       }
+      
+      // Set notes with package info if coming from services page
+      if (packageInfo) {
+        const packageNotes: string[] = [];
+        packageNotes.push(`Dịch vụ: ${packageInfo.service}`);
+        if (packageInfo.package1 > 0) {
+          packageNotes.push(`${packageInfo.package1_name}: ${packageInfo.package1} gói x ${packageInfo.package1_price}`);
+        }
+        if (packageInfo.package2 > 0) {
+          packageNotes.push(`${packageInfo.package2_name}: ${packageInfo.package2} gói x ${packageInfo.package2_price}`);
+        }
+        packageNotes.push(`Tổng: ${new Intl.NumberFormat("vi-VN").format(packageInfo.total)} VNĐ`);
+        
+        setFormData((prev) => ({
+          ...prev,
+          notes: packageNotes.join("\n"),
+        }));
+      }
     } catch (error) {
       console.error("Error loading saved customer info:", error);
     }
-  }, []);
+  }, [packageInfo]);
 
   // Save customer info when form changes
   const saveCustomerInfo = () => {
@@ -403,6 +447,40 @@ const Booking = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Package Info from Services page */}
+          {packageInfo && (
+            <Card className="mb-8 border-2 border-primary">
+              <CardHeader className="bg-primary/10">
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-primary" />
+                  Gói đã chọn
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Dịch vụ:</span>
+                  <span className="text-primary font-semibold">{packageInfo.service}</span>
+                </div>
+                {packageInfo.package1 > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span>{packageInfo.package1_name}:</span>
+                    <span>{packageInfo.package1} x {packageInfo.package1_price}</span>
+                  </div>
+                )}
+                {packageInfo.package2 > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span>{packageInfo.package2_name}:</span>
+                    <span>{packageInfo.package2} x {packageInfo.package2_price}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-3 border-t-2">
+                  <span className="font-bold text-lg">Tổng tiền:</span>
+                  <span className="text-2xl font-bold text-primary">{formatPrice(packageInfo.total)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Booking Form */}

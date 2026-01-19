@@ -35,12 +35,6 @@ const Dashboard = () => {
     description: "", 
     image_url: "", 
     features: "",
-    info_title_1: "",
-    info_content_1: "",
-    info_title_2: "",
-    info_content_2: "",
-    info_title_3: "",
-    info_content_3: "",
     package_1_name: "GÓI CÁ NHÂN",
     package_1_price: "400K",
     package_1_features: "Chụp trọn gói cho một người, Tư vấn trang phục và makeup, Chọn phông nền theo yêu cầu, Chụp nhiều pose khác nhau, Giao ảnh trong 48h",
@@ -48,6 +42,7 @@ const Dashboard = () => {
     package_2_price: "100K",
     package_2_features: "Áp dụng từ 5 người trở lên, Tư vấn trang phục chung cho cả nhóm, Đồng giá chỉ 100k/người, Chụp riêng từng người theo style nhất quán, Tặng ảnh chung cho cả nhóm"
   });
+  const [serviceErrors, setServiceErrors] = useState<Record<string, string>>({});
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
   const [replyDialogOpen, setReplyDialogOpen] = useState(false);
   const [replyData, setReplyData] = useState<{ type: 'booking' | 'contact'; data: any; message: string }>({ type: 'booking', data: null, message: '' });
@@ -464,10 +459,10 @@ const Dashboard = () => {
       toast.success("Đã thêm dịch vụ!");
       setNewService({ 
         title: "", price: "", description: "", image_url: "", features: "",
-        info_title_1: "", info_content_1: "", info_title_2: "", info_content_2: "", info_title_3: "", info_content_3: "",
         package_1_name: "GÓI CÁ NHÂN", package_1_price: "400K", package_1_features: "",
         package_2_name: "GÓI NHÓM", package_2_price: "100K", package_2_features: ""
       });
+      setServiceErrors({});
     },
     onError: (error: any) => {
       toast.error("Lỗi: " + error.message);
@@ -1725,6 +1720,28 @@ const Dashboard = () => {
         );
 
       case "services":
+        const validateService = () => {
+          const errors: Record<string, string> = {};
+          if (!newService.title.trim()) errors.title = "Tiêu đề không được để trống";
+          if (!newService.price.trim()) errors.price = "Giá không được để trống";
+          if (!newService.description.trim()) errors.description = "Mô tả không được để trống";
+          if (!newService.image_url.trim()) errors.image_url = "URL ảnh không được để trống";
+          if (!newService.package_1_name.trim()) errors.package_1_name = "Tên gói 1 không được để trống";
+          if (!newService.package_1_price.trim()) errors.package_1_price = "Giá gói 1 không được để trống";
+          if (!newService.package_2_name.trim()) errors.package_2_name = "Tên gói 2 không được để trống";
+          if (!newService.package_2_price.trim()) errors.package_2_price = "Giá gói 2 không được để trống";
+          setServiceErrors(errors);
+          return Object.keys(errors).length === 0;
+        };
+
+        const handleAddService = () => {
+          if (validateService()) {
+            addService.mutate(newService);
+          } else {
+            toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
+          }
+        };
+
         return (
           <Card>
             <CardHeader>
@@ -1735,27 +1752,47 @@ const Dashboard = () => {
               <div className="mb-6 p-4 border rounded-lg">
                 <h3 className="font-semibold mb-4">Thêm dịch vụ mới</h3>
                 <div className="grid gap-4">
-                  <Input placeholder="Tiêu đề" value={newService.title} onChange={(e) => setNewService({ ...newService, title: e.target.value })} />
-                  <Input placeholder="Giá" value={newService.price} onChange={(e) => setNewService({ ...newService, price: e.target.value })} />
-                  <Textarea placeholder="Mô tả" value={newService.description} onChange={(e) => setNewService({ ...newService, description: e.target.value })} />
-                  <Input placeholder="URL ảnh" value={newService.image_url} onChange={(e) => setNewService({ ...newService, image_url: e.target.value })} />
+                  <div>
+                    <Input placeholder="Tiêu đề *" value={newService.title} onChange={(e) => setNewService({ ...newService, title: e.target.value })} className={serviceErrors.title ? "border-red-500" : ""} />
+                    {serviceErrors.title && <p className="text-sm text-red-500 mt-1">{serviceErrors.title}</p>}
+                  </div>
+                  <div>
+                    <Input placeholder="Giá *" value={newService.price} onChange={(e) => setNewService({ ...newService, price: e.target.value })} className={serviceErrors.price ? "border-red-500" : ""} />
+                    {serviceErrors.price && <p className="text-sm text-red-500 mt-1">{serviceErrors.price}</p>}
+                  </div>
+                  <div>
+                    <Textarea placeholder="Mô tả *" value={newService.description} onChange={(e) => setNewService({ ...newService, description: e.target.value })} className={serviceErrors.description ? "border-red-500" : ""} />
+                    {serviceErrors.description && <p className="text-sm text-red-500 mt-1">{serviceErrors.description}</p>}
+                  </div>
+                  <div>
+                    <Input placeholder="URL ảnh *" value={newService.image_url} onChange={(e) => setNewService({ ...newService, image_url: e.target.value })} className={serviceErrors.image_url ? "border-red-500" : ""} />
+                    {serviceErrors.image_url && <p className="text-sm text-red-500 mt-1">{serviceErrors.image_url}</p>}
+                  </div>
                   <Textarea placeholder="Tính năng (cách nhau bởi dấu phẩy)" value={newService.features} onChange={(e) => setNewService({ ...newService, features: e.target.value })} />
-                  <h4 className="font-semibold mt-4">Thông tin chi tiết</h4>
-                  <Input placeholder="Tiêu đề 1" value={newService.info_title_1} onChange={(e) => setNewService({ ...newService, info_title_1: e.target.value })} />
-                  <Textarea placeholder="Nội dung 1" value={newService.info_content_1} onChange={(e) => setNewService({ ...newService, info_content_1: e.target.value })} />
-                  <Input placeholder="Tiêu đề 2" value={newService.info_title_2} onChange={(e) => setNewService({ ...newService, info_title_2: e.target.value })} />
-                  <Textarea placeholder="Nội dung 2" value={newService.info_content_2} onChange={(e) => setNewService({ ...newService, info_content_2: e.target.value })} />
-                  <Input placeholder="Tiêu đề 3" value={newService.info_title_3} onChange={(e) => setNewService({ ...newService, info_title_3: e.target.value })} />
-                  <Textarea placeholder="Nội dung 3" value={newService.info_content_3} onChange={(e) => setNewService({ ...newService, info_content_3: e.target.value })} />
+                  
                   <h4 className="font-semibold mt-4">Gói 1</h4>
-                  <Input placeholder="Tên gói 1" value={newService.package_1_name} onChange={(e) => setNewService({ ...newService, package_1_name: e.target.value })} />
-                  <Input placeholder="Giá gói 1" value={newService.package_1_price} onChange={(e) => setNewService({ ...newService, package_1_price: e.target.value })} />
-                  <Textarea placeholder="Tính năng gói 1" value={newService.package_1_features} onChange={(e) => setNewService({ ...newService, package_1_features: e.target.value })} />
+                  <div>
+                    <Input placeholder="Tên gói 1 *" value={newService.package_1_name} onChange={(e) => setNewService({ ...newService, package_1_name: e.target.value })} className={serviceErrors.package_1_name ? "border-red-500" : ""} />
+                    {serviceErrors.package_1_name && <p className="text-sm text-red-500 mt-1">{serviceErrors.package_1_name}</p>}
+                  </div>
+                  <div>
+                    <Input placeholder="Giá gói 1 *" value={newService.package_1_price} onChange={(e) => setNewService({ ...newService, package_1_price: e.target.value })} className={serviceErrors.package_1_price ? "border-red-500" : ""} />
+                    {serviceErrors.package_1_price && <p className="text-sm text-red-500 mt-1">{serviceErrors.package_1_price}</p>}
+                  </div>
+                  <Textarea placeholder="Tính năng gói 1 (cách nhau bởi dấu phẩy)" value={newService.package_1_features} onChange={(e) => setNewService({ ...newService, package_1_features: e.target.value })} />
+                  
                   <h4 className="font-semibold mt-4">Gói 2</h4>
-                  <Input placeholder="Tên gói 2" value={newService.package_2_name} onChange={(e) => setNewService({ ...newService, package_2_name: e.target.value })} />
-                  <Input placeholder="Giá gói 2" value={newService.package_2_price} onChange={(e) => setNewService({ ...newService, package_2_price: e.target.value })} />
-                  <Textarea placeholder="Tính năng gói 2" value={newService.package_2_features} onChange={(e) => setNewService({ ...newService, package_2_features: e.target.value })} />
-                  <Button onClick={() => addService.mutate(newService)}><Plus className="w-4 h-4 mr-2" />Thêm dịch vụ</Button>
+                  <div>
+                    <Input placeholder="Tên gói 2 *" value={newService.package_2_name} onChange={(e) => setNewService({ ...newService, package_2_name: e.target.value })} className={serviceErrors.package_2_name ? "border-red-500" : ""} />
+                    {serviceErrors.package_2_name && <p className="text-sm text-red-500 mt-1">{serviceErrors.package_2_name}</p>}
+                  </div>
+                  <div>
+                    <Input placeholder="Giá gói 2 *" value={newService.package_2_price} onChange={(e) => setNewService({ ...newService, package_2_price: e.target.value })} className={serviceErrors.package_2_price ? "border-red-500" : ""} />
+                    {serviceErrors.package_2_price && <p className="text-sm text-red-500 mt-1">{serviceErrors.package_2_price}</p>}
+                  </div>
+                  <Textarea placeholder="Tính năng gói 2 (cách nhau bởi dấu phẩy)" value={newService.package_2_features} onChange={(e) => setNewService({ ...newService, package_2_features: e.target.value })} />
+                  
+                  <Button onClick={handleAddService}><Plus className="w-4 h-4 mr-2" />Thêm dịch vụ</Button>
                 </div>
               </div>
               <div className="space-y-4">
