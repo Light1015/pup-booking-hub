@@ -80,7 +80,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.log(`Sending reminder to: ${booking.email} for booking at ${booking.booking_time}`);
 
         const emailResponse = await resend.emails.send({
-          from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
+          from: "SnapPup Studio <noreply@snappup.vn>",
           to: [booking.email],
           subject: `🐾 Nhắc lịch: Buổi chụp ảnh ngày mai tại SnapPup Studio`,
           html: `

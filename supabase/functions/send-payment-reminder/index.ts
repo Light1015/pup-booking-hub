@@ -64,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get base URL from environment or use default
-    const baseUrl = Deno.env.get("PUBLIC_SITE_URL") || "https://snapup-booking.id.vn";
+    const baseUrl = Deno.env.get("PUBLIC_SITE_URL") || "https://snappup.vn";
     
     const results = [];
 
@@ -76,7 +76,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.log(`Sending payment reminder to: ${booking.email}`);
 
         const emailResponse = await resend.emails.send({
-          from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
+          from: "SnapPup Studio <noreply@snappup.vn>",
           to: [booking.email],
           subject: `🐾 Nhắc nhở: Hoàn tất đặt lịch chụp ảnh tại SnapPup Studio`,
           html: `

@@ -153,7 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send confirmation email to customer with full form details
     const customerEmailResponse = await resend.emails.send({
-      from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
+      from: "SnapPup Studio <noreply@snappup.vn>",
       to: [customerEmail],
       subject: "Xác nhận đặt lịch chụp ảnh - SnapPup Studio",
       html: `
@@ -245,7 +245,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send notification email to admin with full form details
     const adminEmailResponse = await resend.emails.send({
-      from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
+      from: "SnapPup Studio <noreply@snappup.vn>",
       to: [adminEmail],
       subject: `🔔 Đặt lịch mới: ${customerName} - ${categoryName}`,
       html: `
