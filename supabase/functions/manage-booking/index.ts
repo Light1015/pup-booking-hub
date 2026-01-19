@@ -80,7 +80,7 @@ async function sendAdminNotification(
   
   try {
     await resend.emails.send({
-      from: "SNAPPUP <no-reply@snapup-booking.id.vn>",
+      from: "SNAPPUP <noreply@snappup.vn>",
       to: [adminEmail],
       subject,
       html,

@@ -200,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "SnapPup Studio <noreply@snapup-booking.id.vn>",
+      from: "SnapPup Studio <noreply@snappup.vn>",
       to: [customerEmail],
       subject: escapeHtml(subject),
       html: `
