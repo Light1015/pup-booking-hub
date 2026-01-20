@@ -307,7 +307,14 @@ const Services = () => {
                                     
                                     {/* Package 1 */}
                                     {service.package_1_name && (
-                                      <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
+                                      <div className="flex items-start gap-4 p-4 bg-background rounded-lg border">
+                                        {(service as any).package_1_image_url && (
+                                          <img 
+                                            src={(service as any).package_1_image_url} 
+                                            alt={service.package_1_name}
+                                            className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                                          />
+                                        )}
                                         <div className="flex-1">
                                           <div className="flex items-center gap-2">
                                             <h5 className="font-semibold">{service.package_1_name}</h5>
@@ -347,7 +354,14 @@ const Services = () => {
                                     
                                     {/* Package 2 */}
                                     {service.package_2_name && (
-                                      <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
+                                      <div className="flex items-start gap-4 p-4 bg-background rounded-lg border">
+                                        {(service as any).package_2_image_url && (
+                                          <img 
+                                            src={(service as any).package_2_image_url} 
+                                            alt={service.package_2_name}
+                                            className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                                          />
+                                        )}
                                         <div className="flex-1">
                                           <div className="flex items-center gap-2">
                                             <h5 className="font-semibold">{service.package_2_name}</h5>
