@@ -314,9 +314,11 @@ export type Database = {
           info_title_2: string | null
           info_title_3: string | null
           package_1_features: string[] | null
+          package_1_image_url: string | null
           package_1_name: string | null
           package_1_price: string | null
           package_2_features: string[] | null
+          package_2_image_url: string | null
           package_2_name: string | null
           package_2_price: string | null
           price: string
@@ -337,9 +339,11 @@ export type Database = {
           info_title_2?: string | null
           info_title_3?: string | null
           package_1_features?: string[] | null
+          package_1_image_url?: string | null
           package_1_name?: string | null
           package_1_price?: string | null
           package_2_features?: string[] | null
+          package_2_image_url?: string | null
           package_2_name?: string | null
           package_2_price?: string | null
           price: string
@@ -360,9 +364,11 @@ export type Database = {
           info_title_2?: string | null
           info_title_3?: string | null
           package_1_features?: string[] | null
+          package_1_image_url?: string | null
           package_1_name?: string | null
           package_1_price?: string | null
           package_2_features?: string[] | null
+          package_2_image_url?: string | null
           package_2_name?: string | null
           package_2_price?: string | null
           price?: string

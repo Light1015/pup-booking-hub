@@ -18,6 +18,7 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { AdminNotificationBell } from "@/components/AdminNotificationBell";
+import { ServiceManager } from "@/components/admin/ServiceManager";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const Dashboard = () => {
@@ -28,21 +29,6 @@ const Dashboard = () => {
   const [uploadData, setUploadData] = useState({ title: "", category: "", url: "" });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [editingService, setEditingService] = useState<any | null>(null);
-  const [newService, setNewService] = useState({ 
-    title: "", 
-    price: "", 
-    description: "", 
-    image_url: "", 
-    features: "",
-    package_1_name: "GÓI CÁ NHÂN",
-    package_1_price: "400K",
-    package_1_features: "Chụp trọn gói cho một người, Tư vấn trang phục và makeup, Chọn phông nền theo yêu cầu, Chụp nhiều pose khác nhau, Giao ảnh trong 48h",
-    package_2_name: "GÓI NHÓM",
-    package_2_price: "100K",
-    package_2_features: "Áp dụng từ 5 người trở lên, Tư vấn trang phục chung cho cả nhóm, Đồng giá chỉ 100k/người, Chụp riêng từng người theo style nhất quán, Tặng ảnh chung cho cả nhóm"
-  });
-  const [serviceErrors, setServiceErrors] = useState<Record<string, string>>({});
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
   const [replyDialogOpen, setReplyDialogOpen] = useState(false);
   const [replyData, setReplyData] = useState<{ type: 'booking' | 'contact'; data: any; message: string }>({ type: 'booking', data: null, message: '' });
@@ -442,57 +428,6 @@ const Dashboard = () => {
       setUploadingImage(false);
     }
   };
-
-  // Service mutations
-  const addService = useMutation({
-    mutationFn: async (service: any) => {
-      const { error } = await supabase.from("services").insert([{
-        ...service,
-        features: service.features.split(",").map((f: string) => f.trim()),
-        package_1_features: service.package_1_features.split(",").map((f: string) => f.trim()),
-        package_2_features: service.package_2_features.split(",").map((f: string) => f.trim()),
-      }]);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
-      toast.success("Đã thêm dịch vụ!");
-      setNewService({ 
-        title: "", price: "", description: "", image_url: "", features: "",
-        package_1_name: "GÓI CÁ NHÂN", package_1_price: "400K", package_1_features: "",
-        package_2_name: "GÓI NHÓM", package_2_price: "100K", package_2_features: ""
-      });
-      setServiceErrors({});
-    },
-    onError: (error: any) => {
-      toast.error("Lỗi: " + error.message);
-    },
-  });
-
-  const updateService = useMutation({
-    mutationFn: async ({ id, ...service }: any) => {
-      const updateData: any = { ...service };
-      if (typeof service.features === "string") {
-        updateData.features = service.features.split(",").map((f: string) => f.trim());
-      }
-      if (typeof service.package_1_features === "string") {
-        updateData.package_1_features = service.package_1_features.split(",").map((f: string) => f.trim());
-      }
-      if (typeof service.package_2_features === "string") {
-        updateData.package_2_features = service.package_2_features.split(",").map((f: string) => f.trim());
-      }
-      const { error } = await supabase.from("services").update(updateData).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
-      toast.success("Đã cập nhật dịch vụ!");
-      setEditingService(null);
-    },
-    onError: (error: any) => {
-      toast.error("Lỗi: " + error.message);
-    },
-  });
 
   // Mark as read
   const markAsRead = useMutation({
@@ -1720,117 +1655,7 @@ const Dashboard = () => {
         );
 
       case "services":
-        const validateService = () => {
-          const errors: Record<string, string> = {};
-          if (!newService.title.trim()) errors.title = "Tiêu đề không được để trống";
-          if (!newService.price.trim()) errors.price = "Giá không được để trống";
-          if (!newService.description.trim()) errors.description = "Mô tả không được để trống";
-          if (!newService.image_url.trim()) errors.image_url = "URL ảnh không được để trống";
-          if (!newService.package_1_name.trim()) errors.package_1_name = "Tên gói 1 không được để trống";
-          if (!newService.package_1_price.trim()) errors.package_1_price = "Giá gói 1 không được để trống";
-          if (!newService.package_2_name.trim()) errors.package_2_name = "Tên gói 2 không được để trống";
-          if (!newService.package_2_price.trim()) errors.package_2_price = "Giá gói 2 không được để trống";
-          setServiceErrors(errors);
-          return Object.keys(errors).length === 0;
-        };
-
-        const handleAddService = () => {
-          if (validateService()) {
-            addService.mutate(newService);
-          } else {
-            toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
-          }
-        };
-
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Quản lý dịch vụ</CardTitle>
-              <CardDescription>Thêm và chỉnh sửa dịch vụ với thông tin chi tiết</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6 p-4 border rounded-lg">
-                <h3 className="font-semibold mb-4">Thêm dịch vụ mới</h3>
-                <div className="grid gap-4">
-                  <div>
-                    <Input placeholder="Tiêu đề *" value={newService.title} onChange={(e) => setNewService({ ...newService, title: e.target.value })} className={serviceErrors.title ? "border-red-500" : ""} />
-                    {serviceErrors.title && <p className="text-sm text-red-500 mt-1">{serviceErrors.title}</p>}
-                  </div>
-                  <div>
-                    <Input placeholder="Giá *" value={newService.price} onChange={(e) => setNewService({ ...newService, price: e.target.value })} className={serviceErrors.price ? "border-red-500" : ""} />
-                    {serviceErrors.price && <p className="text-sm text-red-500 mt-1">{serviceErrors.price}</p>}
-                  </div>
-                  <div>
-                    <Textarea placeholder="Mô tả *" value={newService.description} onChange={(e) => setNewService({ ...newService, description: e.target.value })} className={serviceErrors.description ? "border-red-500" : ""} />
-                    {serviceErrors.description && <p className="text-sm text-red-500 mt-1">{serviceErrors.description}</p>}
-                  </div>
-                  <div>
-                    <Input placeholder="URL ảnh *" value={newService.image_url} onChange={(e) => setNewService({ ...newService, image_url: e.target.value })} className={serviceErrors.image_url ? "border-red-500" : ""} />
-                    {serviceErrors.image_url && <p className="text-sm text-red-500 mt-1">{serviceErrors.image_url}</p>}
-                  </div>
-                  <Textarea placeholder="Tính năng (cách nhau bởi dấu phẩy)" value={newService.features} onChange={(e) => setNewService({ ...newService, features: e.target.value })} />
-                  
-                  <h4 className="font-semibold mt-4">Gói 1</h4>
-                  <div>
-                    <Input placeholder="Tên gói 1 *" value={newService.package_1_name} onChange={(e) => setNewService({ ...newService, package_1_name: e.target.value })} className={serviceErrors.package_1_name ? "border-red-500" : ""} />
-                    {serviceErrors.package_1_name && <p className="text-sm text-red-500 mt-1">{serviceErrors.package_1_name}</p>}
-                  </div>
-                  <div>
-                    <Input placeholder="Giá gói 1 *" value={newService.package_1_price} onChange={(e) => setNewService({ ...newService, package_1_price: e.target.value })} className={serviceErrors.package_1_price ? "border-red-500" : ""} />
-                    {serviceErrors.package_1_price && <p className="text-sm text-red-500 mt-1">{serviceErrors.package_1_price}</p>}
-                  </div>
-                  <Textarea placeholder="Tính năng gói 1 (cách nhau bởi dấu phẩy)" value={newService.package_1_features} onChange={(e) => setNewService({ ...newService, package_1_features: e.target.value })} />
-                  
-                  <h4 className="font-semibold mt-4">Gói 2</h4>
-                  <div>
-                    <Input placeholder="Tên gói 2 *" value={newService.package_2_name} onChange={(e) => setNewService({ ...newService, package_2_name: e.target.value })} className={serviceErrors.package_2_name ? "border-red-500" : ""} />
-                    {serviceErrors.package_2_name && <p className="text-sm text-red-500 mt-1">{serviceErrors.package_2_name}</p>}
-                  </div>
-                  <div>
-                    <Input placeholder="Giá gói 2 *" value={newService.package_2_price} onChange={(e) => setNewService({ ...newService, package_2_price: e.target.value })} className={serviceErrors.package_2_price ? "border-red-500" : ""} />
-                    {serviceErrors.package_2_price && <p className="text-sm text-red-500 mt-1">{serviceErrors.package_2_price}</p>}
-                  </div>
-                  <Textarea placeholder="Tính năng gói 2 (cách nhau bởi dấu phẩy)" value={newService.package_2_features} onChange={(e) => setNewService({ ...newService, package_2_features: e.target.value })} />
-                  
-                  <Button onClick={handleAddService}><Plus className="w-4 h-4 mr-2" />Thêm dịch vụ</Button>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {services.map((service: any) => (
-                  <Card key={service.id}>
-                    <CardContent className="pt-6">
-                      {editingService?.id === service.id ? (
-                        <div className="grid gap-4">
-                          <Input value={editingService.title} onChange={(e) => setEditingService({ ...editingService, title: e.target.value })} />
-                          <Input value={editingService.price} onChange={(e) => setEditingService({ ...editingService, price: e.target.value })} />
-                          <Textarea value={editingService.description} onChange={(e) => setEditingService({ ...editingService, description: e.target.value })} />
-                          <Input value={editingService.image_url} onChange={(e) => setEditingService({ ...editingService, image_url: e.target.value })} />
-                          <Textarea value={Array.isArray(editingService.features) ? editingService.features.join(", ") : editingService.features} onChange={(e) => setEditingService({ ...editingService, features: e.target.value })} />
-                          <div className="flex gap-2">
-                            <Button onClick={() => updateService.mutate(editingService)}>Lưu</Button>
-                            <Button variant="outline" onClick={() => setEditingService(null)}>Hủy</Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <h3 className="font-semibold text-lg">{service.title}</h3>
-                          <p className="text-primary font-bold">{service.price}</p>
-                          <p className="text-muted-foreground mt-2">{service.description}</p>
-                          <div className="flex gap-2 mt-4">
-                            <Button size="sm" onClick={() => setEditingService(service)}><Edit className="w-4 h-4 mr-2" />Sửa</Button>
-                            <Button size="sm" variant="destructive" onClick={() => showConfirmDialog("Xóa dịch vụ", `Bạn có chắc muốn xóa dịch vụ "${service.title}"?`, () => deleteService.mutate(service.id), "destructive")}>
-                              <Trash2 className="w-4 h-4 mr-2" />Xóa
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        );
+        return <ServiceManager services={services} />;
 
       case "categories":
         return (
