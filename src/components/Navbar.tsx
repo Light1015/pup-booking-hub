@@ -70,7 +70,10 @@ const Navbar = () => {
                 <span className="text-sm font-medium">Dashboard</span>
               </Link>
             )}
-            <a href="https://www.facebook.com/profile.php?id=61581392236844" className="text-accent hover:text-accent/80 transition-colors">
+            <a
+              href="https://www.facebook.com/profile.php?id=61586905820620"
+              className="text-accent hover:text-accent/80 transition-colors"
+            >
               <Facebook className="w-5 h-5" />
             </a>
             <a href="#" className="text-accent hover:text-accent/80 transition-colors">

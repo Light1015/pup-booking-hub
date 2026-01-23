@@ -16,7 +16,10 @@ const Footer = () => {
               Lưu giữ những khoảnh khắc đáng nhớ nhất
             </p>
             <div className="flex space-x-4">
-              <a href="https://www.facebook.com/profile.php?id=61581392236844" className="text-accent hover:text-accent/80 transition-colors">
+              <a
+                href="https://www.facebook.com/profile.php?id=61586905820620"
+                className="text-accent hover:text-accent/80 transition-colors"
+              >
                 <Facebook className="w-5 h-5" />
               </a>
               <a href="#" className="text-accent hover:text-accent/80 transition-colors">
