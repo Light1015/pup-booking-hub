@@ -763,10 +763,26 @@ const Booking = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="text-sm space-y-2 text-muted-foreground list-disc list-inside">
-                    <li>Nên đặt lịch trước 1 tuần để đảm bảo có chỗ</li>
-                    <li>Đảm bảo bé cưng được tắm rửa sạch sẽ trước khi chụp</li>
-                    <li>Có thể mang theo đồ chơi yêu thích của bé</li>
-                    <li>Thời gian chụp khoảng 1-2 giờ</li>
+                    <li>
+                      Nên đặt lịch trước 3–5 ngày để SnapPup chuẩn bị concept và
+                      ekip phù hợp
+                    </li>
+                    <li>
+                      Vui lòng gửi trước thông tin sản phẩm và yêu cầu chụp (mục
+                      đích, phong cách, số lượng)
+                    </li>
+                    <li>
+                      Khách hàng cần chuẩn bị sản phẩm sạch sẽ, đầy đủ phụ kiện
+                      trước buổi chụp
+                    </li>
+                    <li>
+                      Thời gian chụp trung bình 1–3 giờ, tùy số lượng và độ phức
+                      tạp của sản phẩm
+                    </li>
+                    <li>
+                      Thời gian bàn giao ảnh sẽ được thông báo cụ thể sau khi
+                      hoàn tất buổi chụp
+                    </li>
                   </ul>
                 </CardContent>
               </Card>
