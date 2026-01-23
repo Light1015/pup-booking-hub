@@ -62,9 +62,9 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Dịch vụ</h3>
             <ul className="space-y-2 text-sm text-[#FFFFFF]">
-              <li>Chụp ảnh cá nhân</li>
-              <li>Chụp ảnh gia đình</li>
-              <li>Chụp ảnh kỷ yếu</li>
+              <li>Chụp ảnh nền trơn</li>
+              <li>Chụp ảnh layout/concept</li>
+              <li>Chụp ảnh chụp với người mẫu</li>
               <li>Chụp ảnh sản phẩm & thương hiệu</li>
             </ul>
           </div>
