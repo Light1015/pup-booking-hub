@@ -28,8 +28,8 @@ const bookingSchema = z.object({
   name: z.string().trim().min(1, "Vui lòng nhập tên").max(100, "Tên quá dài (tối đa 100 ký tự)"),
   email: z.string().email("Email không hợp lệ").max(255, "Email quá dài"),
   phone: z.string().regex(/^[0-9+\-\s()]+$/, "Số điện thoại không hợp lệ").min(8, "Số điện thoại quá ngắn").max(20, "Số điện thoại quá dài"),
-  selectedCategory: z.string().min(1, "Vui lòng chọn hạng mục chụp ảnh"),
-  notes: z.string().max(500, "Ghi chú quá dài (tối đa 500 ký tự)").optional(),
+  selectedCategory: z.string().min(1, "Vui lòng chọn dịch vụ"),
+  notes: z.string().max(1000, "Ghi chú quá dài (tối đa 1000 ký tự)").optional(),
 });
 
 const timeSlots = [
@@ -168,57 +168,25 @@ const Booking = () => {
     },
   });
 
-  // Fetch categories for selection
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
+  // Fetch services for selection
+  const { data: servicesData = [] } = useQuery({
+    queryKey: ["services-booking"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("gallery_categories").select("*").order("name");
+      const { data, error } = await supabase.from("services").select("id, title, price").order("created_at");
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch albums with prices for estimated price display
-  const { data: albums = [] } = useQuery({
-    queryKey: ["albums-prices"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("photo_albums")
-        .select("category_id, price, name")
-        .not("price", "is", null);
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Calculate estimated price based on selected category
-  const estimatedPrice = useMemo(() => {
+  // Get selected service price for display
+  const selectedServicePrice = useMemo(() => {
     if (!formData.selectedCategory) return null;
     
-    const category = categories.find((c: any) => c.name === formData.selectedCategory);
-    if (!category) return null;
-
-    const categoryAlbums = albums.filter((a: any) => a.category_id === category.id);
-    if (categoryAlbums.length === 0) return { min: 300000, max: 500000 }; // Default range
-
-    const prices = categoryAlbums
-      .map((a: any) => {
-        // Parse price string like "400K" to number
-        const priceStr = a.price?.toLowerCase().replace(/[^0-9k]/g, "") || "0";
-        if (priceStr.includes("k")) {
-          return parseInt(priceStr.replace("k", "")) * 1000;
-        }
-        return parseInt(priceStr) || 0;
-      })
-      .filter((p: number) => p > 0);
-
-    if (prices.length === 0) return { min: 300000, max: 500000 };
-
-    return {
-      min: Math.min(...prices),
-      max: Math.max(...prices),
-    };
-  }, [formData.selectedCategory, categories, albums]);
+    const service = servicesData.find((s: any) => s.title === formData.selectedCategory);
+    if (!service) return null;
+    
+    return service.price;
+  }, [formData.selectedCategory, servicesData]);
 
   // Fetch all bookings for the current month view (for calendar status)
   const { data: monthlyBookings = [] } = useQuery({
@@ -310,9 +278,9 @@ const Booking = () => {
     setIsLoading(true);
 
     try {
-      // Get category label for display
-      const selectedCategoryData = categories.find((c: any) => c.name === formData.selectedCategory);
-      const categoryLabel = selectedCategoryData?.label || formData.selectedCategory;
+      // Get service title for display
+      const selectedService = servicesData.find((s: any) => s.title === formData.selectedCategory);
+      const serviceLabel = selectedService?.title || formData.selectedCategory;
 
       // Prepare IDs client-side to avoid SELECT after INSERT (RLS-safe)
       const bookingId = crypto.randomUUID();
@@ -324,7 +292,7 @@ const Booking = () => {
           name: formData.name,
           phone: formData.phone,
           email: formData.email,
-          pet_name: categoryLabel,
+          pet_name: serviceLabel,
           pet_type: formData.selectedCategory,
           selected_category: formData.selectedCategory,
           booking_date: format(selectedDate, "yyyy-MM-dd"),
@@ -359,7 +327,7 @@ const Booking = () => {
           customerName: formData.name,
           customerEmail: formData.email,
           customerPhone: formData.phone,
-          categoryName: categoryLabel,
+          categoryName: serviceLabel,
           date: format(selectedDate, "yyyy-MM-dd"),
           time: selectedTime,
           notes: formData.notes,
@@ -529,7 +497,7 @@ const Booking = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Hạng mục chụp ảnh *</Label>
+                      <Label>Dịch vụ *</Label>
                       <Select
                         value={formData.selectedCategory}
                         onValueChange={(value) =>
@@ -537,27 +505,25 @@ const Booking = () => {
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Chọn hạng mục chụp ảnh" />
+                          <SelectValue placeholder="Chọn dịch vụ chụp ảnh" />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map((category: any) => (
-                            <SelectItem key={category.id} value={category.name}>
-                              {category.label}
+                          {servicesData.map((service: any) => (
+                            <SelectItem key={service.id} value={service.title}>
+                              {service.title} - {service.price}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       
-                      {/* Estimated Price Display */}
-                      {estimatedPrice && (
+                      {/* Service Price Display */}
+                      {selectedServicePrice && (
                         <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg text-sm">
                           <Calculator className="h-4 w-4 text-primary" />
                           <div>
-                            <span className="text-muted-foreground">Giá ước tính: </span>
+                            <span className="text-muted-foreground">Giá dịch vụ: </span>
                             <span className="font-semibold text-primary">
-                              {estimatedPrice.min === estimatedPrice.max
-                                ? formatPrice(estimatedPrice.min)
-                                : `${formatPrice(estimatedPrice.min)} - ${formatPrice(estimatedPrice.max)}`}
+                              {selectedServicePrice}
                             </span>
                           </div>
                         </div>
