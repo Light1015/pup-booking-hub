@@ -1,31 +1,40 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, Users, Award, Heart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Heart, Shield, Zap, Lightbulb, Palette, Target, Sparkles } from "lucide-react";
 
 const About = () => {
-  const values = [
-    {
-      icon: Camera,
-      title: "Chuyên nghiệp",
-      description:
-        "Cung cấp dịch vụ chụp ảnh sản phẩm theo quy trình rõ ràng, phù hợp cho bán hàng và marketing.",
-    },
+  const coreValues = [
     {
       icon: Heart,
-      title: "Tiện lợi",
+      title: "Tâm (Dedicated)",
       description:
-        "Khách hàng có thể xem dịch vụ, đặt lịch và theo dõi trạng thái booking trực tiếp trên website.",
+        "Chúng tôi đặt cả tâm huyết vào từng set-up, tỉ mỉ trong từng khâu hậu kỳ để đảm bảo mỗi bức ảnh bàn giao đều là một tác phẩm hoàn hảo nhất.",
     },
     {
-      icon: Award,
-      title: "Chất lượng",
-      description: "Cam kết mang đến những bức ảnh chất lượng cao nhất",
+      icon: Shield,
+      title: "Tín (Reliable)",
+      description:
+        "Uy tín là nền tảng của SnapPup. Chúng tôi cam kết đúng tiến độ, đúng chất lượng và minh bạch trong mọi chi phí ngay từ đầu.",
     },
     {
-      icon: Users,
-      title: "Tận tâm",
-      description: "Luôn lắng nghe và đáp ứng mọi yêu cầu của khách hàng",
+      icon: Zap,
+      title: "Tốc (Speed)",
+      description:
+        "Trong kỷ nguyên kinh doanh số, thời gian là vàng. SnapPup tối ưu quy trình để bàn giao hình ảnh nhanh nhất (24h - 48h), giúp khách hàng kịp tiến độ chiến dịch marketing.",
+    },
+    {
+      icon: Lightbulb,
+      title: "Sáng (Creative)",
+      description:
+        "Luôn làm mới mình với những concept độc đáo, không rập khuôn. Chúng tôi không chỉ chụp sản phẩm, chúng tôi tạo ra xu hướng hình ảnh để sản phẩm của bạn dẫn đầu thị trường.",
+    },
+    {
+      icon: Palette,
+      title: "Mỹ (Aesthetic)",
+      description:
+        "Đề cao tính thẩm mỹ và sự tinh tế. Hình ảnh của SnapPup không chỉ đẹp về thị giác mà còn phải đúng 'gu' của đối tượng khách hàng mục tiêu mà bạn hướng tới.",
     },
   ];
 
@@ -34,36 +43,72 @@ const About = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <h1 className="text-5xl font-display font-bold">Về SnapPup Studio</h1>
-          <p className="text-xl text-muted-foreground leading-relaxed">
-            SnapPup Studio là nền tảng hỗ trợ đặt lịch chụp ảnh sản phẩm trực
-            tuyến, được xây dựng nhằm giúp cá nhân và doanh nghiệp dễ dàng tiếp
-            cận dịch vụ chụp ảnh chuyên nghiệp một cách nhanh chóng – rõ ràng –
-            tiện lợi. SnapPup tập trung vào việc đơn giản hóa quy trình đặt
-            lịch, quản lý dịch vụ và theo dõi trạng thái booking trên một hệ
-            thống tập trung.
-          </p>
+      <section className="relative py-20 bg-gradient-to-b from-primary/5 to-background overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-6">
+            <Badge className="bg-primary/20 text-primary border-primary/30 px-4 py-2">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Về chúng tôi
+            </Badge>
+            <h1 className="text-5xl font-display font-bold">
+              SnapPup – Người kể chuyện thương hiệu bằng hình ảnh
+            </h1>
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Tại SnapPup, chúng tôi không chỉ "chụp ảnh", chúng tôi kiến tạo giá trị cho sản phẩm. 
+              Với biểu tượng chú chó thông minh và nhạy bén trong logo, SnapPup cam kết sự tận tâm, 
+              tốc độ và độ chính xác cao nhất trong từng khung hình.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Values */}
+      {/* Mission */}
+      <section className="container mx-auto px-4 py-16">
+        <Card className="bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 border-2 border-primary/20">
+          <CardContent className="p-8 md:p-12">
+            <div className="flex items-start gap-4">
+              <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center flex-shrink-0">
+                <Target className="h-8 w-8 text-primary-foreground" />
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-3xl font-display font-bold">Sứ mệnh</h2>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Giúp các doanh nghiệp vừa và nhỏ (SMEs) tại Cần Thơ và miền Tây sở hữu bộ nhận diện 
+                  sản phẩm chuyên nghiệp với chi phí tối ưu. Chúng tôi tin rằng mọi sản phẩm đều 
+                  xứng đáng được thể hiện đẹp nhất.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Core Values */}
       <section className="bg-muted/30 py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4 px-4 py-1.5">
+              <Sparkles className="h-4 w-4 mr-1" />
+              Những gì định nghĩa chúng tôi
+            </Badge>
             <h2 className="text-4xl font-display font-bold mb-4">
               Giá trị cốt lõi
             </h2>
-            <p className="text-muted-foreground text-lg">
-              Những gì chúng tôi mang đến cho bạn
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              5 giá trị cốt lõi tạo nên thương hiệu SnapPup
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {values.map((value, index) => (
-              <Card key={index} className="text-center">
-                <CardContent className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {coreValues.map((value, index) => (
+              <Card 
+                key={index} 
+                className={`text-center hover:shadow-lg transition-all duration-300 ${
+                  index === 4 ? 'md:col-span-2 lg:col-span-1' : ''
+                }`}
+              >
+                <CardContent className="p-8 space-y-4">
                   <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
                     <value.icon className="h-8 w-8 text-primary" />
                   </div>
@@ -78,18 +123,21 @@ const About = () => {
 
       {/* Story */}
       <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-12">
           <div className="space-y-4">
+            <Badge variant="outline" className="px-4 py-1.5">
+              <Sparkles className="h-4 w-4 mr-1" />
+              Câu chuyện
+            </Badge>
             <h2 className="text-3xl font-display font-bold">
-              Câu chuyện của chúng tôi
+              Câu chuyện của SnapPup
             </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              SnapPup được phát triển từ nhu cầu thực tế trong việc đặt lịch và
-              quản lý dịch vụ chụp ảnh sản phẩm. Nhóm nhận thấy khách hàng
-              thường gặp khó khăn khi liên hệ studio, theo dõi lịch chụp và quản
-              lý thông tin dịch vụ. Từ đó, SnapPup ra đời như một giải pháp số
-              hóa quy trình, giúp việc đặt lịch chụp ảnh sản phẩm trở nên đơn
-              giản và hiệu quả hơn.
+            <p className="text-muted-foreground leading-relaxed text-lg">
+              SnapPup được thành lập từ niềm đam mê nhiếp ảnh và mong muốn hỗ trợ các doanh nghiệp 
+              địa phương phát triển. Nhận thấy nhiều shop online và doanh nghiệp nhỏ tại Cần Thơ 
+              gặp khó khăn trong việc có được hình ảnh sản phẩm chất lượng với chi phí hợp lý, 
+              chúng tôi quyết định xây dựng một studio chuyên nghiệp với quy trình tối ưu, 
+              giúp mọi sản phẩm đều có cơ hội tỏa sáng.
             </p>
           </div>
 
@@ -97,11 +145,10 @@ const About = () => {
             <h2 className="text-3xl font-display font-bold">
               Đội ngũ của chúng tôi
             </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Đội ngũ SnapPup gồm các thành viên có nền tảng về công nghệ và
-              quản lý hệ thống, tập trung xây dựng một nền tảng ổn định, dễ sử
-              dụng, hỗ trợ tốt cho cả khách hàng và đơn vị cung cấp dịch vụ chụp
-              ảnh.
+            <p className="text-muted-foreground leading-relaxed text-lg">
+              Đội ngũ SnapPup gồm các nhiếp ảnh gia, stylist và chuyên gia hậu kỳ giàu kinh nghiệm, 
+              luôn cập nhật xu hướng và công nghệ mới nhất. Chúng tôi làm việc với tinh thần đồng đội 
+              cao, mỗi người đều mang lại giá trị riêng để tạo nên những bộ ảnh hoàn hảo cho khách hàng.
             </p>
           </div>
         </div>
