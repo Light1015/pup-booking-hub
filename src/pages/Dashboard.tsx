@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar, MessageSquare, Image, FolderOpen, Bell, Search, Download, FileText, CreditCard, Clock, CheckCircle, XCircle, AlertCircle, Ban, CalendarDays } from "lucide-react";
+import { Trash2, Mail, Upload, Plus, Edit, LogOut, Eye, Calendar, MessageSquare, Image, FolderOpen, Bell, Search, Download, FileText, CreditCard, Clock, CheckCircle, XCircle, AlertCircle, Ban, CalendarDays, Camera, Package, ImageIcon } from "lucide-react";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { AdminReplies } from "@/components/AdminReplies";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -19,6 +19,8 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { AdminNotificationBell } from "@/components/AdminNotificationBell";
 import { ServiceManager } from "@/components/admin/ServiceManager";
+import { BookingDetailDialog } from "@/components/BookingDetailDialog";
+import { BookingWorkflowTimeline, WorkflowStatus } from "@/components/BookingWorkflowTimeline";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const Dashboard = () => {
@@ -54,6 +56,8 @@ const Dashboard = () => {
   
   // Detail dialog states
   const [detailDialog, setDetailDialog] = useState<{ open: boolean; type: 'booking' | 'contact'; data: any }>({ open: false, type: 'booking', data: null });
+  const [bookingDetailOpen, setBookingDetailOpen] = useState(false);
+  const [selectedBookingDetail, setSelectedBookingDetail] = useState<any>(null);
   const [editingAlbum, setEditingAlbum] = useState<any | null>(null);
   
   // Confirm dialog states
@@ -1097,99 +1101,117 @@ const Dashboard = () => {
                     <p>Không tìm thấy lịch đặt nào</p>
                   </CardContent>
                 </Card>
-              ) : filteredBookings.map((booking: any) => (
-                <Card key={booking.id} className={`border-0 shadow-sm hover:shadow-md transition-shadow ${!booking.read_at ? 'ring-2 ring-primary/20' : ''}`}>
-                  <CardContent className="p-4">
-                    <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                      {/* Status Badges */}
-                      <div className="flex flex-wrap gap-2">
-                        {!booking.read_at && <Badge className="bg-blue-500">Mới</Badge>}
-                        {booking.read_at && !booking.replied_at && <Badge variant="secondary">Đã đọc</Badge>}
-                        {booking.replied_at && <Badge variant="outline" className="border-green-500 text-green-600">Đã phản hồi</Badge>}
-                        
-                        {booking.status === 'pending_payment' && (
-                          <Badge className="bg-orange-500"><CreditCard className="w-3 h-3 mr-1" />Chờ TT</Badge>
-                        )}
-                        {booking.status === 'pending' && (
-                          <Badge className="bg-yellow-500"><Clock className="w-3 h-3 mr-1" />Chờ XN</Badge>
-                        )}
-                        {booking.status === 'confirmed' && (
-                          <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" />Đã XN</Badge>
-                        )}
-                        {booking.status === 'cancelled' && (
-                          <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Đã hủy</Badge>
-                        )}
-                      </div>
-
-                      {/* Main Info */}
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div>
-                          <p className="font-semibold text-base">{booking.name}</p>
-                          <p className="text-sm text-muted-foreground">{booking.email}</p>
-                          <p className="text-sm text-muted-foreground">{booking.phone}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm"><span className="text-muted-foreground">Hạng mục:</span> <span className="font-medium text-primary">{booking.pet_name}</span></p>
-                          <p className="text-sm"><span className="text-muted-foreground">Ngày:</span> {new Date(booking.booking_date).toLocaleDateString('vi-VN')}</p>
-                          <p className="text-sm"><span className="text-muted-foreground">Giờ:</span> {booking.booking_time}</p>
-                        </div>
-                        <div>
-                          {booking.notes && <p className="text-sm text-muted-foreground line-clamp-2">{booking.notes}</p>}
-                          {booking.payment_proof_url && (
-                            <a href={booking.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1">
-                              <CreditCard className="h-3 w-3" />Xem ảnh TT
-                            </a>
+              ) : filteredBookings.map((booking: any) => {
+                const workflowStatus = (booking.workflow_status || "pending_payment") as WorkflowStatus;
+                
+                return (
+                  <Card 
+                    key={booking.id} 
+                    className={`border-0 shadow-sm hover:shadow-md transition-all cursor-pointer ${!booking.read_at ? 'ring-2 ring-primary/20' : ''}`}
+                    onClick={() => {
+                      setSelectedBookingDetail(booking);
+                      setBookingDetailOpen(true);
+                      if (!booking.read_at) {
+                        markAsRead.mutate({ type: 'booking', id: booking.id });
+                      }
+                    }}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                        {/* Status Badges */}
+                        <div className="flex flex-wrap gap-2">
+                          {!booking.read_at && <Badge className="bg-blue-500">Mới</Badge>}
+                          {booking.replied_at && <Badge variant="outline" className="border-green-500 text-green-600">Đã phản hồi</Badge>}
+                          
+                          {/* Workflow Status Badge */}
+                          {workflowStatus === 'pending_payment' && !booking.payment_proof_url && (
+                            <Badge className="bg-orange-500"><CreditCard className="w-3 h-3 mr-1" />Chờ TT</Badge>
+                          )}
+                          {workflowStatus === 'pending_payment' && booking.payment_proof_url && (
+                            <Badge className="bg-yellow-500"><Clock className="w-3 h-3 mr-1" />Chờ XN TT</Badge>
+                          )}
+                          {workflowStatus === 'payment_confirmed' && (
+                            <Badge className="bg-blue-500"><CheckCircle className="w-3 h-3 mr-1" />Đã TT</Badge>
+                          )}
+                          {workflowStatus === 'scheduled' && (
+                            <Badge className="bg-indigo-500"><Calendar className="w-3 h-3 mr-1" />Đã lên lịch</Badge>
+                          )}
+                          {workflowStatus === 'shooting' && (
+                            <Badge className="bg-purple-500"><Camera className="w-3 h-3 mr-1" />Đang chụp</Badge>
+                          )}
+                          {workflowStatus === 'processing' && (
+                            <Badge className="bg-pink-500"><ImageIcon className="w-3 h-3 mr-1" />Đang xử lý</Badge>
+                          )}
+                          {workflowStatus === 'editing_complete' && (
+                            <Badge className="bg-teal-500"><CheckCircle className="w-3 h-3 mr-1" />Hoàn tất</Badge>
+                          )}
+                          {workflowStatus === 'delivered' && (
+                            <Badge className="bg-emerald-500"><Package className="w-3 h-3 mr-1" />Đã giao</Badge>
+                          )}
+                          {workflowStatus === 'cancelled' && (
+                            <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Đã hủy</Badge>
                           )}
                         </div>
-                      </div>
 
-                      {/* Actions */}
-                      <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end">
-                        {!booking.read_at && (
-                          <Button size="sm" variant="ghost" onClick={() => markAsRead.mutate({ type: 'booking', id: booking.id })}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {(booking.status === 'pending' || booking.status === 'pending_payment') && (
-                          <Button 
-                            size="sm" 
-                            className="bg-emerald-500 hover:bg-emerald-600"
-                            onClick={() => showConfirmDialog(
-                              "Xác nhận lịch đặt", 
-                              `Xác nhận lịch đặt của ${booking.name}?`, 
-                              () => confirmBookingStatus.mutate(booking.id),
-                              "default"
+                        {/* Main Info */}
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <p className="font-semibold text-base">{booking.name}</p>
+                            <p className="text-sm text-muted-foreground">{booking.email}</p>
+                            <p className="text-sm text-muted-foreground">{booking.phone}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm"><span className="text-muted-foreground">Dịch vụ:</span> <span className="font-medium text-primary">{booking.pet_name}</span></p>
+                            <p className="text-sm"><span className="text-muted-foreground">Ngày:</span> {new Date(booking.booking_date).toLocaleDateString('vi-VN')}</p>
+                            <p className="text-sm"><span className="text-muted-foreground">Giờ:</span> {booking.booking_time}</p>
+                          </div>
+                          <div>
+                            {booking.expected_revenue > 0 && (
+                              <p className="text-sm text-green-600 font-medium">
+                                {new Intl.NumberFormat("vi-VN").format(booking.expected_revenue)} VNĐ
+                              </p>
                             )}
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {booking.status !== 'cancelled' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="text-orange-600 border-orange-300"
-                            onClick={() => showConfirmDialog(
-                              "Hủy lịch đặt", 
-                              `Hủy lịch đặt của ${booking.name}?`, 
-                              () => cancelBooking.mutate(booking.id),
-                              "destructive"
+                            {booking.payment_proof_url && (
+                              <span className="inline-flex items-center gap-1 text-sm text-primary">
+                                <CreditCard className="h-3 w-3" />Có ảnh TT
+                              </span>
                             )}
-                          >
-                            <Ban className="w-4 h-4" />
+                          </div>
+                        </div>
+
+                        {/* Compact Timeline */}
+                        <div className="hidden xl:block">
+                          <BookingWorkflowTimeline
+                            currentStatus={workflowStatus}
+                            timestamps={{
+                              created_at: booking.created_at,
+                              payment_confirmed_at: booking.payment_confirmed_at,
+                              scheduled_at: booking.scheduled_at,
+                              shooting_at: booking.shooting_at,
+                              processing_at: booking.processing_at,
+                              editing_complete_at: booking.editing_complete_at,
+                              delivered_at: booking.delivered_at,
+                              cancelled_at: booking.cancelled_at,
+                            }}
+                            hasPaymentProof={!!booking.payment_proof_url}
+                            compact
+                          />
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end" onClick={(e) => e.stopPropagation()}>
+                          <Button size="sm" variant="outline" onClick={() => { setReplyData({ type: 'booking', data: booking, message: '' }); setReplyDialogOpen(true); }}>
+                            <Mail className="w-4 h-4" />
                           </Button>
-                        )}
-                        <Button size="sm" variant="outline" onClick={() => { setReplyData({ type: 'booking', data: booking, message: '' }); setReplyDialogOpen(true); }}>
-                          <Mail className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => showConfirmDialog("Xóa", `Xóa lịch đặt của ${booking.name}?`, () => deleteBooking.mutate(booking.id), "destructive")}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => showConfirmDialog("Xóa", `Xóa lịch đặt của ${booking.name}?`, () => deleteBooking.mutate(booking.id), "destructive")}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         );
@@ -2160,6 +2182,14 @@ const Dashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Booking Detail Dialog */}
+      <BookingDetailDialog
+        open={bookingDetailOpen}
+        onOpenChange={setBookingDetailOpen}
+        booking={selectedBookingDetail}
+        isAdmin={true}
+      />
     </div>
   );
 };

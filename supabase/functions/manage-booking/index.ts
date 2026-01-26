@@ -194,7 +194,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       let query = supabase
         .from("bookings")
-        .select("id, name, phone, email, booking_date, booking_time, pet_name, status, payment_proof_url, created_at")
+        .select("id, name, phone, email, booking_date, booking_time, pet_name, pet_type, notes, status, workflow_status, payment_proof_url, created_at, payment_confirmed_at, scheduled_at, shooting_at, processing_at, editing_complete_at, delivered_at, cancelled_at, manage_token, selected_category, expected_revenue")
         .order("booking_date", { ascending: false });
 
       if (phone && email) {
@@ -259,7 +259,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Handle different actions
     switch (action) {
       case "get":
-        // Return booking details (sanitized)
+        // Return booking details (sanitized) with workflow status
         return new Response(
           JSON.stringify({
             booking: {
@@ -270,11 +270,21 @@ const handler = async (req: Request): Promise<Response> => {
               booking_date: booking.booking_date,
               booking_time: booking.booking_time,
               pet_name: booking.pet_name,
+              pet_type: booking.pet_type,
               selected_category: booking.selected_category,
               notes: booking.notes,
               status: booking.status,
+              workflow_status: booking.workflow_status || "pending_payment",
               payment_proof_url: booking.payment_proof_url,
               created_at: booking.created_at,
+              payment_confirmed_at: booking.payment_confirmed_at,
+              scheduled_at: booking.scheduled_at,
+              shooting_at: booking.shooting_at,
+              processing_at: booking.processing_at,
+              editing_complete_at: booking.editing_complete_at,
+              delivered_at: booking.delivered_at,
+              cancelled_at: booking.cancelled_at,
+              expected_revenue: booking.expected_revenue,
             }
           }),
           { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
