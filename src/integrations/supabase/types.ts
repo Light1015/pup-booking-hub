@@ -86,62 +86,86 @@ export type Database = {
         Row: {
           booking_date: string
           booking_time: string
+          cancelled_at: string | null
           created_at: string
+          delivered_at: string | null
+          editing_complete_at: string | null
           email: string
           expected_revenue: number | null
           id: string
           manage_token: string | null
           name: string
           notes: string | null
+          payment_confirmed_at: string | null
           payment_proof_url: string | null
           pet_age: string | null
           pet_name: string
           pet_type: string
           phone: string
+          processing_at: string | null
           read_at: string | null
           replied_at: string | null
+          scheduled_at: string | null
           selected_category: string | null
+          shooting_at: string | null
           status: string | null
+          workflow_status: string | null
         }
         Insert: {
           booking_date: string
           booking_time: string
+          cancelled_at?: string | null
           created_at?: string
+          delivered_at?: string | null
+          editing_complete_at?: string | null
           email: string
           expected_revenue?: number | null
           id?: string
           manage_token?: string | null
           name: string
           notes?: string | null
+          payment_confirmed_at?: string | null
           payment_proof_url?: string | null
           pet_age?: string | null
           pet_name: string
           pet_type: string
           phone: string
+          processing_at?: string | null
           read_at?: string | null
           replied_at?: string | null
+          scheduled_at?: string | null
           selected_category?: string | null
+          shooting_at?: string | null
           status?: string | null
+          workflow_status?: string | null
         }
         Update: {
           booking_date?: string
           booking_time?: string
+          cancelled_at?: string | null
           created_at?: string
+          delivered_at?: string | null
+          editing_complete_at?: string | null
           email?: string
           expected_revenue?: number | null
           id?: string
           manage_token?: string | null
           name?: string
           notes?: string | null
+          payment_confirmed_at?: string | null
           payment_proof_url?: string | null
           pet_age?: string | null
           pet_name?: string
           pet_type?: string
           phone?: string
+          processing_at?: string | null
           read_at?: string | null
           replied_at?: string | null
+          scheduled_at?: string | null
           selected_category?: string | null
+          shooting_at?: string | null
           status?: string | null
+          workflow_status?: string | null
         }
         Relationships: []
       }
@@ -428,6 +452,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_cancel_unpaid_bookings: { Args: never; Returns: undefined }
       get_booking_by_token: {
         Args: { p_token: string }
         Returns: {
@@ -446,6 +471,33 @@ export type Database = {
           phone: string
           selected_category: string
           status: string
+        }[]
+      }
+      get_bookings_by_contact: {
+        Args: { p_email?: string; p_phone?: string }
+        Returns: {
+          booking_date: string
+          booking_time: string
+          cancelled_at: string
+          created_at: string
+          delivered_at: string
+          editing_complete_at: string
+          email: string
+          id: string
+          manage_token: string
+          name: string
+          notes: string
+          payment_confirmed_at: string
+          payment_proof_url: string
+          pet_name: string
+          pet_type: string
+          phone: string
+          processing_at: string
+          scheduled_at: string
+          selected_category: string
+          shooting_at: string
+          status: string
+          workflow_status: string
         }[]
       }
       has_role: {
