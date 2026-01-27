@@ -1,10 +1,39 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Shield, Zap, Lightbulb, Palette, Target, Sparkles } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Heart, Shield, Zap, Lightbulb, Palette, Target, Sparkles, Mail, Phone, Users } from "lucide-react";
+
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  bio: string | null;
+  avatar_url: string | null;
+  email: string | null;
+  phone: string | null;
+  display_order: number;
+  is_active: boolean;
+}
 
 const About = () => {
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ["teamMembersPublic"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data as TeamMember[];
+    },
+  });
+
   const coreValues = [
     {
       icon: Heart,
@@ -121,35 +150,130 @@ const About = () => {
         </div>
       </section>
 
-      {/* Story */}
+      {/* Team Section */}
       <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto space-y-12">
-          <div className="space-y-4">
+        <div className="max-w-5xl mx-auto space-y-12">
+          <div className="text-center space-y-4">
             <Badge variant="outline" className="px-4 py-1.5">
-              <Sparkles className="h-4 w-4 mr-1" />
-              Câu chuyện
+              <Users className="h-4 w-4 mr-1" />
+              Đội ngũ
             </Badge>
-            <h2 className="text-3xl font-display font-bold">
-              Câu chuyện của SnapPup
+            <h2 className="text-4xl font-display font-bold">
+              Đội ngũ của chúng tôi
             </h2>
-            <p className="text-muted-foreground leading-relaxed text-lg">
-              SnapPup được thành lập từ niềm đam mê nhiếp ảnh và mong muốn hỗ trợ các doanh nghiệp 
-              địa phương phát triển. Nhận thấy nhiều shop online và doanh nghiệp nhỏ tại Cần Thơ 
-              gặp khó khăn trong việc có được hình ảnh sản phẩm chất lượng với chi phí hợp lý, 
-              chúng tôi quyết định xây dựng một studio chuyên nghiệp với quy trình tối ưu, 
-              giúp mọi sản phẩm đều có cơ hội tỏa sáng.
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Đội ngũ SnapPup gồm các nhiếp ảnh gia, stylist và chuyên gia hậu kỳ giàu kinh nghiệm, 
+              luôn cập nhật xu hướng và công nghệ mới nhất.
             </p>
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-3xl font-display font-bold">
-              Đội ngũ của chúng tôi
-            </h2>
-            <p className="text-muted-foreground leading-relaxed text-lg">
-              Đội ngũ SnapPup gồm các nhiếp ảnh gia, stylist và chuyên gia hậu kỳ giàu kinh nghiệm, 
-              luôn cập nhật xu hướng và công nghệ mới nhất. Chúng tôi làm việc với tinh thần đồng đội 
-              cao, mỗi người đều mang lại giá trị riêng để tạo nên những bộ ảnh hoàn hảo cho khách hàng.
-            </p>
+          {teamMembers.length > 0 ? (
+            <Tabs defaultValue={teamMembers[0]?.id} className="w-full">
+              <TabsList className="flex flex-wrap justify-center gap-2 h-auto bg-transparent p-0 mb-8">
+                {teamMembers.map((member) => (
+                  <TabsTrigger
+                    key={member.id}
+                    value={member.id}
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3 rounded-full border data-[state=active]:border-primary transition-all"
+                  >
+                    <Avatar className="h-6 w-6 mr-2">
+                      <AvatarImage src={member.avatar_url || undefined} />
+                      <AvatarFallback className="text-xs">{member.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    {member.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {teamMembers.map((member) => (
+                <TabsContent key={member.id} value={member.id} className="mt-0">
+                  <Card className="overflow-hidden border-0 shadow-lg">
+                    <CardContent className="p-0">
+                      <div className="grid md:grid-cols-2 gap-0">
+                        {/* Avatar/Image Section */}
+                        <div className="bg-gradient-to-br from-primary/20 to-primary/5 p-8 flex items-center justify-center min-h-[300px]">
+                          <Avatar className="h-48 w-48 border-4 border-background shadow-xl">
+                            <AvatarImage 
+                              src={member.avatar_url || undefined} 
+                              className="object-cover"
+                            />
+                            <AvatarFallback className="text-6xl bg-primary/10">
+                              {member.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+
+                        {/* Info Section */}
+                        <div className="p-8 flex flex-col justify-center space-y-6">
+                          <div>
+                            <h3 className="text-3xl font-display font-bold">{member.name}</h3>
+                            <p className="text-primary font-medium text-lg">{member.role}</p>
+                          </div>
+
+                          {member.bio && (
+                            <p className="text-muted-foreground leading-relaxed">
+                              {member.bio}
+                            </p>
+                          )}
+
+                          <div className="space-y-3">
+                            {member.email && (
+                              <div className="flex items-center gap-3 text-muted-foreground">
+                                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                  <Mail className="h-5 w-5" />
+                                </div>
+                                <span>{member.email}</span>
+                              </div>
+                            )}
+                            {member.phone && (
+                              <div className="flex items-center gap-3 text-muted-foreground">
+                                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                  <Phone className="h-5 w-5" />
+                                </div>
+                                <span>{member.phone}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              ))}
+            </Tabs>
+          ) : (
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-12 text-center">
+                <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                <p className="text-lg text-muted-foreground">
+                  Thông tin đội ngũ đang được cập nhật...
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </section>
+
+      {/* Story */}
+      <section className="bg-muted/30 py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="space-y-4">
+              <Badge variant="outline" className="px-4 py-1.5">
+                <Sparkles className="h-4 w-4 mr-1" />
+                Câu chuyện
+              </Badge>
+              <h2 className="text-3xl font-display font-bold">
+                Câu chuyện của SnapPup
+              </h2>
+              <p className="text-muted-foreground leading-relaxed text-lg">
+                SnapPup được thành lập từ niềm đam mê nhiếp ảnh và mong muốn hỗ trợ các doanh nghiệp 
+                địa phương phát triển. Nhận thấy nhiều shop online và doanh nghiệp nhỏ tại Cần Thơ 
+                gặp khó khăn trong việc có được hình ảnh sản phẩm chất lượng với chi phí hợp lý, 
+                chúng tôi quyết định xây dựng một studio chuyên nghiệp với quy trình tối ưu, 
+                giúp mọi sản phẩm đều có cơ hội tỏa sáng.
+              </p>
+            </div>
           </div>
         </div>
       </section>
