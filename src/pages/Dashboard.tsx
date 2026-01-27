@@ -19,6 +19,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { AdminNotificationBell } from "@/components/AdminNotificationBell";
 import { ServiceManager } from "@/components/admin/ServiceManager";
+import { TeamMemberManager } from "@/components/admin/TeamMemberManager";
 import { BookingDetailDialog } from "@/components/BookingDetailDialog";
 import { BookingWorkflowTimeline, WorkflowStatus } from "@/components/BookingWorkflowTimeline";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -1912,6 +1913,9 @@ const Dashboard = () => {
           </Card>
         );
 
+      case "team":
+        return <TeamMemberManager />;
+
       case "settings":
         return (
           <Card>
@@ -2052,6 +2056,7 @@ const Dashboard = () => {
       { id: "albums", label: "Bộ ảnh" },
       { id: "categories", label: "Quản lý danh mục" },
       { id: "services", label: "Quản lý dịch vụ" },
+      { id: "team", label: "Quản lý thành viên" },
       { id: "settings", label: "Cài đặt hệ thống" },
     ];
     return allItems.find(item => item.id === activeTab)?.label || "Dashboard";

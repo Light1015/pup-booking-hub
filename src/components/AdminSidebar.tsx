@@ -49,6 +49,7 @@ const menuGroups = [
       { id: "albums", label: "Bộ ảnh", icon: FolderOpen },
       { id: "categories", label: "Danh mục", icon: FolderOpen },
       { id: "services", label: "Dịch vụ", icon: Briefcase },
+      { id: "team", label: "Thành viên", icon: Users },
     ]
   },
   {
