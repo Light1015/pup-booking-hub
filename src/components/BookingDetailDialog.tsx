@@ -45,8 +45,34 @@ export const BookingDetailDialog = ({
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState<WorkflowStatus | "">("");
 
+  const sendWorkflowUpdateEmail = async (previousStatus: string, newStatus: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("send-workflow-update", {
+        body: {
+          customerEmail: booking.email,
+          customerName: booking.name,
+          petName: booking.pet_name || booking.selected_category,
+          bookingDate: booking.booking_date,
+          bookingTime: booking.booking_time,
+          selectedCategory: booking.selected_category,
+          previousStatus,
+          newStatus,
+          manageToken: booking.manage_token,
+        },
+      });
+      if (error) {
+        console.error("Failed to send workflow update email:", error);
+      } else {
+        console.log("Workflow update email sent successfully");
+      }
+    } catch (err) {
+      console.error("Error sending workflow update email:", err);
+    }
+  };
+
   const updateWorkflowStatus = useMutation({
     mutationFn: async (newStatus: WorkflowStatus) => {
+      const previousStatus = booking.workflow_status || "pending_payment";
       const timestampField = `${newStatus}_at`;
       const updateData: Record<string, any> = {
         workflow_status: newStatus,
@@ -68,10 +94,13 @@ export const BookingDetailDialog = ({
         .eq("id", booking.id);
       
       if (error) throw error;
+
+      // Send email notification
+      await sendWorkflowUpdateEmail(previousStatus, newStatus);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      toast.success("Đã cập nhật trạng thái!");
+      toast.success("Đã cập nhật trạng thái và gửi email thông báo!");
       setSelectedStatus("");
     },
     onError: (error: any) => {
@@ -81,6 +110,7 @@ export const BookingDetailDialog = ({
 
   const confirmPayment = useMutation({
     mutationFn: async () => {
+      const previousStatus = booking.workflow_status || "pending_payment";
       const { error } = await supabase
         .from("bookings")
         .update({
@@ -91,10 +121,13 @@ export const BookingDetailDialog = ({
         .eq("id", booking.id);
       
       if (error) throw error;
+
+      // Send email notification
+      await sendWorkflowUpdateEmail(previousStatus, "payment_confirmed");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      toast.success("Đã xác nhận thanh toán!");
+      toast.success("Đã xác nhận thanh toán và gửi email thông báo!");
     },
     onError: (error: any) => {
       toast.error("Lỗi: " + error.message);
@@ -103,6 +136,7 @@ export const BookingDetailDialog = ({
 
   const cancelBooking = useMutation({
     mutationFn: async () => {
+      const previousStatus = booking.workflow_status || "pending_payment";
       const { error } = await supabase
         .from("bookings")
         .update({
@@ -113,10 +147,13 @@ export const BookingDetailDialog = ({
         .eq("id", booking.id);
       
       if (error) throw error;
+
+      // Send email notification
+      await sendWorkflowUpdateEmail(previousStatus, "cancelled");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      toast.success("Đã hủy lịch đặt!");
+      toast.success("Đã hủy lịch đặt và gửi email thông báo!");
       onOpenChange(false);
     },
     onError: (error: any) => {

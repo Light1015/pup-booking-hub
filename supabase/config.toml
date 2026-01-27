@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.send-payment-reminder]
 verify_jwt = false
+
+[functions.send-workflow-update]
+verify_jwt = true
