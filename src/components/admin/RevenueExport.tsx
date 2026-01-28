@@ -290,12 +290,12 @@ export const RevenueExport = ({ bookings }: RevenueExportProps) => {
           </div>
           <div className="space-y-2">
             <Label>Chọn kỳ</Label>
-            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <Select value={selectedPeriod || "all"} onValueChange={(v) => setSelectedPeriod(v === "all" ? "" : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Chọn kỳ báo cáo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tất cả</SelectItem>
+                <SelectItem value="all">Tất cả</SelectItem>
                 {periodOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
