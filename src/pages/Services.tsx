@@ -61,14 +61,40 @@ const Services = () => {
     return Package;
   };
 
-  // Parse price string to number (e.g., "120K" -> 120000, "2.000K" -> 2000000)
+  // Parse price string to number (e.g., "120K" -> 120000, "2.000K" -> 2000000, "1.500.000" -> 1500000)
   const parsePrice = (priceStr: string): number => {
     if (!priceStr) return 0;
-    const cleaned = priceStr.replace(/[^0-9.,kKmM]/g, "").replace(",", ".");
-    const match = cleaned.match(/(\d+(?:\.\d+)?)\s*([kKmM])?/);
-    if (!match) return 0;
-    const num = parseFloat(match[1]);
-    const suffix = match[2]?.toLowerCase();
+    
+    // First, extract suffix (K or M)
+    const suffixMatch = priceStr.match(/[kKmM]/);
+    const suffix = suffixMatch ? suffixMatch[0].toLowerCase() : null;
+    
+    // Remove all non-numeric characters except dots and commas
+    let numericPart = priceStr.replace(/[^0-9.,]/g, "");
+    
+    // Handle Vietnamese format: dots as thousand separators, comma as decimal
+    // If there are multiple dots, they're thousand separators (e.g., "2.000.000")
+    const dotCount = (numericPart.match(/\./g) || []).length;
+    if (dotCount > 1) {
+      // Multiple dots = thousand separators
+      numericPart = numericPart.replace(/\./g, "");
+    } else if (dotCount === 1) {
+      // Single dot: check if it's a decimal or thousand separator
+      // In Vietnamese format, "2.000" means 2000, not 2.0
+      const parts = numericPart.split(".");
+      if (parts[1] && parts[1].length === 3) {
+        // It's a thousand separator (e.g., "2.000")
+        numericPart = numericPart.replace(".", "");
+      }
+      // Otherwise keep it as decimal (e.g., "2.5")
+    }
+    
+    // Replace comma with dot for decimal parsing
+    numericPart = numericPart.replace(",", ".");
+    
+    const num = parseFloat(numericPart);
+    if (isNaN(num)) return 0;
+    
     if (suffix === "k") return num * 1000;
     if (suffix === "m") return num * 1000000;
     return num;
