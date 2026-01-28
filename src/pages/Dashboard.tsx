@@ -20,6 +20,7 @@ import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { AdminNotificationBell } from "@/components/AdminNotificationBell";
 import { ServiceManager } from "@/components/admin/ServiceManager";
 import { TeamMemberManager } from "@/components/admin/TeamMemberManager";
+import { RevenueExport } from "@/components/admin/RevenueExport";
 import { BookingDetailDialog } from "@/components/BookingDetailDialog";
 import { BookingWorkflowTimeline, WorkflowStatus } from "@/components/BookingWorkflowTimeline";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -1608,6 +1609,9 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Revenue Export */}
+            <RevenueExport bookings={bookings} />
           </div>
         );
 
