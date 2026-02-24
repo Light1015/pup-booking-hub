@@ -212,8 +212,8 @@ const ManageBooking = () => {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Ảnh quá lớn (tối đa 5MB)");
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Ảnh quá lớn (tối đa 20MB)");
       return;
     }
 

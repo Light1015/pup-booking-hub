@@ -22,6 +22,7 @@ interface Booking {
   status: string | null;
   workflow_status: string | null;
   expected_revenue: number | null;
+  actual_revenue: number | null;
   payment_confirmed_at: string | null;
   created_at: string;
 }
@@ -95,22 +96,22 @@ export const RevenueExport = ({ bookings }: RevenueExportProps) => {
 
   const calculateStats = () => {
     const filtered = filterBookingsByPeriod();
-    const confirmedBookings = filtered.filter((b) => b.payment_confirmed_at && b.workflow_status !== "cancelled");
-    const pendingBookings = filtered.filter((b) => !b.payment_confirmed_at && b.workflow_status !== "cancelled");
+    const deliveredBookings = filtered.filter((b) => b.workflow_status === 'delivered');
+    const pendingBookings = filtered.filter((b) => b.workflow_status !== 'delivered' && b.workflow_status !== 'cancelled');
     const cancelledBookings = filtered.filter((b) => b.workflow_status === "cancelled");
 
-    const confirmedRevenue = confirmedBookings.reduce((sum, b) => sum + (b.expected_revenue || 0), 0);
+    const confirmedRevenue = deliveredBookings.reduce((sum, b) => sum + (b.actual_revenue || 0), 0);
     const potentialRevenue = pendingBookings.reduce((sum, b) => sum + (b.expected_revenue || 0), 0);
 
     return {
       total: filtered.length,
-      confirmed: confirmedBookings.length,
+      confirmed: deliveredBookings.length,
       pending: pendingBookings.length,
       cancelled: cancelledBookings.length,
       confirmedRevenue,
       potentialRevenue,
       filtered,
-      confirmedBookings,
+      confirmedBookings: deliveredBookings,
     };
   };
 
@@ -159,7 +160,7 @@ export const RevenueExport = ({ bookings }: RevenueExportProps) => {
       b.email,
       b.selected_category || "Chưa chọn",
       WORKFLOW_LABELS[b.workflow_status || ""] || b.workflow_status,
-      b.expected_revenue || 0,
+      b.actual_revenue || b.expected_revenue || 0,
     ]);
 
     // Create workbook
@@ -314,7 +315,7 @@ export const RevenueExport = ({ bookings }: RevenueExportProps) => {
           </div>
           <div className="p-4 bg-green-50 rounded-lg text-center">
             <p className="text-2xl font-bold text-green-600">{stats.confirmed}</p>
-            <p className="text-sm text-muted-foreground">Đã thanh toán</p>
+            <p className="text-sm text-muted-foreground">Đã bàn giao</p>
           </div>
           <div className="p-4 bg-emerald-50 rounded-lg text-center">
             <p className="text-lg font-bold text-emerald-600">{formatCurrency(stats.confirmedRevenue)}</p>
