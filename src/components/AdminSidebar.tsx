@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Users,
   Briefcase,
-  ImageIcon
+  ImageIcon,
+  DollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -30,6 +31,7 @@ const menuGroups = [
     title: "Tổng quan",
     items: [
       { id: "overview", label: "Dashboard", icon: LayoutDashboard },
+      { id: "revenue", label: "Doanh thu", icon: DollarSign },
       { id: "reports", label: "Báo cáo", icon: BarChart3 },
     ]
   },

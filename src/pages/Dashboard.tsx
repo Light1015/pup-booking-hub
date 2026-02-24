@@ -608,10 +608,10 @@ const Dashboard = () => {
           ? ((cancelledBookings.length / totalProcessedBookings) * 100).toFixed(1)
           : '0';
         
-        // Expected revenue calculation (based on confirmed bookings)
-        const AVERAGE_BOOKING_VALUE = 400000; // 400K VND average per booking
-        const expectedRevenue = confirmedBookings.length * AVERAGE_BOOKING_VALUE;
-        const potentialRevenue = pendingBookings.length * AVERAGE_BOOKING_VALUE;
+        // Revenue calculation (based on actual_revenue from delivered bookings)
+        const deliveredBookings = bookings.filter((b: any) => b.workflow_status === 'delivered');
+        const expectedRevenue = deliveredBookings.reduce((sum: number, b: any) => sum + (b.actual_revenue || 0), 0);
+        const potentialRevenue = confirmedBookings.reduce((sum: number, b: any) => sum + (b.expected_revenue || 0), 0);
         
         // This month stats
         const thisMonth = new Date();
@@ -621,7 +621,8 @@ const Dashboard = () => {
         });
         const thisMonthConfirmed = thisMonthBookings.filter((b: any) => b.status === 'confirmed');
         const thisMonthCancelled = thisMonthBookings.filter((b: any) => b.status === 'cancelled');
-        const thisMonthRevenue = thisMonthConfirmed.length * AVERAGE_BOOKING_VALUE;
+        const thisMonthDelivered = thisMonthBookings.filter((b: any) => b.workflow_status === 'delivered');
+        const thisMonthRevenue = thisMonthDelivered.reduce((sum: number, b: any) => sum + (b.actual_revenue || 0), 0);
         
         // Chart data
         const bookingsByCategory = categories.map((cat: any) => ({
@@ -727,13 +728,13 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg">
                 <CardHeader className="pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu dự kiến</CardTitle>
+                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu thực tế</CardTitle>
                 </CardHeader>
                 <CardContent className="pb-4">
                   <p className="text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(expectedRevenue)} đ
                   </p>
-                  <p className="text-xs opacity-80 mt-1">Từ {confirmedBookings.length} lịch đã xác nhận</p>
+                  <p className="text-xs opacity-80 mt-1">Từ {deliveredBookings.length} lịch đã bàn giao</p>
                 </CardContent>
               </Card>
               
@@ -757,7 +758,7 @@ const Dashboard = () => {
                   <p className="text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(thisMonthRevenue)} đ
                   </p>
-                  <p className="text-xs opacity-80 mt-1">{thisMonthConfirmed.length} lịch đã xác nhận</p>
+                  <p className="text-xs opacity-80 mt-1">{thisMonthDelivered.length} lịch đã bàn giao</p>
                 </CardContent>
               </Card>
             </div>
@@ -1401,6 +1402,133 @@ const Dashboard = () => {
           </div>
         );
 
+      case "revenue":
+        const deliveredForRevenue = bookings.filter((b: any) => b.workflow_status === 'delivered');
+        const totalActualRevenue = deliveredForRevenue.reduce((sum: number, b: any) => sum + (b.actual_revenue || 0), 0);
+        const pendingRevenueInput = deliveredForRevenue.filter((b: any) => !b.actual_revenue).length;
+        
+        return (
+          <div className="space-y-6">
+            {/* Revenue Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg">
+                <CardHeader className="pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium opacity-90">Tổng doanh thu thực tế</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4">
+                  <p className="text-2xl font-bold">
+                    {new Intl.NumberFormat('vi-VN').format(totalActualRevenue)} đ
+                  </p>
+                  <p className="text-xs opacity-80 mt-1">{deliveredForRevenue.filter((b: any) => b.actual_revenue).length} lịch đã nhập doanh thu</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+                <CardHeader className="pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium opacity-90">Tổng lịch đã bàn giao</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4">
+                  <p className="text-2xl font-bold">{deliveredForRevenue.length}</p>
+                  <p className="text-xs opacity-80 mt-1">Hoàn thành & bàn giao cho khách</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 shadow-lg">
+                <CardHeader className="pb-2 pt-4">
+                  <CardTitle className="text-sm font-medium opacity-90">Chưa nhập doanh thu</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4">
+                  <p className="text-2xl font-bold">{pendingRevenueInput}</p>
+                  <p className="text-xs opacity-80 mt-1">Cần nhập số tiền thực tế</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Delivered bookings list with revenue input */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quản lý doanh thu theo lịch đặt</CardTitle>
+                <CardDescription>Nhập số tiền thực tế cho mỗi lịch đã bàn giao để thống kê doanh thu chính xác</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {deliveredForRevenue.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Chưa có lịch nào được bàn giao</p>
+                    <p className="text-sm mt-1">Khi lịch đặt được chuyển sang trạng thái "Đã giao", sẽ hiển thị ở đây</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {deliveredForRevenue.map((booking: any) => (
+                      <div key={booking.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                          {/* Customer info */}
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Khách hàng</p>
+                              <p className="font-medium">{booking.name}</p>
+                              <p className="text-sm text-muted-foreground">{booking.phone}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Ngày chụp</p>
+                              <p className="font-medium">{new Date(booking.booking_date).toLocaleDateString('vi-VN')}</p>
+                              <p className="text-sm text-muted-foreground">{booking.booking_time}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Dịch vụ</p>
+                              <p className="font-medium">{booking.selected_category || 'Chưa chọn'}</p>
+                              <Badge variant="outline" className="mt-1 text-emerald-600 border-emerald-200 bg-emerald-50">
+                                Đã bàn giao
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          {/* Revenue input */}
+                          <div className="lg:w-64 flex items-end gap-2">
+                            <div className="flex-1">
+                              <Label className="text-sm">Doanh thu thực tế (VNĐ)</Label>
+                              <Input
+                                type="number"
+                                placeholder="Nhập số tiền..."
+                                defaultValue={booking.actual_revenue || ''}
+                                onBlur={async (e) => {
+                                  const value = parseFloat(e.target.value);
+                                  if (isNaN(value) && e.target.value !== '') return;
+                                  const newValue = e.target.value === '' ? null : value;
+                                  try {
+                                    const { error } = await supabase
+                                      .from('bookings')
+                                      .update({ actual_revenue: newValue })
+                                      .eq('id', booking.id);
+                                    if (error) throw error;
+                                    queryClient.invalidateQueries({ queryKey: ['bookings'] });
+                                    toast.success('Đã cập nhật doanh thu');
+                                  } catch (err: any) {
+                                    toast.error('Lỗi: ' + err.message);
+                                  }
+                                }}
+                                className="mt-1"
+                              />
+                            </div>
+                            {booking.actual_revenue > 0 && (
+                              <div className="pb-1">
+                                <Badge className="bg-emerald-100 text-emerald-700">
+                                  {new Intl.NumberFormat('vi-VN').format(booking.actual_revenue)} đ
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Revenue Export */}
+            <RevenueExport bookings={bookings} />
+          </div>
+        );
+
       case "reports":
         // Generate report data
         const getMonthlyStats = (data: any[], months: number) => {
@@ -1981,8 +2109,8 @@ const Dashboard = () => {
                                   toast.error("Vui lòng chọn file ảnh");
                                   return;
                                 }
-                                if (file.size > 5 * 1024 * 1024) {
-                                  toast.error("Ảnh quá lớn (tối đa 5MB)");
+                                if (file.size > 20 * 1024 * 1024) {
+                                  toast.error("Ảnh quá lớn (tối đa 20MB)");
                                   return;
                                 }
                                 try {

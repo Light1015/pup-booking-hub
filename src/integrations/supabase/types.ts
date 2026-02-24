@@ -84,6 +84,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          actual_revenue: number | null
           booking_date: string
           booking_time: string
           cancelled_at: string | null
@@ -112,6 +113,7 @@ export type Database = {
           workflow_status: string | null
         }
         Insert: {
+          actual_revenue?: number | null
           booking_date: string
           booking_time: string
           cancelled_at?: string | null
@@ -140,6 +142,7 @@ export type Database = {
           workflow_status?: string | null
         }
         Update: {
+          actual_revenue?: number | null
           booking_date?: string
           booking_time?: string
           cancelled_at?: string | null
