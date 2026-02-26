@@ -408,6 +408,13 @@ const Dashboard = () => {
       return;
     }
 
+    if (uploadType === "file" && selectedFile) {
+      if (selectedFile.size > 20 * 1024 * 1024) {
+        toast.error("Ảnh quá lớn (tối đa 20MB)");
+        return;
+      }
+    }
+
     setUploadingImage(true);
     try {
       if (uploadType === "file" && selectedFile) {
