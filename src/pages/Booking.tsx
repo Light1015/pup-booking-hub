@@ -799,6 +799,7 @@ const Booking = () => {
 
       <Footer />
     </div>
+    </>
   );
 };
 

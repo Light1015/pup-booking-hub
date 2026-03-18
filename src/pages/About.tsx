@@ -286,6 +286,7 @@ const About = () => {
 
       <Footer />
     </div>
+    </>
   );
 };
 
