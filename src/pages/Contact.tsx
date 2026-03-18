@@ -246,16 +246,12 @@ const Contact = () => {
                 <CardContent>
                   <div className="flex gap-4">
                     <a
-                      href="#"
+                      href="https://www.facebook.com/profile.php?id=61586905820620"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
                     >
                       <Facebook className="h-6 w-6" />
-                    </a>
-                    <a
-                      href="#"
-                      className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-                    >
-                      <Instagram className="h-6 w-6" />
                     </a>
                   </div>
                 </CardContent>
