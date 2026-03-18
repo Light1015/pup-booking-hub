@@ -60,8 +60,7 @@ const Services = () => {
       
       return (data as Service[]).sort((a, b) => sortOrder(a.title) - sortOrder(b.title));
       
-      if (error) throw error;
-      return data as Service[];
+      // error handling and return moved above
     },
   });
 
