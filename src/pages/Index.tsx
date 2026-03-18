@@ -3,6 +3,7 @@ import { Camera, Lightbulb, Palette, Clock, TrendingUp, ArrowRight, Zap, CheckCi
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Helmet } from "react-helmet";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import heroImage from "@/assets/hero-section.png";
