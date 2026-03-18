@@ -69,8 +69,13 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
+    <>
+      <Helmet>
+        <title>Về SnapPup Studio - Đội Ngũ Chụp Ảnh Sản Phẩm Cần Thơ</title>
+        <meta name="description" content="Tìm hiểu về SnapPup Studio - đội ngũ chụp ảnh sản phẩm chuyên nghiệp tại Cần Thơ. Tín - Tốc - Sáng, cam kết chất lượng và tiến độ." />
+      </Helmet>
+      <div className="min-h-screen">
+        <Navbar />
 
       {/* Hero */}
       <section className="relative py-20 bg-gradient-to-b from-primary/5 to-background overflow-hidden">

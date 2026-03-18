@@ -119,7 +119,12 @@ const Contact = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Liên Hệ SnapPup Studio - Báo Giá Chụp Ảnh Sản Phẩm</title>
+        <meta name="description" content="Liên hệ SnapPup Studio để nhận tư vấn và báo giá chụp ảnh sản phẩm. SĐT: 037.213.0010. Email: snappup@gmail.com. Cần Thơ." />
+      </Helmet>
+      <div className="min-h-screen">
       <LoadingDialog open={createContactMutation.isPending} message="Đang gửi tin nhắn..." />
       <Navbar />
 

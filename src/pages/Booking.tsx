@@ -365,8 +365,12 @@ const Booking = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <LoadingDialog open={isLoading} message="Đang xử lý đặt lịch..." />
+    <>
+      <Helmet>
+        <title>Đặt Lịch Chụp Ảnh Sản Phẩm - SnapPup Studio Cần Thơ</title>
+        <meta name="description" content="Đặt lịch chụp ảnh sản phẩm online tại SnapPup Studio Cần Thơ. Chọn gói, chọn ngày giờ, thanh toán dễ dàng." />
+      </Helmet>
+      <div className="min-h-screen">
       <Navbar />
 
       <div className="container mx-auto px-4 py-12">

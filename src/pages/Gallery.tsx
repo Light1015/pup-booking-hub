@@ -200,8 +200,13 @@ const Gallery = () => {
   ];
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
+    <>
+      <Helmet>
+        <title>Kho Ảnh Sản Phẩm Đẹp - SnapPup Studio Cần Thơ</title>
+        <meta name="description" content="Xem kho ảnh sản phẩm chuyên nghiệp từ SnapPup Studio. Ảnh nền trơn, layout/concept, lifestyle với người mẫu." />
+      </Helmet>
+      <div className="min-h-screen">
+        <Navbar />
 
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
