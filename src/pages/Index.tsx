@@ -127,9 +127,6 @@ const Index = () => {
               <div className="absolute -top-4 -right-4 bg-primary text-primary-foreground px-4 py-2 rounded-full font-bold shadow-lg animate-bounce">
                 GIÁ TỪ 120K/SẢN PHẨM
               </div>
-              <div className="absolute -bottom-4 -left-4 bg-background border-2 border-primary px-4 py-2 rounded-full font-semibold shadow-lg">
-                ✨ 500+ khách hàng tin tưởng
-              </div>
             </div>
 
             {/* Content */}
