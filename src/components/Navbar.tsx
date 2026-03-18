@@ -3,7 +3,7 @@ import { Menu, X, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import logoIcon from "@/assets/logo-icon.png";
-import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Facebook } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
