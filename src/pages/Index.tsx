@@ -35,8 +35,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      <Helmet>
+        <title>SnapPup Studio - Chụp Ảnh Sản Phẩm Chuyên Nghiệp Cần Thơ</title>
+        <meta name="description" content="Giải pháp hình ảnh sản phẩm chuyên nghiệp tại Cần Thơ. Chụp nền trơn từ 120K, layout/concept từ 500K, kèm người mẫu từ 3.500K. Bàn giao 24-48h." />
+      </Helmet>
       <Navbar />
-      
       {/* Hero Section */}
       <section className="relative h-[650px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
