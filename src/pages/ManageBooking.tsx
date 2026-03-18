@@ -220,11 +220,13 @@ const ManageBooking = () => {
 
     setUploading(true);
     try {
-      const fileName = `payment-proof/${bookingData?.id}-${Date.now()}.${fileExt}`;
+      const compressedFile = await compressImage(file);
+      const compressedExt = compressedFile.name.split(".").pop() || fileExt;
+      const fileName = `payment-proof/${bookingData?.id}-${Date.now()}.${compressedExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("gallery")
-        .upload(fileName, file);
+        .upload(fileName, compressedFile);
 
       if (uploadError) throw uploadError;
 
