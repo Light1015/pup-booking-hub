@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -199,8 +200,13 @@ const Gallery = () => {
   ];
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
+    <>
+      <Helmet>
+        <title>Kho Ảnh Sản Phẩm Đẹp - SnapPup Studio Cần Thơ</title>
+        <meta name="description" content="Xem kho ảnh sản phẩm chuyên nghiệp từ SnapPup Studio. Ảnh nền trơn, layout/concept, lifestyle với người mẫu." />
+      </Helmet>
+      <div className="min-h-screen">
+        <Navbar />
 
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
@@ -332,7 +338,7 @@ const Gallery = () => {
                         alt={album.name}
                         loading="lazy"
                         decoding="async"
-                        fetchPriority="low"
+                        
                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
@@ -540,6 +546,7 @@ const Gallery = () => {
 
       <Footer />
     </div>
+    </>
   );
 };
 

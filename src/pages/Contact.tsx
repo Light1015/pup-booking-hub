@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Phone, Mail, MapPin, Clock, Facebook, Instagram } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Facebook } from "lucide-react";
+import { Helmet } from "react-helmet";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation } from "@tanstack/react-query";
 import LoadingDialog from "@/components/LoadingDialog";
@@ -118,7 +119,12 @@ const Contact = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Liên Hệ SnapPup Studio - Báo Giá Chụp Ảnh Sản Phẩm</title>
+        <meta name="description" content="Liên hệ SnapPup Studio để nhận tư vấn và báo giá chụp ảnh sản phẩm. SĐT: 037.213.0010. Email: snappup@gmail.com. Cần Thơ." />
+      </Helmet>
+      <div className="min-h-screen">
       <LoadingDialog open={createContactMutation.isPending} message="Đang gửi tin nhắn..." />
       <Navbar />
 
@@ -240,16 +246,12 @@ const Contact = () => {
                 <CardContent>
                   <div className="flex gap-4">
                     <a
-                      href="#"
+                      href="https://www.facebook.com/profile.php?id=61586905820620"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
                     >
                       <Facebook className="h-6 w-6" />
-                    </a>
-                    <a
-                      href="#"
-                      className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-                    >
-                      <Instagram className="h-6 w-6" />
                     </a>
                   </div>
                 </CardContent>
@@ -270,6 +272,7 @@ const Contact = () => {
 
       <Footer />
     </div>
+    </>
   );
 };
 

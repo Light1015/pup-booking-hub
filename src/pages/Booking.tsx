@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { Helmet } from "react-helmet";
 import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
@@ -364,7 +365,12 @@ const Booking = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Đặt Lịch Chụp Ảnh Sản Phẩm - SnapPup Studio Cần Thơ</title>
+        <meta name="description" content="Đặt lịch chụp ảnh sản phẩm online tại SnapPup Studio Cần Thơ. Chọn gói, chọn ngày giờ, thanh toán dễ dàng." />
+      </Helmet>
+      <div className="min-h-screen">
       <LoadingDialog open={isLoading} message="Đang xử lý đặt lịch..." />
       <Navbar />
 
@@ -794,6 +800,7 @@ const Booking = () => {
 
       <Footer />
     </div>
+    </>
   );
 };
 
