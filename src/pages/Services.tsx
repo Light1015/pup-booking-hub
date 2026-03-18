@@ -49,6 +49,18 @@ const Services = () => {
         .order("created_at", { ascending: true });
       
       if (error) throw error;
+      
+      // Sort: nền trơn first, layout/concept middle, lifestyle/mẫu last
+      const sortOrder = (title: string) => {
+        if (title.includes("nền trơn")) return 0;
+        if (title.includes("layout") || title.includes("concept")) return 1;
+        if (title.includes("người mẫu") || title.includes("Lifestyle")) return 2;
+        return 3;
+      };
+      
+      return (data as Service[]).sort((a, b) => sortOrder(a.title) - sortOrder(b.title));
+      
+      if (error) throw error;
       return data as Service[];
     },
   });
