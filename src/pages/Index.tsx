@@ -156,7 +156,7 @@ const Index = () => {
                 </div>
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Chụp sản phẩm kèm người mẫu - từ 2.000K/gói</span>
+                  <span>Chụp sản phẩm kèm người mẫu - từ 3.500K/buổi</span>
                 </div>
               </div>
               

@@ -2123,11 +2123,12 @@ const Dashboard = () => {
                                   return;
                                 }
                                 try {
-                                  const fileExt = file.name.split(".").pop();
+                                  const compressedFile = await compressImage(file);
+                                  const fileExt = compressedFile.name.split(".").pop();
                                   const fileName = `qr-code/bank-qr-${Date.now()}.${fileExt}`;
                                   const { error: uploadError } = await supabase.storage
                                     .from("gallery")
-                                    .upload(fileName, file);
+                                    .upload(fileName, compressedFile);
                                   if (uploadError) throw uploadError;
                                   const { data: { publicUrl } } = supabase.storage
                                     .from("gallery")

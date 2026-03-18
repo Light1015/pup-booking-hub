@@ -232,7 +232,7 @@ const Services = () => {
                               <div className="absolute top-4 left-4">
                                 <Badge className="bg-primary text-primary-foreground px-3 py-1.5">
                                   <ServiceIcon className="h-4 w-4 mr-1" />
-                                  {index === 0 ? "PHỔ BIẾN" : index === 1 ? "CONCEPT" : "LIFESTYLE"}
+                                  {service.title.includes("nền trơn") ? "PHỔ BIẾN" : service.title.includes("layout") || service.title.includes("concept") ? "CONCEPT" : "LIFESTYLE"}
                                 </Badge>
                               </div>
                             </div>
