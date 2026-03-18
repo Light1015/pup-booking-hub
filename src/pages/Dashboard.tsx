@@ -419,12 +419,13 @@ const Dashboard = () => {
     setUploadingImage(true);
     try {
       if (uploadType === "file" && selectedFile) {
-        const fileExt = selectedFile.name.split(".").pop();
+        const compressedFile = await compressImage(selectedFile);
+        const fileExt = compressedFile.name.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from("gallery")
-          .upload(fileName, selectedFile);
+          .upload(fileName, compressedFile);
 
         if (uploadError) throw uploadError;
 
