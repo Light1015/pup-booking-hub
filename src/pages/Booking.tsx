@@ -371,6 +371,7 @@ const Booking = () => {
         <meta name="description" content="Đặt lịch chụp ảnh sản phẩm online tại SnapPup Studio Cần Thơ. Chọn gói, chọn ngày giờ, thanh toán dễ dàng." />
       </Helmet>
       <div className="min-h-screen">
+      <LoadingDialog open={isLoading} message="Đang xử lý đặt lịch..." />
       <Navbar />
 
       <div className="container mx-auto px-4 py-12">
