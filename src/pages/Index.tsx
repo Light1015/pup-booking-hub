@@ -54,7 +54,7 @@ const Index = () => {
               Đầu tư hình ảnh, tối ưu doanh thu
             </Badge>
             
-            <h1 className="text-5xl md:text-6xl font-display font-bold leading-tight">
+            <h1 className="text-5xl md:text-6xl font-display font-bold leading-tight mt-4">
               Hình ảnh sắc nét – <br />
               <span className="text-primary">Chốt đơn thần tốc.</span>
             </h1>
@@ -127,9 +127,6 @@ const Index = () => {
               <div className="absolute -top-4 -right-4 bg-primary text-primary-foreground px-4 py-2 rounded-full font-bold shadow-lg animate-bounce">
                 GIÁ TỪ 120K/SẢN PHẨM
               </div>
-              <div className="absolute -bottom-4 -left-4 bg-background border-2 border-primary px-4 py-2 rounded-full font-semibold shadow-lg">
-                ✨ 500+ khách hàng tin tưởng
-              </div>
             </div>
 
             {/* Content */}
@@ -159,7 +156,7 @@ const Index = () => {
                 </div>
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Chụp sản phẩm kèm người mẫu - từ 2.000K/gói</span>
+                  <span>Chụp sản phẩm kèm người mẫu - từ 3.500K/buổi</span>
                 </div>
               </div>
               

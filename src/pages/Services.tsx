@@ -49,7 +49,16 @@ const Services = () => {
         .order("created_at", { ascending: true });
       
       if (error) throw error;
-      return data as Service[];
+      
+      // Sort: nền trơn first, layout/concept middle, lifestyle/mẫu last
+      const sortOrder = (title: string) => {
+        if (title.includes("nền trơn")) return 0;
+        if (title.includes("layout") || title.includes("concept")) return 1;
+        if (title.includes("người mẫu") || title.includes("Lifestyle")) return 2;
+        return 3;
+      };
+      
+      return (data as Service[]).sort((a, b) => sortOrder(a.title) - sortOrder(b.title));
     },
   });
 
@@ -221,7 +230,7 @@ const Services = () => {
                               <div className="absolute top-4 left-4">
                                 <Badge className="bg-primary text-primary-foreground px-3 py-1.5">
                                   <ServiceIcon className="h-4 w-4 mr-1" />
-                                  {index === 0 ? "PHỔ BIẾN" : index === 1 ? "CONCEPT" : "LIFESTYLE"}
+                                  {service.title.includes("nền trơn") ? "PHỔ BIẾN" : service.title.includes("layout") || service.title.includes("concept") ? "CONCEPT" : "LIFESTYLE"}
                                 </Badge>
                               </div>
                             </div>

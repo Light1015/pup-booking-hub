@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/imageCompress";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -418,12 +419,13 @@ const Dashboard = () => {
     setUploadingImage(true);
     try {
       if (uploadType === "file" && selectedFile) {
-        const fileExt = selectedFile.name.split(".").pop();
+        const compressedFile = await compressImage(selectedFile);
+        const fileExt = compressedFile.name.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from("gallery")
-          .upload(fileName, selectedFile);
+          .upload(fileName, compressedFile);
 
         if (uploadError) throw uploadError;
 
@@ -2121,11 +2123,12 @@ const Dashboard = () => {
                                   return;
                                 }
                                 try {
-                                  const fileExt = file.name.split(".").pop();
+                                  const compressedFile = await compressImage(file);
+                                  const fileExt = compressedFile.name.split(".").pop();
                                   const fileName = `qr-code/bank-qr-${Date.now()}.${fileExt}`;
                                   const { error: uploadError } = await supabase.storage
                                     .from("gallery")
-                                    .upload(fileName, file);
+                                    .upload(fileName, compressedFile);
                                   if (uploadError) throw uploadError;
                                   const { data: { publicUrl } } = supabase.storage
                                     .from("gallery")
