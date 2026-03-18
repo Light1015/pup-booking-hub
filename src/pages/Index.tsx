@@ -54,7 +54,7 @@ const Index = () => {
               Đầu tư hình ảnh, tối ưu doanh thu
             </Badge>
             
-            <h1 className="text-5xl md:text-6xl font-display font-bold leading-tight">
+            <h1 className="text-5xl md:text-6xl font-display font-bold leading-tight mt-4">
               Hình ảnh sắc nét – <br />
               <span className="text-primary">Chốt đơn thần tốc.</span>
             </h1>
