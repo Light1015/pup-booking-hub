@@ -669,63 +669,63 @@ const Dashboard = () => {
             </div>
             
             {/* Stats Cards - Row 1 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => setActiveTab("bookings")}>
                 <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Tổng lịch đặt</CardTitle>
-                  <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Tổng lịch đặt</CardTitle>
+                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Calendar className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-3xl font-bold">{bookings.length}</p>
+                  <p className="text-2xl md:text-3xl font-bold">{bookings.length}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     <span className="text-blue-600 font-medium">{unreadBookings.length}</span> chưa đọc
                   </p>
                 </CardContent>
               </Card>
               
-              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => { setActiveTab("bookings"); setBookingPaymentFilter("confirmed"); }}>
                 <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Đã xác nhận</CardTitle>
-                  <div className="h-9 w-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Đã xác nhận</CardTitle>
+                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-emerald-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-3xl font-bold text-emerald-600">{confirmedBookings.length}</p>
+                  <p className="text-2xl md:text-3xl font-bold text-emerald-600">{confirmedBookings.length}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     <span className="text-emerald-600 font-medium">{thisMonthConfirmed.length}</span> tháng này
                   </p>
                 </CardContent>
               </Card>
               
-              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => { setActiveTab("bookings"); setBookingPaymentFilter("pending"); }}>
                 <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Chờ xác nhận</CardTitle>
-                  <div className="h-9 w-9 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-amber-600" />
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Chờ xác nhận</CardTitle>
+                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-amber-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Clock className="h-4 w-4 md:h-5 md:w-5 text-amber-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-3xl font-bold text-amber-600">{pendingBookings.length}</p>
+                  <p className="text-2xl md:text-3xl font-bold text-amber-600">{pendingBookings.length}</p>
                   <p className="text-xs text-muted-foreground mt-1">Cần xử lý</p>
                 </CardContent>
               </Card>
               
-              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => { setActiveTab("bookings"); setBookingPaymentFilter("cancelled"); }}>
                 <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Tỷ lệ hủy</CardTitle>
-                  <div className="h-9 w-9 rounded-lg bg-rose-100 flex items-center justify-center">
-                    <XCircle className="h-5 w-5 text-rose-600" />
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Tỷ lệ hủy</CardTitle>
+                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-rose-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <XCircle className="h-4 w-4 md:h-5 md:w-5 text-rose-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-3xl font-bold text-rose-600">{cancellationRate}%</p>
+                  <p className="text-2xl md:text-3xl font-bold text-rose-600">{cancellationRate}%</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     <span className="text-rose-600 font-medium">{cancelledBookings.length}</span> đã hủy
                   </p>
