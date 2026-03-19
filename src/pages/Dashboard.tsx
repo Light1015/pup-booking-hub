@@ -896,11 +896,16 @@ const Dashboard = () => {
                     <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
                       <Calendar className="h-4 w-4 text-blue-600" />
                     </div>
-                    <CardTitle className="text-base font-semibold">Lịch đặt gần đây</CardTitle>
+                    <CardTitle className="text-sm md:text-base font-semibold">Lịch đặt gần đây</CardTitle>
                   </div>
-                  {unreadBookings.length > 0 && (
-                    <Badge className="bg-blue-500 hover:bg-blue-600">{unreadBookings.length} mới</Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {unreadBookings.length > 0 && (
+                      <Badge className="bg-blue-500 hover:bg-blue-600">{unreadBookings.length} mới</Badge>
+                    )}
+                    <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => setActiveTab("bookings")}>
+                      Xem tất cả →
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-2 max-h-[280px] overflow-y-auto">
