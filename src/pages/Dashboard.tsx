@@ -734,37 +734,37 @@ const Dashboard = () => {
             </div>
             
             {/* Revenue Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setActiveTab("revenue")}>
                 <CardHeader className="pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu thực tế</CardTitle>
+                  <CardTitle className="text-xs md:text-sm font-medium opacity-90">Doanh thu thực tế</CardTitle>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl md:text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(expectedRevenue)} đ
                   </p>
                   <p className="text-xs opacity-80 mt-1">Từ {deliveredBookings.length} lịch đã bàn giao</p>
                 </CardContent>
               </Card>
               
-              <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 shadow-lg">
+              <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setActiveTab("revenue")}>
                 <CardHeader className="pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu tiềm năng</CardTitle>
+                  <CardTitle className="text-xs md:text-sm font-medium opacity-90">Doanh thu tiềm năng</CardTitle>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl md:text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(potentialRevenue)} đ
                   </p>
                   <p className="text-xs opacity-80 mt-1">Từ {pendingBookings.length} lịch chờ xác nhận</p>
                 </CardContent>
               </Card>
               
-              <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-0 shadow-lg">
+              <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setActiveTab("revenue")}>
                 <CardHeader className="pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu tháng này</CardTitle>
+                  <CardTitle className="text-xs md:text-sm font-medium opacity-90">Doanh thu tháng này</CardTitle>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl md:text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(thisMonthRevenue)} đ
                   </p>
                   <p className="text-xs opacity-80 mt-1">{thisMonthDelivered.length} lịch đã bàn giao</p>
