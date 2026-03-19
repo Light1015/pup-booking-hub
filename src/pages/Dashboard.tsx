@@ -773,50 +773,50 @@ const Dashboard = () => {
             </div>
             
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 text-indigo-600" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("contacts")}>
+                <CardContent className="p-3 md:p-4 flex items-center gap-3">
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-indigo-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{contacts.length}</p>
+                    <p className="text-xl md:text-2xl font-bold">{contacts.length}</p>
                     <p className="text-xs text-muted-foreground">Liên hệ ({unreadContacts.length} mới)</p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                    <Image className="h-5 w-5 text-purple-600" />
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("gallery")}>
+                <CardContent className="p-3 md:p-4 flex items-center gap-3">
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <Image className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{gallery.length}</p>
+                    <p className="text-xl md:text-2xl font-bold">{gallery.length}</p>
                     <p className="text-xs text-muted-foreground">Ảnh ({albums.length} bộ)</p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-                    <FolderOpen className="h-5 w-5 text-orange-600" />
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("categories")}>
+                <CardContent className="p-3 md:p-4 flex items-center gap-3">
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <FolderOpen className="h-4 w-4 md:h-5 md:w-5 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{categories.length}</p>
+                    <p className="text-xl md:text-2xl font-bold">{categories.length}</p>
                     <p className="text-xs text-muted-foreground">Danh mục</p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
-                    <FileText className="h-5 w-5 text-pink-600" />
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("services")}>
+                <CardContent className="p-3 md:p-4 flex items-center gap-3">
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-4 w-4 md:h-5 md:w-5 text-pink-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{services.length}</p>
+                    <p className="text-xl md:text-2xl font-bold">{services.length}</p>
                     <p className="text-xs text-muted-foreground">Dịch vụ</p>
                   </div>
                 </CardContent>
