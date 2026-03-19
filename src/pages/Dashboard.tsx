@@ -661,71 +661,71 @@ const Dashboard = () => {
         ].filter(item => item.value > 0);
 
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {/* Welcome Banner */}
-            <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-6 text-primary-foreground">
-              <h2 className="text-2xl font-bold mb-1">Xin chào! 👋</h2>
-              <p className="opacity-90">Đây là tổng quan hoạt động của SnapPup Studio hôm nay</p>
+            <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-4 md:p-6 text-primary-foreground">
+              <h2 className="text-xl md:text-2xl font-bold mb-1">Xin chào! 👋</h2>
+              <p className="opacity-90 text-sm md:text-base">Đây là tổng quan hoạt động của SnapPup Studio hôm nay</p>
             </div>
             
             {/* Stats Cards - Row 1 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => setActiveTab("bookings")}>
                 <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Tổng lịch đặt</CardTitle>
-                  <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Tổng lịch đặt</CardTitle>
+                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Calendar className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-3xl font-bold">{bookings.length}</p>
+                  <p className="text-2xl md:text-3xl font-bold">{bookings.length}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     <span className="text-blue-600 font-medium">{unreadBookings.length}</span> chưa đọc
                   </p>
                 </CardContent>
               </Card>
               
-              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => { setActiveTab("bookings"); setBookingPaymentFilter("confirmed"); }}>
                 <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Đã xác nhận</CardTitle>
-                  <div className="h-9 w-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Đã xác nhận</CardTitle>
+                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-emerald-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-3xl font-bold text-emerald-600">{confirmedBookings.length}</p>
+                  <p className="text-2xl md:text-3xl font-bold text-emerald-600">{confirmedBookings.length}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     <span className="text-emerald-600 font-medium">{thisMonthConfirmed.length}</span> tháng này
                   </p>
                 </CardContent>
               </Card>
               
-              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => { setActiveTab("bookings"); setBookingPaymentFilter("pending"); }}>
                 <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Chờ xác nhận</CardTitle>
-                  <div className="h-9 w-9 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-amber-600" />
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Chờ xác nhận</CardTitle>
+                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-amber-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Clock className="h-4 w-4 md:h-5 md:w-5 text-amber-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-3xl font-bold text-amber-600">{pendingBookings.length}</p>
+                  <p className="text-2xl md:text-3xl font-bold text-amber-600">{pendingBookings.length}</p>
                   <p className="text-xs text-muted-foreground mt-1">Cần xử lý</p>
                 </CardContent>
               </Card>
               
-              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => { setActiveTab("bookings"); setBookingPaymentFilter("cancelled"); }}>
                 <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
                 <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Tỷ lệ hủy</CardTitle>
-                  <div className="h-9 w-9 rounded-lg bg-rose-100 flex items-center justify-center">
-                    <XCircle className="h-5 w-5 text-rose-600" />
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Tỷ lệ hủy</CardTitle>
+                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-rose-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <XCircle className="h-4 w-4 md:h-5 md:w-5 text-rose-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-3xl font-bold text-rose-600">{cancellationRate}%</p>
+                  <p className="text-2xl md:text-3xl font-bold text-rose-600">{cancellationRate}%</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     <span className="text-rose-600 font-medium">{cancelledBookings.length}</span> đã hủy
                   </p>
@@ -734,37 +734,37 @@ const Dashboard = () => {
             </div>
             
             {/* Revenue Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setActiveTab("revenue")}>
                 <CardHeader className="pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu thực tế</CardTitle>
+                  <CardTitle className="text-xs md:text-sm font-medium opacity-90">Doanh thu thực tế</CardTitle>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl md:text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(expectedRevenue)} đ
                   </p>
                   <p className="text-xs opacity-80 mt-1">Từ {deliveredBookings.length} lịch đã bàn giao</p>
                 </CardContent>
               </Card>
               
-              <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 shadow-lg">
+              <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setActiveTab("revenue")}>
                 <CardHeader className="pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu tiềm năng</CardTitle>
+                  <CardTitle className="text-xs md:text-sm font-medium opacity-90">Doanh thu tiềm năng</CardTitle>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl md:text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(potentialRevenue)} đ
                   </p>
                   <p className="text-xs opacity-80 mt-1">Từ {pendingBookings.length} lịch chờ xác nhận</p>
                 </CardContent>
               </Card>
               
-              <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-0 shadow-lg">
+              <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setActiveTab("revenue")}>
                 <CardHeader className="pb-2 pt-4">
-                  <CardTitle className="text-sm font-medium opacity-90">Doanh thu tháng này</CardTitle>
+                  <CardTitle className="text-xs md:text-sm font-medium opacity-90">Doanh thu tháng này</CardTitle>
                 </CardHeader>
                 <CardContent className="pb-4">
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl md:text-2xl font-bold">
                     {new Intl.NumberFormat('vi-VN').format(thisMonthRevenue)} đ
                   </p>
                   <p className="text-xs opacity-80 mt-1">{thisMonthDelivered.length} lịch đã bàn giao</p>
@@ -773,50 +773,50 @@ const Dashboard = () => {
             </div>
             
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 text-indigo-600" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("contacts")}>
+                <CardContent className="p-3 md:p-4 flex items-center gap-3">
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-indigo-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{contacts.length}</p>
+                    <p className="text-xl md:text-2xl font-bold">{contacts.length}</p>
                     <p className="text-xs text-muted-foreground">Liên hệ ({unreadContacts.length} mới)</p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                    <Image className="h-5 w-5 text-purple-600" />
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("gallery")}>
+                <CardContent className="p-3 md:p-4 flex items-center gap-3">
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <Image className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{gallery.length}</p>
+                    <p className="text-xl md:text-2xl font-bold">{gallery.length}</p>
                     <p className="text-xs text-muted-foreground">Ảnh ({albums.length} bộ)</p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-                    <FolderOpen className="h-5 w-5 text-orange-600" />
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("categories")}>
+                <CardContent className="p-3 md:p-4 flex items-center gap-3">
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <FolderOpen className="h-4 w-4 md:h-5 md:w-5 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{categories.length}</p>
+                    <p className="text-xl md:text-2xl font-bold">{categories.length}</p>
                     <p className="text-xs text-muted-foreground">Danh mục</p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
-                    <FileText className="h-5 w-5 text-pink-600" />
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("services")}>
+                <CardContent className="p-3 md:p-4 flex items-center gap-3">
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-4 w-4 md:h-5 md:w-5 text-pink-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{services.length}</p>
+                    <p className="text-xl md:text-2xl font-bold">{services.length}</p>
                     <p className="text-xs text-muted-foreground">Dịch vụ</p>
                   </div>
                 </CardContent>
@@ -896,11 +896,16 @@ const Dashboard = () => {
                     <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
                       <Calendar className="h-4 w-4 text-blue-600" />
                     </div>
-                    <CardTitle className="text-base font-semibold">Lịch đặt gần đây</CardTitle>
+                    <CardTitle className="text-sm md:text-base font-semibold">Lịch đặt gần đây</CardTitle>
                   </div>
-                  {unreadBookings.length > 0 && (
-                    <Badge className="bg-blue-500 hover:bg-blue-600">{unreadBookings.length} mới</Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {unreadBookings.length > 0 && (
+                      <Badge className="bg-blue-500 hover:bg-blue-600">{unreadBookings.length} mới</Badge>
+                    )}
+                    <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => setActiveTab("bookings")}>
+                      Xem tất cả →
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-2 max-h-[280px] overflow-y-auto">
@@ -935,11 +940,16 @@ const Dashboard = () => {
                     <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                       <MessageSquare className="h-4 w-4 text-emerald-600" />
                     </div>
-                    <CardTitle className="text-base font-semibold">Tin nhắn liên hệ</CardTitle>
+                    <CardTitle className="text-sm md:text-base font-semibold">Tin nhắn liên hệ</CardTitle>
                   </div>
-                  {unreadContacts.length > 0 && (
-                    <Badge className="bg-emerald-500 hover:bg-emerald-600">{unreadContacts.length} mới</Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {unreadContacts.length > 0 && (
+                      <Badge className="bg-emerald-500 hover:bg-emerald-600">{unreadContacts.length} mới</Badge>
+                    )}
+                    <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => setActiveTab("contacts")}>
+                      Xem tất cả →
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-2 max-h-[280px] overflow-y-auto">
@@ -2204,22 +2214,32 @@ const Dashboard = () => {
     return allItems.find(item => item.id === activeTab)?.label || "Dashboard";
   };
 
+  const unreadBookingsCount = bookings.filter((b: any) => !b.read_at).length;
+  const unreadContactsCount = contacts.filter((c: any) => !c.read_at).length;
+
   return (
     <div className="min-h-screen bg-muted/30 flex">
-      <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <AdminSidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        unreadBookings={unreadBookingsCount}
+        unreadContacts={unreadContactsCount}
+      />
       
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-card border-b flex items-center justify-between px-6 sticky top-0 z-10 shadow-sm">
+        <header className="h-16 bg-card border-b flex items-center justify-between px-4 md:px-6 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-4">
+            {/* Space for mobile hamburger */}
+            <div className="w-10 lg:hidden" />
             <div>
-              <h1 className="text-lg font-semibold text-foreground">{getCurrentTabTitle()}</h1>
-              <p className="text-xs text-muted-foreground">
+              <h1 className="text-base md:text-lg font-semibold text-foreground">{getCurrentTabTitle()}</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <AdminNotificationBell 
               onNotificationClick={(notification) => {
                 if (notification.type === "booking" || notification.type === "payment") {
@@ -2240,7 +2260,7 @@ const Dashboard = () => {
         </header>
         
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
             {renderContent()}
           </div>

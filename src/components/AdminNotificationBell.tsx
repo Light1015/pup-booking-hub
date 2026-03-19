@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ interface AdminNotificationBellProps {
 
 export function AdminNotificationBell({ onNotificationClick }: AdminNotificationBellProps) {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   // Fetch unread bookings
@@ -81,8 +81,8 @@ export function AdminNotificationBell({ onNotificationClick }: AdminNotification
     refetchInterval: 30000,
   });
 
-  // Build notifications list
-  useEffect(() => {
+  // Build notifications list with useMemo to prevent infinite re-renders
+  const notifications = useMemo(() => {
     const newNotifications: Notification[] = [];
 
     unreadBookings.forEach((booking) => {
@@ -92,7 +92,7 @@ export function AdminNotificationBell({ onNotificationClick }: AdminNotification
         title: "Lịch đặt mới",
         message: `${booking.name} - ${booking.booking_date} ${booking.booking_time}`,
         timestamp: new Date(booking.created_at),
-        read: false,
+        read: dismissedIds.has(`booking-${booking.id}`),
         data: booking,
       });
     });
@@ -104,15 +104,15 @@ export function AdminNotificationBell({ onNotificationClick }: AdminNotification
         title: "Liên hệ mới",
         message: `${contact.name}: ${contact.message.substring(0, 50)}...`,
         timestamp: new Date(contact.created_at),
-        read: false,
+        read: dismissedIds.has(`contact-${contact.id}`),
         data: contact,
       });
     });
 
     // Sort by timestamp
     newNotifications.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    setNotifications(newNotifications);
-  }, [unreadBookings, unreadContacts]);
+    return newNotifications;
+  }, [unreadBookings, unreadContacts, dismissedIds]);
 
   const unreadCount = notifications.filter((n) => !n.read).length + pendingPayments.length;
 
