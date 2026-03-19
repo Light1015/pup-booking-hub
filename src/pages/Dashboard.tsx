@@ -661,11 +661,11 @@ const Dashboard = () => {
         ].filter(item => item.value > 0);
 
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {/* Welcome Banner */}
-            <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-6 text-primary-foreground">
-              <h2 className="text-2xl font-bold mb-1">Xin chào! 👋</h2>
-              <p className="opacity-90">Đây là tổng quan hoạt động của SnapPup Studio hôm nay</p>
+            <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-4 md:p-6 text-primary-foreground">
+              <h2 className="text-xl md:text-2xl font-bold mb-1">Xin chào! 👋</h2>
+              <p className="opacity-90 text-sm md:text-base">Đây là tổng quan hoạt động của SnapPup Studio hôm nay</p>
             </div>
             
             {/* Stats Cards - Row 1 */}
