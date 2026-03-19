@@ -2204,22 +2204,32 @@ const Dashboard = () => {
     return allItems.find(item => item.id === activeTab)?.label || "Dashboard";
   };
 
+  const unreadBookingsCount = bookings.filter((b: any) => !b.read_at).length;
+  const unreadContactsCount = contacts.filter((c: any) => !c.read_at).length;
+
   return (
     <div className="min-h-screen bg-muted/30 flex">
-      <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <AdminSidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        unreadBookings={unreadBookingsCount}
+        unreadContacts={unreadContactsCount}
+      />
       
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-card border-b flex items-center justify-between px-6 sticky top-0 z-10 shadow-sm">
+        <header className="h-16 bg-card border-b flex items-center justify-between px-4 md:px-6 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-4">
+            {/* Space for mobile hamburger */}
+            <div className="w-10 lg:hidden" />
             <div>
-              <h1 className="text-lg font-semibold text-foreground">{getCurrentTabTitle()}</h1>
-              <p className="text-xs text-muted-foreground">
+              <h1 className="text-base md:text-lg font-semibold text-foreground">{getCurrentTabTitle()}</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <AdminNotificationBell 
               onNotificationClick={(notification) => {
                 if (notification.type === "booking" || notification.type === "payment") {
@@ -2240,7 +2250,7 @@ const Dashboard = () => {
         </header>
         
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
             {renderContent()}
           </div>
