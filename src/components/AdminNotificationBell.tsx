@@ -29,7 +29,7 @@ interface AdminNotificationBellProps {
 
 export function AdminNotificationBell({ onNotificationClick }: AdminNotificationBellProps) {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   // Fetch unread bookings
