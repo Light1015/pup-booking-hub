@@ -940,11 +940,16 @@ const Dashboard = () => {
                     <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                       <MessageSquare className="h-4 w-4 text-emerald-600" />
                     </div>
-                    <CardTitle className="text-base font-semibold">Tin nhắn liên hệ</CardTitle>
+                    <CardTitle className="text-sm md:text-base font-semibold">Tin nhắn liên hệ</CardTitle>
                   </div>
-                  {unreadContacts.length > 0 && (
-                    <Badge className="bg-emerald-500 hover:bg-emerald-600">{unreadContacts.length} mới</Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {unreadContacts.length > 0 && (
+                      <Badge className="bg-emerald-500 hover:bg-emerald-600">{unreadContacts.length} mới</Badge>
+                    )}
+                    <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => setActiveTab("contacts")}>
+                      Xem tất cả →
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-2 max-h-[280px] overflow-y-auto">
